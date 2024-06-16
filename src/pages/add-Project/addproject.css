@@ -1,0 +1,154 @@
+.container-wrapper {
+    display: flex;
+    justify-content: space-around; /* Adjust spacing between containers */
+    gap: 20px; /* Adjust gap between containers */
+}
+
+.container-wrapper .container2, .container3 {
+    background: rgba(41, 31, 31, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px 0 rgb(31, 38, 135);
+    color: white;
+    padding: 20px;
+    width: 350px;
+    max-width: 100%;
+    text-align: center;
+}
+
+.container-wrapper .logo2 {
+    width: 350px;
+    display: block;
+    margin: 0 auto 20px;
+    background: #525440b9;
+}
+
+.container-wrapper form {
+    display: grid;
+    gap: 10px;
+}
+
+.container-wrapper form div {
+    display: grid;
+    gap: 3px;
+    grid-template-columns: max-content 1fr; /* Label next to input */
+    align-items: center;
+}
+
+.container-wrapper label {
+    font-weight: bold;
+    padding-right: 10px; /* Add space between label and input */
+    text-align: right; /* Align labels to the right for consistent spacing */
+}
+
+.container-wrapper input[type="text"],
+input[type="date"],
+textarea,
+input[type="file"] {
+    width: calc(100% - 10px); /* Adjust input width to account for padding */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.container-wrapper textarea {
+    height: 50px; /* Adjust textarea height */
+}
+
+.container-wrapper .participant-search {
+    display: grid;
+    gap: 12px;
+    align-items: center;
+    grid-template-columns: auto 1fr auto; /* Adjust column layout */
+}
+
+.container-wrapper .search-button,
+.add-participant-button,
+.save-button,
+.close-button {
+    padding: 8px 12px; /* Adjust button padding for consistency */
+    font-size: 16px; /* Consider a consistent font size for buttons */
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.container-wrapper .search-button {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+}
+
+.container-wrapper .save-close-buttons {
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.container-wrapper .save-button {
+    background: #eef7a0;
+    color: black;
+    border: none;
+}
+
+.container-wrapper .close-button {
+    background: #d9534f;
+    color: white;
+    border: none;
+}
+
+/* Hover states */
+.container-wrapper .save-button:hover,
+.search-button:hover,
+.add-participant-button:hover,
+.close-button:hover {
+    opacity: 0.8;
+}
+
+/* Fish animation */
+.container-wrapper .bird {
+    position: absolute;
+    width: 50px; /* Adjust size as needed */
+    height: auto;
+    bottom: 20px; /* Adjust as needed */
+    right: 1200px;
+}
+
+.container-wrapper .bird1{
+    top: 100px;
+    animation: fly 36s linear infinite;
+    animation-delay: 10s;
+    animation-fill-mode: forwards;
+    animation-fill-mode: both;
+}
+.container-wrapper .bird2{
+    top: 350px;
+    animation: fly 51s linear infinite;
+    animation-delay: 0s; /* Start after 18 seconds */
+    animation-fill-mode: both;
+
+}
+.container-wrapper .bird3{
+    bottom: 100px;
+    animation: fly 23.5s linear infinite;
+    animation-delay: 7s; /* Start after 18 seconds */
+    animation-fill-mode: both;
+}
+
+@keyframes fly {
+    0% {
+        opacity: 0; 
+        transform: translateX(-100px) scaleX(1);
+    }
+    15% {
+        opacity: 1; 
+        transform: translateX(calc(14vw - 50px)) scaleX(1);
+    }
+    50% {
+        transform: translateX(calc(70vw - 50px)) scaleX(1);
+    }
+    51% {
+        transform: translateX(calc(70vw - 50px)) scaleX(-1);
+    }
+    100% {
+        transform: translateX(-100px) scaleX(-1);
+    }
+}

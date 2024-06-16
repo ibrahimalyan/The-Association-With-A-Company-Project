@@ -1,25 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+// // src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import{ Auth } from './pages/auth/index';
+import { HomePage }from './pages/home-page/index';
+import { AddProject } from './pages/add-Project/index';
+import { UserProfile } from './pages/update-Participent/index';
+import { EditProject } from './pages/update-Project/index';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <Router>
+            <Routes>
+                <Route path="/signin" element={<Auth />} />
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/addProject" element={<AddProject />} />
+                <Route path="/UserProfile" element={<UserProfile />} />
+                <Route path="/editProject/:id" element={<EditProject />} /> {/* Define route with parameter */}
+                <Route path="/" element={<Auth />} />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;
