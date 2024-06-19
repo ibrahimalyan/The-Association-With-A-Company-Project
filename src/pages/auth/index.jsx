@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../config/firebase-config';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { useUserInfo } from '../../hooks/useUserInfo';  // Adjust the path as needed
 import logo from '../../images/logo.png';
@@ -14,6 +15,15 @@ import './auth.css'; // Import the CSS file
 
 const db = getFirestore();
 
+const Modal = ({ message, onClose }) => (
+    <div className="modal">
+        <div className="modal-content">
+            <p>{message}</p>
+            <button onClick={onClose}>Close</button>
+        </div>
+    </div>
+);
+
 export const Auth = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -21,6 +31,8 @@ export const Auth = () => {
     const [isSignUp, setIsSignUp] = useState(false);
     const [error, setError] = useState("");
     const [showSaveButton, setShowSaveButton] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
     const { additionalInfo, handleInputChange } = useUserInfo();
 
     const signIn = async (e) => {
@@ -35,8 +47,6 @@ export const Auth = () => {
             console.error(error);
         }
     };
-
-    
 
     const handleSignUp = () => {
         setShowSaveButton(true);
@@ -72,17 +82,32 @@ export const Auth = () => {
         }
     };
 
+    const resetPassword = async () => {
+        if (!email) {
+            setError("Please enter your email address to reset password.");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setModalMessage("Password reset email sent! Please check your inbox.");
+            setShowModal(true);
+        } catch (error) {
+            setError("Error sending password reset email. Please try again.");
+            console.error("Error during password reset process: ", error);
+        }
+    };
+
     return (
         <div className="auth-wrapper">
             <img src={fish1} alt="Fish" className="fish fish1" />
             <img src={fish2} alt="Fish" className="fish fish2" />
             <img src={fish3} alt="Fish" className="fish fish3" />
             <img src={fish4} alt="Fish" className="fish fish4" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles1" /> 
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles2" /> 
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles3" /> 
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles4" /> 
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles5" /> 
+            <img src={bubbles} alt="bubbles" className="bubbles bubbles1" />
+            <img src={bubbles} alt="bubbles" className="bubbles bubbles2" />
+            <img src={bubbles} alt="bubbles" className="bubbles bubbles3" />
+            <img src={bubbles} alt="bubbles" className="bubbles bubbles4" />
+            <img src={bubbles} alt="bubbles" className="bubbles bubbles5" />
             <div className="container">
                 <img src={logo} alt="Logo" />
                 <form onSubmit={handleSubmit}>
@@ -115,14 +140,20 @@ export const Auth = () => {
                             <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(""); }}>
                                 {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
                             </button>
+                            {!isSignUp && (
+                                <button type="button" onClick={resetPassword}>Reset Password</button>
+                            )}
                         </>
                     ) : (
                         <button type="submit">Save</button>
                     )}
                 </form>
             </div>
+            {showModal && <Modal message={modalMessage} onClose={() => setShowModal(false)} />}
         </div>
     );
 };
 
 export default Auth;
+
+
