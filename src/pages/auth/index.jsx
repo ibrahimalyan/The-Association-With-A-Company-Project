@@ -28,6 +28,7 @@ export const Auth = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [isSignUp, setIsSignUp] = useState(false);
     const [error, setError] = useState("");
     const [showSaveButton, setShowSaveButton] = useState(false);
@@ -53,7 +54,11 @@ export const Auth = () => {
     };
 
     const handleSave = async (e) => {
-        e.preventDefault();  // Prevent default form submission
+        e.preventDefault();  // Prevent default form submission 
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
         try {
             console.log("Starting user creation process...");
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -115,6 +120,7 @@ export const Auth = () => {
                     <input placeholder="Password..." type='password' required onChange={(e) => setPassword(e.target.value)} />
                     {isSignUp && (
                         <>
+                             <input placeholder="Confirm Password..." type="password" required onChange={(e) => setConfirmPassword(e.target.value)} />
                             <div className="input-group">
                                 <input placeholder="Username..." name="username" required onChange={handleInputChange} />
                                 <input placeholder="First Name..." name="firstName" required onChange={handleInputChange} />
@@ -138,7 +144,7 @@ export const Auth = () => {
                         <>
                             <button type="submit">{isSignUp ? "Sign Up" : "Sign In"}</button>
                             <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(""); }}>
-                                {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+                                {isSignUp ? "Already have an account? Sign In" : "Sign Up"}
                             </button>
                             {!isSignUp && (
                                 <button type="button" onClick={resetPassword}>Reset Password</button>
