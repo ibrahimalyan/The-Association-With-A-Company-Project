@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
-import './styles.css'; // Make sure to create a corresponding CSS file for styling
+import duck1 from '../../images/duck1.svg';
+import './userprofileedite.css'; // Make sure to create a corresponding CSS file for styling
 
 const db = getFirestore();
 
@@ -64,57 +65,50 @@ export const UserProfile = () => {
         }
     };
 
+    const handleClose = () => {
+        navigate('/home'); // Navigate back to the previous page
+    };
+
     if (loading) {
         return <div>Loading...</div>;
     }
 
     return (
         <div className="user-profile-container">
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Username:</label>
-                    <input type="text" name="username" value={userData.username} onChange={handleInputChange} required />
+            <img src={duck1} alt="duck" className="duck duck1" />
+            <img src={duck1} alt="duck" className="duck duck2" />
+            <img src={duck1} alt="duck" className="duck duck3" />
+            <img src={duck1} alt="duck" className="duck duck4" />
+            <img src={duck1} alt="duck" className="duck duck5" />
+            <form onSubmit={handleSubmit} className="user-profile-form">
+                <div className="form-group">
+                    <label className="form-label">First Name:</label>
+                    <input className="form-input" type="text" name="firstName" value={userData.firstName} onChange={handleInputChange} required />
+                    <label className="form-label">Last Name:</label>
+                    <input className="form-input" type="text" name="lastName" value={userData.lastName} onChange={handleInputChange} required />
+                    <label className="form-label">ID:</label>
+                    <input className="form-input" type="text" name="id" value={userData.id} onChange={handleInputChange} required />
+                    <label className="form-label">Phone Number:</label>
+                    <input className="form-input" type="text" name="phoneNumber" value={userData.phoneNumber} onChange={handleInputChange} required />
+                    <label className="form-label">Username:</label>
+                    <input className="form-input" type="text" name="username" value={userData.username} onChange={handleInputChange} required />
+                    <label className="form-label">Email:</label>
+                    <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
+                    <label className="form-label">Gender:</label>
+                    <input className="form-input" type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
+                    <label className="form-label">Birth Date:</label>
+                    <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
+                    <label className="form-label">Location:</label>
+                    <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />
+                    <label className="form-label">Role:</label>
+                    <span className="form-input">{userData.role}</span>
                 </div>
-                <div>
-                    <label>Email:</label>
-                    <input type="email" name="email" value={userData.email} onChange={handleInputChange} required />
+                {error && <p className="error-message">{error}</p>}
+                <div className="save-close-buttons">
+                    <button type="button" className="close-button" onClick={handleClose}>Close</button>
+                    <button type="submit" className="save-button">Save</button>
                 </div>
-                <div>
-                    <label>First Name:</label>
-                    <input type="text" name="firstName" value={userData.firstName} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Last Name:</label>
-                    <input type="text" name="lastName" value={userData.lastName} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Location:</label>
-                    <input type="text" name="location" value={userData.location} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Birth Date:</label>
-                    <input type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Gender:</label>
-                    <input type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>ID:</label>
-                    <input type="text" name="id" value={userData.id} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Phone Number:</label>
-                    <input type="text" name="phoneNumber" value={userData.phoneNumber} onChange={handleInputChange} required />
-                </div>
-                <div>
-                    <label>Role:</label>
-                    <input type="text" name="role" value={userData.role} onChange={handleInputChange} required />
-                </div>
-                {error && <p className="error">{error}</p>}
-                <button type="submit">Save</button>
             </form>
         </div>
     );
 };
-
