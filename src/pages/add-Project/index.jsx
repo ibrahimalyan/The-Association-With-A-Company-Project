@@ -5,7 +5,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import { collection, addDoc, writeBatch, getDocs, doc, updateDoc, where, query } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import bird1 from '../../images/bird1.svg';
 import bird2 from '../../images/bird2.svg';
 import bird3 from '../../images/bird3.svg';
@@ -171,6 +171,3 @@ export const AddProject = () => {
 };
 
 export default AddProject;
-
-
-
