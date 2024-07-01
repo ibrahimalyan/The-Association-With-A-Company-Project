@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc, writeBatch, where } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import './styles.css';
 
 export const EditProject = () => {
@@ -13,24 +14,28 @@ export const EditProject = () => {
     const auth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [lastProjectTitle, setLastProjectTitle] = useState("");
+    const [userData, setUserData] = useState({
+        projectTitle: '',
+        startDate: '',
+        endDate: '',
+        location: '',
+        description: '',
+        imageUrl: '',
+        imageFile: null,
+        participantQuery: '',
+        participants: [],
+        participantList: [],
+    });
     const { 
-        projectTitle,
-        startDate,
-        endDate,
-        location,
-        description,
-        participantQuery,
-        participants,
-        participantList,
-        imageFile,
-        imageUrl,
-        error,
-        setProjectDetails,
-        handleInputChange,
+        participants, 
+        participantQuery, 
+        handleAddParticipant, 
         handleParticipantSearch,
-        handleAddParticipant,
-        uploadImage
+        setParticipantQuery
     } = useProjectInfo();
+    
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -39,7 +44,20 @@ export const EditProject = () => {
                 const docRef = doc(db, "projects", id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setProjectDetails(docSnap.data());
+                    
+                    const projectData = docSnap.data();
+                    setUserData({
+                        ...userData,
+                        projectTitle: projectData.projectTitle,
+                        startDate: projectData.startDate,
+                        endDate: projectData.endDate,
+                        location: projectData.location,
+                        description: projectData.description,
+                        participants: projectData.participants || [],
+                        imageUrl: projectData.imageUrl || '',
+                        participantList: projectData.participants || [],
+                    });
+                    setLastProjectTitle(projectData.projectTitle || ''); // Update lastProjectTitle
                 } else {
                     console.log("No such document!");
                 }
@@ -50,28 +68,102 @@ export const EditProject = () => {
         });
 
         return () => unsubscribe();
-    }, [auth, id, navigate, setProjectDetails]);
+    }, [auth, id, navigate]);
+
+
+    const updateParticipants = async () => {
+        const batch = writeBatch(db);
+        for (const participant of userData.participantList) {
+            console.log(participant);
+            const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
+            userQuerySnapshot.forEach((doc) => {
+                const participantRef = doc.ref;
+                const userProjects = doc.data().projects || [];
+                const projectIndex = userProjects.indexOf(lastProjectTitle);
+                if (doc.data().id === participant) {
+                    console.log("Participant found");
+                    
+                    if (projectIndex !== -1) {
+                        console.log(lastProjectTitle);
+                        userProjects.splice(projectIndex, 1);
+                    }
+                    console.log(userProjects);
+                    
+                    userProjects.push(userData.projectTitle);
+                    
+                    console.log(userProjects);
+                    
+                    batch.update(participantRef, { projects: userProjects });
+                }
+                else{
+                    console.log("Participant not found");
+                }
+            });
+        }
+        await batch.commit();
+    };
+
+
+    const handleInputChange = (e) => {
+        const { name, value, files } = e.target;
+        if (name === 'image') {
+            setUserData((prevDetails) => ({
+                ...prevDetails,
+                imageFile: files[0]
+            }));
+        } else if (name === 'participantQuery') {
+            setParticipantQuery(value);
+        } else {
+            setUserData((prevDetails) => ({
+                ...prevDetails,
+                [name]: value
+            }));
+        }
+    };
+
+    const uploadImage = async () => {
+        // Implement image upload logic here
+    };
 
     const handleUpdateProject = async (e) => {
         e.preventDefault();
         try {
-            await uploadImage();
+            if (userData.imageFile) {
+                await uploadImage();
+            }
             const docRef = doc(db, "projects", id);
-            
+
             await updateDoc(docRef, {
-                projectTitle,
-                startDate,
-                endDate,
-                location,
-                description,
-                imageUrl,
-                participants: participantList
+                projectTitle: userData.projectTitle,
+                startDate: userData.startDate,
+                endDate: userData.endDate,
+                location: userData.location,
+                description: userData.description,
+                imageUrl: userData.imageUrl,
+                participants: userData.participantList
             });
+            console.log("participant list: ", userData.participantList);
+            updateParticipants();
+            console.log("participants updated");
             console.log("Document updated with ID: ", id);
             navigate('/home');
         } catch (error) {
             console.error("Error updating document: ", error);
+            setError("Error updating document");
         }
+    };
+
+    const handleAddParticipantToList = (participant) => {
+        if (!userData.participantList.includes(participant.id)) {
+            setUserData(prevData => ({
+                ...prevData,
+                participantList: [...prevData.participantList, participant.id]
+            }));
+        }
+    };
+
+    const handleClose = () => {
+        navigate('/home');
     };
 
     if (!authenticated) {
@@ -88,54 +180,89 @@ export const EditProject = () => {
             <form onSubmit={handleUpdateProject}>
                 <div>
                     <label>Project Title:</label>
-                    <input type="text" name="projectTitle" value={projectTitle} onChange={handleInputChange} required />
+                    <input
+                        type="text"
+                        name="projectTitle"
+                        value={userData.projectTitle}
+                        onChange={handleInputChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Start Date:</label>
-                    <input type="date" name="startDate" value={startDate} onChange={handleInputChange} required />
+                    <input
+                        type="date"
+                        name="startDate"
+                        value={userData.startDate}
+                        onChange={handleInputChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>End Date:</label>
-                    <input type="date" name="endDate" value={endDate} onChange={handleInputChange} required />
+                    <input
+                        type="date"
+                        name="endDate"
+                        value={userData.endDate}
+                        onChange={handleInputChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Location:</label>
-                    <input type="text" name="location" value={location} onChange={handleInputChange} required />
+                    <input
+                        type="text"
+                        name="location"
+                        value={userData.location}
+                        onChange={handleInputChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Description:</label>
-                    <textarea name="description" value={description} onChange={handleInputChange} required></textarea>
+                    <textarea
+                        name="description"
+                        value={userData.description}
+                        onChange={handleInputChange}
+                        required
+                    ></textarea>
                 </div>
                 <div>
                     <label>Project Image:</label>
                     <input type="file" name="image" onChange={handleInputChange} />
                 </div>
                 <div className="participant-search">
-                    <label>Add Participant:</label>
-                    <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
-                    <button type="button" onClick={handleParticipantSearch}>Search</button>
-                </div>
-                {participants.length > 0 && (
+                     <label>Add Participant:</label>
+                     <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
+                     <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
+                 </div>
+                 {participants.length > 0 && (
                     <ul className="participant-search-results">
                         {participants.map(participant => (
                             <li key={participant.id}>
                                 {participant.name} ({participant.id})
-                                <button type="button" onClick={() => handleAddParticipant(participant)}>Add</button>
+                                <button type="button" className="add-participant-button" onClick={() => handleAddParticipantToList(participant)}>Add</button>
                             </li>
                         ))}
                     </ul>
                 )}
+
+                {error && <p className="error">{error}</p>}
+                    <div className="save-close-buttons">
+                        <button type="button" className="close-button" onClick={handleClose}>Close</button>
+                        <button type="submit" className="save-button">Save</button>
+                    </div>
+            </form>
+            <div className="container3">
                 <div>
                     <label>Participant List:</label>
                     <ul className="participant-list">
-                        {participantList.map(id => (
+                        {userData.participantList.map(id => (
                             <li key={id}>{id}</li>
                         ))}
                     </ul>
                 </div>
-                {error && <p className="error">{error}</p>}
-                <button type="submit">Save</button>
-            </form>
+            </div>
         </div>
     );
 };

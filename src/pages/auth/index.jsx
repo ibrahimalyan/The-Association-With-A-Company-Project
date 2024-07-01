@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../config/firebase-config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDocs, collection, where, query } from 'firebase/firestore';
 import { useUserInfo } from '../../hooks/useUserInfo';  // Adjust the path as needed
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import fish1 from '../../images/fish1.svg';
 import fish2 from '../../images/fish2.svg';
 import fish3 from '../../images/fish3.svg';
@@ -36,9 +35,31 @@ export const Auth = () => {
     const [modalMessage, setModalMessage] = useState("");
     const { additionalInfo, handleInputChange } = useUserInfo();
 
+   
     const signIn = async (e) => {
         e.preventDefault(); // Prevent default form submission
         try {
+            const firestore = getFirestore();
+            const usersCollection = collection(firestore, 'users');
+            const q = query(usersCollection, where('email', '==', email));
+            const userSnapshot = await getDocs(q);
+            
+            if (userSnapshot.empty) {
+                setError("No user found with this email.");
+                return;
+            }
+
+            // Assuming email is unique, we get the first document
+            const userDoc = userSnapshot.docs[0];
+            const userData = userDoc.data();
+
+            // Check if the user's role is "deleted"
+            if (userData.role === "deleted") {
+                alert("This user account is deleted and cannot sign in.");
+                return;
+            }
+
+            // Proceed with sign-in if role is not "deleted"
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log("User signed in: ", user);
@@ -47,8 +68,10 @@ export const Auth = () => {
             setError("Incorrect email or password. Please try again.");
             console.error(error);
         }
-    };
+    }; 
 
+
+    
     const handleSignUp = () => {
         setShowSaveButton(true);
     };
@@ -69,7 +92,7 @@ export const Auth = () => {
                 email,
                 ...additionalInfo
             });
-
+            
             console.log("User data saved to Firestore");
             console.log("User signed up: ", user);
             navigate('/home'); // Ensure this is executed after the Firestore operation

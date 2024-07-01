@@ -65,7 +65,10 @@ export const useProjectInfo = () => {
             const querySnapshot = await getDocs(q);
             const results = [];
             querySnapshot.forEach((doc) => {
-                results.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                if (data.role !== "deleted") {
+                    results.push({ id: doc.id, ...doc.data() });
+                }
             });
             setParticipants(results);
         } catch (error) {
@@ -102,6 +105,7 @@ export const useProjectInfo = () => {
         error,
         setProjectDetails,
         setError,
+        setParticipantQuery,
         handleInputChange,
         handleParticipantSearch,
         handleAddParticipant,

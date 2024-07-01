@@ -1,102 +1,15 @@
-// import React, { useEffect, useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { getAuth, onAuthStateChanged } from 'firebase/auth';
-// import './styles.css'; // Import CSS for styling
-// import logo from '../../images/logo.png';
-// import { useProjects } from '../../hooks/useGetProjectsInfo';
-
-// export const HomePage = () => {
-//     const { projects, loading, error } = useProjects();
-//     const navigate = useNavigate();
-//     const auth = getAuth();
-//     const [authenticated, setAuthenticated] = useState(false);
-
-//     useEffect(() => {
-//         const unsubscribe = onAuthStateChanged(auth, (user) => {
-//             if (user) {
-//                 setAuthenticated(true);
-//             } else {
-//                 navigate('/signin'); // Redirect to sign-in page if not authenticated
-//             }
-//         });
-
-//         return () => unsubscribe();
-//     }, [auth, navigate]);
-
-//     if (!authenticated) {
-//         return null; // Or a loading spinner while checking authentication
-//     }
-
-//     if (loading) {
-//         return <div>Loading...</div>;
-//     }
-
-//     if (error) {
-//         return <div>Error: {error}</div>;
-//     }
-
-//     return (
-//         <div className="dashboard">
-//             <header className="header">
-//                 <div className="header-left">
-//                     <button>AR</button>
-//                     <button>Heb</button>
-//                 </div>
-//                 <div className="header-center">
-//                     <img src={logo} alt="Logo" className="logo" />
-//                     <button>sign in</button>
-//                     <button>admin</button>
-//                     <button>register worker</button>
-//                 </div>
-//                 <div className="header-right">
-//                     <button>notify</button>
-//                 </div>
-//             </header>
-//             <main className="main-content">
-//                 <table className="projects-table">
-//                     <thead>
-//                         <tr>
-//                             <th>#</th>
-//                             <th>Project Name</th>
-//                             <th>Start Date</th>
-//                             <th>End Date</th>
-//                             <th>Location</th>
-//                             <th>Picture</th>
-//                         </tr>
-//                     </thead>
-//                     <tbody>
-//                         {projects.map((project, index) => (
-//                             <tr key={project.id}>
-//                                 <td>{index + 1}</td>
-//                                 <td>{project.projectTitle}</td>
-//                                 <td>{project.startDate}</td>
-//                                 <td>{project.endDate}</td>
-//                                 <td>{project.location}</td>
-//                                 <td>
-//                                     {project.imageUrl && <img src={project.imageUrl} alt={project.projectTitle} className="project-image" />}
-//                                 </td>
-//                             </tr>
-//                         ))}
-//                     </tbody>
-//                 </table>
-//             </main>
-//             <footer className="footer">
-//                 <p>CONTACT US</p>
-//             </footer>
-//         </div>
-//     );
-// };
-
-// export default HomePage;
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc } from 'firebase/firestore';
+// import { doc, deleteDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
+
 import { db } from '../../config/firebase-config';
+import profileIcon from '../../images/profileIcon.png';
 
 export const HomePage = () => {
     const { projects, loading, error } = useProjects();
@@ -104,6 +17,13 @@ export const HomePage = () => {
     const auth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
     const [expandedRows, setExpandedRows] = useState([]);
+    const [filteredProjects, setFilteredProjects] = useState([]);
+    const [filter, setFilter] = useState({
+        name: '',
+        location: '',
+        startDate: '',
+        endDate: ''
+    });
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -116,6 +36,22 @@ export const HomePage = () => {
 
         return () => unsubscribe();
     }, [auth, navigate]);
+
+    useEffect(() => {
+        setFilteredProjects(projects);
+    }, [projects]);
+
+    const handleUserProfile = () => {
+        navigate('/userProfile');
+    };
+
+    const handleAddProject = () => {
+        navigate('/addProject');
+    };
+
+    const handleParticipant = () => {
+        navigate('/participant');
+    };
 
     const handleRowClick = (projectId) => {
         const isExpanded = expandedRows.includes(projectId);
@@ -130,12 +66,31 @@ export const HomePage = () => {
         navigate(`/editProject/${projectId}`);
     };
 
-    const handleDeleteProject = async (projectId) => {
+    const handleDeleteProject = async (projectId, projectTitle) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
-                const docRef = doc(db, "projects", projectId);
-                await deleteDoc(docRef);
+                // Delete the project document
+                const projectDocRef = doc(db, "projects", projectId);
+                await deleteDoc(projectDocRef);
+    
+                // Retrieve all users
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                usersSnapshot.forEach(async (userDoc) => {
+                    const userData = userDoc.data();
+                    if (userData.projects && userData.projects.includes(projectTitle)) {
+                        // Remove the project title from the user's projects array
+                        console.log("delted");
+                        const userDocRef = doc(db, "users", userDoc.id);
+                        await updateDoc(userDocRef, {
+                            projects: arrayRemove(projectTitle)
+                        });
+                    }
+                    else{
+                        console.log("not delted");
+                    }
+                });
+    
                 alert("Project deleted successfully.");
                 // Refresh the page or remove the project from the state
                 window.location.reload();
@@ -145,6 +100,7 @@ export const HomePage = () => {
             }
         }
     };
+    
 
     const handleSignOut = async () => {
         try {
@@ -154,6 +110,33 @@ export const HomePage = () => {
             console.error("Error signing out: ", error);
             alert("Error signing out. Please try again.");
         }
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilter({
+            ...filter,
+            [name]: value
+        });
+    };
+
+    const applyFilter = () => {
+        let filtered = projects;
+
+        if (filter.name) {
+            filtered = filtered.filter(project => project.projectTitle.toLowerCase().includes(filter.name.toLowerCase()));
+        }
+        if (filter.location) {
+            filtered = filtered.filter(project => project.location.toLowerCase().includes(filter.location.toLowerCase()));
+        }
+        if (filter.startDate) {
+            filtered = filtered.filter(project => new Date(project.startDate) >= new Date(filter.startDate));
+        }
+        if (filter.endDate) {
+            filtered = filtered.filter(project => new Date(project.endDate) <= new Date(filter.endDate));
+        }
+
+        setFilteredProjects(filtered);
     };
 
     if (!authenticated) {
@@ -178,14 +161,50 @@ export const HomePage = () => {
                 <div className="header-center">
                     <img src={logo} alt="Logo" className="logo" />
                     <button onClick={handleSignOut}>Sign Out</button>
-                    <button>Admin</button>
+                    <button>Register Admin</button>
                     <button>Register Worker</button>
+                    <button 
+                        onClick={handleUserProfile}>
+                        <img src={profileIcon} alt="profileIcon" className="profileIcon"/>
+                    </button>
+                    <button onClick={handleAddProject}>Add Project</button>
+                    <button onClick={handleParticipant}>Users</button>
+                    
                 </div>
                 <div className="header-right">
                     <button>Notify</button>
                 </div>
             </header>
             <main className="main-content">
+                <div className="filter-section">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Project Name"
+                        value={filter.name}
+                        onChange={handleFilterChange}
+                    />
+                    <input
+                        type="text"
+                        name="location"
+                        placeholder="Location"
+                        value={filter.location}
+                        onChange={handleFilterChange}
+                    />
+                    <input
+                        type="date"
+                        name="startDate"
+                        value={filter.startDate}
+                        onChange={handleFilterChange}
+                    />
+                    <input
+                        type="date"
+                        name="endDate"
+                        value={filter.endDate}
+                        onChange={handleFilterChange}
+                    />
+                    <button onClick={applyFilter}>Apply Filter</button>
+                </div>
                 <table className="projects-table">
                     <thead>
                         <tr>
@@ -199,7 +218,7 @@ export const HomePage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {projects.map((project, index) => (
+                        {filteredProjects.map((project, index) => (
                             <React.Fragment key={project.id}>
                                 <tr onClick={() => handleRowClick(project.id)}>
                                     <td>{index + 1}</td>
@@ -211,7 +230,7 @@ export const HomePage = () => {
                                         <button onClick={() => handleEditProject(project.id)}>Edit</button>
                                     </td>
                                     <td>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}>Delete</button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>Delete</button>
                                     </td>
                                 </tr>
                                 {expandedRows.includes(project.id) && (

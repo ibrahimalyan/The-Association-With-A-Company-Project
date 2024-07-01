@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, writeBatch, getDocs, doc, updateDoc, where, query } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import bird1 from '../../images/bird1.svg';
 import bird2 from '../../images/bird2.svg';
 import bird3 from '../../images/bird3.svg';
@@ -42,8 +43,10 @@ export const AddProject = () => {
         handleInputChange,
         handleParticipantSearch,
         handleAddParticipant,
-        uploadImage
+        uploadImage,
     } = useProjectInfo();
+
+    
 
     const handleAddProject = async (e) => {
         e.preventDefault();
@@ -59,19 +62,43 @@ export const AddProject = () => {
                 participants: participantList
             });
             console.log("Document written with ID: ", docRef.id);
+    
+            const updateParticipants = async () => {
+                const batch = writeBatch(db);
+                for (const participant of participantList) {
+                    console.log(participant);
+                    const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
+                    userQuerySnapshot.forEach((doc) => {
+                        const participantRef = doc.ref;
+                        const userProjects = doc.data().projects || [];
+                        if (doc.data().id === participant) {
+                            console.log("Participant found");
+                            userProjects.push(projectTitle);
+                            batch.update(participantRef, { projects: userProjects });
+                        }
+                        else{
+                            console.log("Participant not found");
+                        }
+                    });
+                }
+                await batch.commit();
+            };
+    
+            await updateParticipants();
+    
             navigate('/home');
         } catch (error) {
             console.error("Error adding document: ", error);
-            // setError("Error adding project. Please try again.");
         }
     };
+    
 
     const handleClose = () => {
         navigate('/home');
     };
 
     if (!authenticated) {
-        return null; // Or a loading spinner while checking authentication
+        return null; 
     }
 
     return (
