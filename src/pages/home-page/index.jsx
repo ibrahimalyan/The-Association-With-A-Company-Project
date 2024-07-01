@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
-import logo from '../../images/logo.png';
+import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
 // import { doc, deleteDoc, getDocs, collection } from 'firebase/firestore';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
@@ -65,22 +65,6 @@ export const HomePage = () => {
     const handleEditProject = (projectId) => {
         navigate(`/editProject/${projectId}`);
     };
-
-    // const handleDeleteProject = async (projectId) => {
-    //     const confirmDelete = window.confirm("Are you sure you want to delete this project?");
-    //     if (confirmDelete) {
-    //         try {
-    //             const docRef = doc(db, "projects", projectId);
-    //             await deleteDoc(docRef);
-    //             alert("Project deleted successfully.");
-    //             // Refresh the page or remove the project from the state
-    //             window.location.reload();
-    //         } catch (error) {
-    //             console.error("Error deleting document: ", error);
-    //             alert("Error deleting project. Please try again.");
-    //         }
-    //     }
-    // };
 
     const handleDeleteProject = async (projectId, projectTitle) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
