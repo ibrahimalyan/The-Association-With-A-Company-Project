@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { db } from '../../config/firebase-config';
+import { db, storage } from '../../config/firebase-config';
 import { collection, doc, getDoc, getDocs, updateDoc, writeBatch, where } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
 import { useProjectInfo } from '../../hooks/useProjectInfo';
 import logo from '../../images/logo.jpeg';
 import './styles.css';
@@ -21,18 +22,20 @@ export const EditProject = () => {
         endDate: '',
         location: '',
         description: '',
-        imageUrl: '',
-        imageFile: null,
         participantQuery: '',
         participants: [],
         participantList: [],
+        imageUrl: '',
     });
     const { 
         participants, 
-        participantQuery, 
-        handleAddParticipant, 
+        participantQuery,
+        imageFile,
+        imageUrl,
         handleParticipantSearch,
-        setParticipantQuery
+        setParticipantQuery,
+        uploadImage,
+        setImageUrl
     } = useProjectInfo();
     
     const [error, setError] = useState('');
@@ -57,6 +60,7 @@ export const EditProject = () => {
                         imageUrl: projectData.imageUrl || '',
                         participantList: projectData.participants || [],
                     });
+                    
                     setLastProjectTitle(projectData.projectTitle || ''); // Update lastProjectTitle
                 } else {
                     console.log("No such document!");
@@ -71,7 +75,7 @@ export const EditProject = () => {
     }, [auth, id, navigate]);
 
 
-    const updateParticipants = async () => {
+    const updateParticipants = async (notRemovedParticipant) => {
         const batch = writeBatch(db);
         for (const participant of userData.participantList) {
             console.log(participant);
@@ -88,11 +92,10 @@ export const EditProject = () => {
                         userProjects.splice(projectIndex, 1);
                     }
                     console.log(userProjects);
-                    
-                    userProjects.push(userData.projectTitle);
-                    
-                    console.log(userProjects);
-                    
+                    if (notRemovedParticipant){
+                        userProjects.push(userData.projectTitle);
+                        console.log(userProjects);
+                    }
                     batch.update(participantRef, { projects: userProjects });
                 }
                 else{
@@ -121,16 +124,33 @@ export const EditProject = () => {
         }
     };
 
-    const uploadImage = async () => {
-        // Implement image upload logic here
-    };
-
     const handleUpdateProject = async (e) => {
         e.preventDefault();
         try {
-            if (userData.imageFile) {
-                await uploadImage();
+
+
+            // console.log("projecttitle: ", userData.projectTitle);
+            // const uploadedImageUrl = await uploadImage(imageFile, userData.projectTitle);
+            // console.log("uploadedImageUrl: ", uploadedImageUrl);
+
+            // setImageUrl(uploadedImageUrl);
+            
+            console.log("outside image File: ");
+            if (imageFile) {
+                // Delete previous image if it exists
+                console.log("inside image File: ");
+                if (userData.imageUrl) {
+                    const imageRef = ref(storage, userData.imageUrl);
+                    console.log("imageRef: ", imageRef);
+                    await deleteObject(imageRef);
+                }
+
+                // Upload new image
+                const uploadedImageUrl = await uploadImage(imageFile, userData.projectTitle);
+                console.log("uploadedImageUrl: ", uploadedImageUrl);
+                setImageUrl(uploadedImageUrl);
             }
+
             const docRef = doc(db, "projects", id);
 
             await updateDoc(docRef, {
@@ -143,7 +163,7 @@ export const EditProject = () => {
                 participants: userData.participantList
             });
             console.log("participant list: ", userData.participantList);
-            updateParticipants();
+            updateParticipants(true);
             console.log("participants updated");
             console.log("Document updated with ID: ", id);
             navigate('/home');
@@ -160,7 +180,56 @@ export const EditProject = () => {
                 participantList: [...prevData.participantList, participant.id]
             }));
         }
+        console.log("add: ", userData.participantList);
     };
+
+    const handleRemoveParticipantToList = async (participantId) => {
+        try {
+            console.log("remove: ", participantId);
+            // Remove participant from local state
+            const updatedParticipantList = userData.participantList.filter(id => id !== participantId);
+            setUserData(prevData => ({
+                ...prevData,
+                participantList: updatedParticipantList
+            }));
+            console.log("list: ", userData.participantList);
+            console.log("filter: ", updatedParticipantList);
+            // Update Firestore document for each participant
+            updateParticipants(false);
+        } catch (error) {
+            console.error("Error removing participant:", error);
+            setError("Error removing participant");
+        }
+    };
+
+
+
+    const handleInputChangeImage = (e) => {
+        const { name, value, files } = e.target;
+        if (name === 'image') {
+            console.log("inside image File: ");
+            setUserData((prevDetails) => ({
+                ...prevDetails,
+                imageFile: files[0]
+            }));
+        } else if (name === 'participantQuery') {
+            console.log("inside participant query: ");
+            setParticipantQuery(value);
+        } else {
+            console.log("inside else: ");
+            setUserData((prevDetails) => ({
+                ...prevDetails,
+                [name]: value
+            }));
+        }
+    };
+    
+    const handleUploadImage = (e) => {
+        const { files } = e.target;
+        if (files && files[0]) {
+            handleInputChangeImage(e); // This will update the imageFile state
+        }
+    }
 
     const handleClose = () => {
         navigate('/home');
@@ -229,7 +298,7 @@ export const EditProject = () => {
                 </div>
                 <div>
                     <label>Project Image:</label>
-                    <input type="file" name="image" onChange={handleInputChange} />
+                    <input type="file" name="image" onChange={handleUploadImage} />
                 </div>
                 <div className="participant-search">
                      <label>Add Participant:</label>
@@ -258,7 +327,9 @@ export const EditProject = () => {
                     <label>Participant List:</label>
                     <ul className="participant-list">
                         {userData.participantList.map(id => (
-                            <li key={id}>{id}</li>
+                            <li key={id}>
+                                {id}
+                                <button onClick={() => handleRemoveParticipantToList(id)}>remove</button></li>
                         ))}
                     </ul>
                 </div>
