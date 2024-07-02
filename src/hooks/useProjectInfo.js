@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { db, storage } from '../config/firebase-config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 export const useProjectInfo = () => {
     const [projectTitle, setProjectTitle] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -78,18 +79,61 @@ export const useProjectInfo = () => {
     };
 
     const handleAddParticipant = (participant) => {
+        console.log("add: ", participant);
         setParticipantList([...participantList, participant.id]);
         setParticipants([]);
         setParticipantQuery("");
+        console.log("list: ", participantList);
     };
 
-    const uploadImage = async () => {
-        if (!imageFile) return;
-        const imageRef = ref(storage, `images/${imageFile.name}`);
-        await uploadBytes(imageRef, imageFile);
-        const url = await getDownloadURL(imageRef);
-        setImageUrl(url);
+    const handleRemoveParticipant = (participant) => {
+        console.log("remove: ", participant);
+        console.log("list: ", participantList);
+        console.log("filter: ", participantList.filter((id) => id!== participant.id));
+        setParticipantList(participantList.filter(id => id !== participant));
+        setParticipants([]);
+        setParticipantQuery("");
     };
+    
+
+    const uploadImage = async (imageFile, projectTitle) => {
+        try {
+            console.log("imageFile hook: ", projectTitle);
+            if (!imageFile) return; // Handle case where no image is selected
+            
+
+            const imageRef = ref(storage, `images/${projectTitle}/${imageFile.name}`);
+            await uploadBytes(imageRef, imageFile);
+            const imageUrl = await getDownloadURL(imageRef);
+            
+            return imageUrl; // Return the image URL after successful upload
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            throw new Error("Failed to upload image. Please try again.");
+        }
+    };
+
+    const updateParticipants = async () => {
+        const batch = writeBatch(db);
+        for (const participant of participantList) {
+            console.log(participant);
+            const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
+            userQuerySnapshot.forEach((doc) => {
+                const participantRef = doc.ref;
+                const userProjects = doc.data().projects || [];
+                if (doc.data().id === participant) {
+                    console.log("Participant found");
+                    userProjects.push(projectTitle);
+                    batch.update(participantRef, { projects: userProjects });
+                }
+                else{
+                    console.log("Participant not found");
+                }
+            });
+        }
+        await batch.commit();
+    };
+
 
     return {
         projectTitle,
@@ -109,6 +153,9 @@ export const useProjectInfo = () => {
         handleInputChange,
         handleParticipantSearch,
         handleAddParticipant,
+        handleRemoveParticipant,
         uploadImage,
+        updateParticipants,
+        setImageUrl,
     };
 };
