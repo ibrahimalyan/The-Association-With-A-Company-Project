@@ -120,6 +120,10 @@ export const HomePage = () => {
         });
     };
 
+    const handlePrint = () => {
+        window.print();
+      };
+
     const applyFilter = () => {
         let filtered = projects;
 
@@ -138,6 +142,12 @@ export const HomePage = () => {
 
         setFilteredProjects(filtered);
     };
+
+
+    const renderImage = (url) => {
+        return <img src={url} alt="Project" className="project-image" />;
+    };
+
 
     if (!authenticated) {
         return null; // Or a loading spinner while checking authentication
@@ -213,6 +223,7 @@ export const HomePage = () => {
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Location</th>
+                            <th>Image</th>
                             <th>Edit</th>
                             <th>Delete</th>
                         </tr>
@@ -226,19 +237,30 @@ export const HomePage = () => {
                                     <td>{project.startDate}</td>
                                     <td>{project.endDate}</td>
                                     <td>{project.location}</td>
+                                    <td>{renderImage(project.imageUrl)}</td> {/* Render the image */}
                                     <td>
-                                        <button onClick={() => handleEditProject(project.id)}>Edit</button>
+                                        <button onClick={() => handleEditProject(project.id)}>
+                                            Edit
+                                        </button>
                                     </td>
                                     <td>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>Delete</button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                                 {expandedRows.includes(project.id) && (
                                     <tr className="expanded-row">
                                         <td colSpan="7">
                                             <div className="expanded-content">
+                                                <p><strong>project Title:</strong>{project.projectTitle}</p>
+                                                <p><strong>start Date:</strong>{project.startDate}</p>
+                                                <p><strong>end Date:</strong>{project.endDate}</p>
+                                                <p><strong>location:</strong>{project.location}</p>
                                                 <p><strong>Description:</strong> {project.description}</p>
+                                                <p><strong>Number Of Participant:</strong> {project.participants.length}</p>
                                                 <p><strong>Participants:</strong> {project.participants.join(', ')}</p>
+                                                <p>{renderImage(project.imageUrl)}</p>
                                                 {/* Add more project details here */}
                                             </div>
                                         </td>
@@ -248,6 +270,9 @@ export const HomePage = () => {
                         ))}
                     </tbody>
                 </table>
+                <div className="action-buttons">
+                    <button onClick={handlePrint}>Print</button>
+                </div>
             </main>
             <footer className="footer">
                 <p>CONTACT US</p>

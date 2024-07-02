@@ -72,9 +72,9 @@ export const Auth = () => {
 
 
     
-    const handleSignUp = () => {
-        setShowSaveButton(true);
-    };
+    // const handleSignUp = () => {
+    //     setShowSaveButton(true);
+    // };
 
     const handleSave = async (e) => {
         e.preventDefault();  // Prevent default form submission 

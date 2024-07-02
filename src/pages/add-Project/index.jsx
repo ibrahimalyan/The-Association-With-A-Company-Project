@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
-import { collection, addDoc, writeBatch, getDocs, doc, updateDoc, where, query } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
 import logo from '../../images/logo.jpeg';
 import bird1 from '../../images/bird1.svg';
@@ -43,7 +43,10 @@ export const AddProject = () => {
         handleInputChange,
         handleParticipantSearch,
         handleAddParticipant,
+        handleRemoveParticipant,
         uploadImage,
+        updateParticipants,
+        setImageUrl,
     } = useProjectInfo();
 
     
@@ -51,39 +54,23 @@ export const AddProject = () => {
     const handleAddProject = async (e) => {
         e.preventDefault();
         try {
-            await uploadImage();
+            const uploadedImageUrl = await uploadImage(imageFile, projectTitle);
+            console.log("uploadedImageUrl: ", uploadedImageUrl);
+
+            setImageUrl(uploadedImageUrl);
+            
             const docRef = await addDoc(collection(db, "projects"), {
                 projectTitle,
                 startDate,
                 endDate,
                 location,
                 description,
-                imageUrl,
+                imageUrl: uploadedImageUrl,
                 participants: participantList
             });
             console.log("Document written with ID: ", docRef.id);
-    
-            const updateParticipants = async () => {
-                const batch = writeBatch(db);
-                for (const participant of participantList) {
-                    console.log(participant);
-                    const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
-                    userQuerySnapshot.forEach((doc) => {
-                        const participantRef = doc.ref;
-                        const userProjects = doc.data().projects || [];
-                        if (doc.data().id === participant) {
-                            console.log("Participant found");
-                            userProjects.push(projectTitle);
-                            batch.update(participantRef, { projects: userProjects });
-                        }
-                        else{
-                            console.log("Participant not found");
-                        }
-                    });
-                }
-                await batch.commit();
-            };
-    
+            console.log("projectTitle: ", projectTitle);
+            console.log("imageUrl: ", imageUrl);
             await updateParticipants();
     
             navigate('/home');
@@ -93,6 +80,12 @@ export const AddProject = () => {
     };
     
 
+    const handleUploadImage = (e) => {
+        const { files } = e.target;
+        if (files && files[0]) {
+            handleInputChange(e); // This will update the imageFile state
+        }
+    }
     const handleClose = () => {
         navigate('/home');
     };
@@ -131,7 +124,7 @@ export const AddProject = () => {
                     </div>
                     <div>
                         <label>Project Image:</label>
-                        <input type="file" name="image" onChange={handleInputChange} />
+                        <input type="file" name="image" onChange={handleUploadImage} required/>
                     </div>
                     <div className="participant-search">
                         <label>Add Participant:</label>
@@ -161,7 +154,9 @@ export const AddProject = () => {
                     <label>Participant List:</label>
                     <ul className="participant-list">
                         {participantList.map(id => (
-                            <li key={id}>{id}</li>
+                            <li key={id}>
+                                {id}
+                                <button onClick={() => handleRemoveParticipant(id)}>remove</button></li>
                         ))}
                     </ul>
                 </div>
