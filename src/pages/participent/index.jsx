@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import logo from '../../images/logo.jpeg';
 import { db } from '../../config/firebase-config';
@@ -14,8 +14,7 @@ export const Participent = () => {
   const [filterName, setFilterName] = useState('');
   const [filterId, setFilterId] = useState('');
   const [filterRole, setFilterRole] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [authenticated, setAuthenticated] = useState(false);  
+  const [filteredUsers, setFilteredUsers] = useState([]);  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,7 +70,7 @@ export const Participent = () => {
   
         // Fetch all projects
         const projectsSnapshot = await getDocs(collection(db, 'projects'));
-        const projectsList = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   
         // Remove userId from each project's participants array
         for (const projectDoc of projectsSnapshot.docs) {
