@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import logo from '../../images/logo.jpeg';
 import { db } from '../../config/firebase-config';
 import './styles.css'; // Ensure you have appropriate CSS
@@ -15,26 +15,30 @@ export const Participent = () => {
   const [filterId, setFilterId] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);  
+  const [authenticated, setAuthenticated] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-
-    if (!user) {
-      // User not signed in, navigate to sign-in page
-      navigate('/signin');
-    } else {
-      const fetchUsersAndProjects = async () => {
-        const userSnapshot = await getDocs(collection(db, 'users'));
-        const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setUsers(usersList);
-        setFilteredUsers(usersList); // Initialize filteredUsers with all users
-      };
+  const auth = getAuth();
   
-      fetchUsersAndProjects();
-    }
-  }, [navigate]);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            setAuthenticated(true);
+            fetchUsersAndProjects();
+        } else {
+            navigate('/signin'); // Redirect to sign-in page if not authenticated
+        }
+    });
+
+    return () => unsubscribe();
+}, [auth, navigate]);
+
+
+  const fetchUsersAndProjects = async () => {
+    const userSnapshot = await getDocs(collection(db, 'users'));
+    const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setUsers(usersList);
+    setFilteredUsers(usersList); // Initialize filteredUsers with all users
+  };
 
   const handleHomePage = () => {
     navigate('/home');
@@ -103,7 +107,7 @@ export const Participent = () => {
   
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   const handlePrint = () => {
