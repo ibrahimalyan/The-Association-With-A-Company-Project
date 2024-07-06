@@ -15,19 +15,22 @@ export const AddProject = () => {
     const navigate = useNavigate();
     const auth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setAuthenticated(true);
-            } else {
-                navigate('/signin'); // Redirect to sign-in page if not authenticated
-            }
-        });
-
-        return () => unsubscribe();
-    }, [auth, navigate]);
-
+    
+    const [selectedLocations, setSelectedLocations] = useState([]);
+    const locations = [
+        'North region',
+        'South region',
+        'central area', 
+        'West region', 
+        'East region', 
+        'field of addictions', 
+        'the field of young people and the homeless',
+        'field of group work',
+        'ultra-orthodox field',
+        'national religious field',
+        'Education, training and employment, media, response'
+    ];
+    
     const {
         projectTitle,
         startDate,
@@ -50,10 +53,41 @@ export const AddProject = () => {
     } = useProjectInfo();
 
     
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setAuthenticated(true);
+            } else {
+                navigate('/signin'); // Redirect to sign-in page if not authenticated
+            }
+        });
+
+        return () => unsubscribe();
+    }, [auth, navigate]);
+
+
+    const handleCheckboxChange = (event) => {
+        const { value, checked } = event.target;
+        setSelectedLocations(prevState => {
+            if (checked) {
+                return [...prevState, value];
+            } else {
+                return prevState.filter(location => location !== value);
+            }
+        });
+    };
 
     const handleAddProject = async (e) => {
         e.preventDefault();
+        
+        if (selectedLocations.length === 0) {
+            alert("Please select at least one location.");
+            return;
+        }
+        
         try {
+            
+
             const uploadedImageUrl = await uploadImage(imageFile, projectTitle);
             console.log("uploadedImageUrl: ", uploadedImageUrl);
 
@@ -63,7 +97,7 @@ export const AddProject = () => {
                 projectTitle,
                 startDate,
                 endDate,
-                location,
+                location: selectedLocations,
                 description,
                 imageUrl: uploadedImageUrl,
                 participants: participantList
@@ -107,8 +141,18 @@ export const AddProject = () => {
                         <input type="text" name="projectTitle" value={projectTitle} onChange={handleInputChange} required />
                     </div>
                     <div>
-                        <label>Location:</label>
-                        <input type="text" name="location" value={location} onChange={handleInputChange} required />
+                        <label>Select Locations:</label>
+                        {locations.map((location) => (
+                            <div key={location}>
+                                <input
+                                    type="checkbox"
+                                    name="location"
+                                    value={location}
+                                    onChange={handleCheckboxChange}
+                                />
+                                {location}
+                            </div>
+                        ))}
                     </div>
                     <div>
                         <label>Start Date:</label>
