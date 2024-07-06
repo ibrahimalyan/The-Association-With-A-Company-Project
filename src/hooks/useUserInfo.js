@@ -9,7 +9,7 @@ export const useUserInfo = () => {
         username: "",
         firstName: "",
         lastName: "",
-        location: "",
+        location: [],
         birthDate: "",
         gender: "",
         phoneNumber: "",
