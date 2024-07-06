@@ -7,7 +7,11 @@ import { collection, doc, getDoc, getDocs, updateDoc, writeBatch, where } from '
 import { ref, deleteObject } from 'firebase/storage';
 import { useProjectInfo } from '../../hooks/useProjectInfo';
 import logo from '../../images/logo.jpeg';
-import './styles.css';
+import bird1 from '../../images/bird1.svg';
+import bird2 from '../../images/bird2.svg';
+import bird3 from '../../images/bird3.svg';
+
+import '../add-Project/addproject.css';
 
 export const EditProject = () => {
     const navigate = useNavigate();
@@ -40,6 +44,21 @@ export const EditProject = () => {
     
     const [error, setError] = useState('');
 
+    const [selectedLocations, setSelectedLocations] = useState([]);
+    const locations = [
+        'North region',
+        'South region',
+        'Central area',
+        'West region',
+        'East region',
+        'Field of addictions',
+        'The field of young people and the homeless',
+        'Field of group work',
+        'Ultra-Orthodox field',
+        'National religious field',
+        'Education, training and employment, media, response'
+    ];
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -49,6 +68,7 @@ export const EditProject = () => {
                 if (docSnap.exists()) {
                     
                     const projectData = docSnap.data();
+                    
                     setUserData({
                         ...userData,
                         projectTitle: projectData.projectTitle,
@@ -62,6 +82,10 @@ export const EditProject = () => {
                     });
                     
                     setLastProjectTitle(projectData.projectTitle || ''); // Update lastProjectTitle
+                
+                       // Preselect locations based on projectData
+                       setSelectedLocations(projectData.location || []);
+
                 } else {
                     console.log("No such document!");
                 }
@@ -73,6 +97,16 @@ export const EditProject = () => {
 
         return () => unsubscribe();
     }, [auth, id, navigate]);
+
+
+    const handleCheckboxChange = (event) => {
+        const { value, checked } = event.target;
+        if (checked) {
+            setSelectedLocations(prevState => [...prevState, value]);
+        } else {
+            setSelectedLocations(prevState => prevState.filter(location => location !== value));
+        }
+    };
 
 
     const updateParticipants = async (notRemovedParticipant) => {
@@ -113,6 +147,11 @@ export const EditProject = () => {
             setUserData((prevDetails) => ({
                 ...prevDetails,
                 imageFile: files[0]
+            }));
+        } else if (name === 'location') {
+            setUserData((prevDetails) => ({
+                ...prevDetails,
+                location: value
             }));
         } else if (name === 'participantQuery') {
             setParticipantQuery(value);
@@ -202,32 +241,10 @@ export const EditProject = () => {
         }
     };
 
-
-
-    const handleInputChangeImage = (e) => {
-        const { name, value, files } = e.target;
-        if (name === 'image') {
-            console.log("inside image File: ");
-            setUserData((prevDetails) => ({
-                ...prevDetails,
-                imageFile: files[0]
-            }));
-        } else if (name === 'participantQuery') {
-            console.log("inside participant query: ");
-            setParticipantQuery(value);
-        } else {
-            console.log("inside else: ");
-            setUserData((prevDetails) => ({
-                ...prevDetails,
-                [name]: value
-            }));
-        }
-    };
-    
     const handleUploadImage = (e) => {
         const { files } = e.target;
         if (files && files[0]) {
-            handleInputChangeImage(e); // This will update the imageFile state
+            handleInputChange(e); // This will update the imageFile state
         }
     }
 
@@ -244,8 +261,13 @@ export const EditProject = () => {
     }
 
     return (
-        <div className="container">
-            <img src={logo} alt="Logo" className="logo" />
+        <div className="container-wrapper">
+            
+            <img src={bird1} alt="bird" className="bird bird1" />
+            <img src={bird2} alt="bird" className="bird bird2" />
+            <img src={bird3} alt="bird" className="bird bird3" />
+            <div className="container2">
+            <img src={logo} alt="Logo" className="logo2" />
             <form onSubmit={handleUpdateProject}>
                 <div>
                     <label>Project Title:</label>
@@ -278,14 +300,18 @@ export const EditProject = () => {
                     />
                 </div>
                 <div>
-                    <label>Location:</label>
-                    <input
-                        type="text"
-                        name="location"
-                        value={userData.location}
-                        onChange={handleInputChange}
-                        required
-                    />
+                    <label>Select Locations:</label>
+                    {locations.map((location) => (
+                        <div key={location}>
+                            <input
+                                type="checkbox"
+                                name="location"
+                                value={location}
+                                onChange={handleCheckboxChange}
+                            />
+                            {location}
+                        </div>
+                    ))}
                 </div>
                 <div>
                     <label>Description:</label>
@@ -322,6 +348,7 @@ export const EditProject = () => {
                         <button type="submit" className="save-button">Save</button>
                     </div>
             </form>
+            </div>
             <div className="container3">
                 <div>
                     <label>Participant List:</label>
