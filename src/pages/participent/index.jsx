@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import logo from '../../images/logo.jpeg';
 import { db } from '../../config/firebase-config';
-import './styles.css'; // Ensure you have appropriate CSS
+import './participent.css'; // Ensure you have appropriate CSS
 
 export const Participent = () => {
   const [users, setUsers] = useState([]);
@@ -125,18 +123,12 @@ export const Participent = () => {
 
   return (
     <div className="users-list-dashboard">
-      <header className="header">
-        <div className="header-left">
-          <img src={logo} alt="Logo" className="logo" />
+      <div className="users-list-content">
+        <div className="users-list-buttons">
+          <button onClick={handleHomePage} className="home-button">Home</button>
+          <button onClick={handlePrint} className="print-button">Print</button>
         </div>
-      </header>
-      <div className="content">
-        <div className="buttons">
-          <button onClick={handleHomePage}>Home</button>
-          <button>Participant</button>
-          <button>Partner</button>
-        </div>
-        <div className="filter-bar">
+        <div className="users-list-filter-bar">
           <input 
             type="text" 
             placeholder="Filter by name" 
@@ -155,47 +147,55 @@ export const Participent = () => {
             value={filterRole} 
             onChange={(e) => setFilterRole(e.target.value)} 
           />
-          <button onClick={applyFilters}>Apply Filters</button>
+          <button onClick={applyFilters} className="apply-filters-button">Apply Filters</button>
         </div>
-        <div className="user-table">
-          <div className="table-header">
-            <span>Participant Name</span>
-            <span>ID #</span>
-            <span>Role</span>
-          </div>
-          {filteredUsers.map((user, index) => (
-            <div className="table-row" key={user.id} onClick={() => handleRowClick(user)}>
-              <span>#{index + 1}</span>
-              <span>{user.firstName} {user.lastName}</span>
-              <span>{user.id}</span>
-              <span>{user.role}</span>
-              <button onClick={() => handleDelete(user.id)}>Delete</button>
+        <div className="users-list-table-wrapper">
+          <div className="users-list-table">
+            <div className="users-list-table-header">
+              <span>#</span>
+              <span>Participant Name</span>
+              <span>ID #</span>
+              <span>Role</span>
             </div>
-          ))}
-        </div>
-        <div className="action-buttons">
-          <button onClick={handlePrint}>Print</button>
+            {filteredUsers.map((user, index) => (
+              <div className="users-list-table-row" key={user.id} onClick={() => handleRowClick(user)}>
+                <span>#{index + 1}</span>
+                <span>{user.firstName} {user.lastName}</span>
+                <span>{user.id}</span>
+                <span>{user.role}</span>
+                <button onClick={() => handleDelete(user.id)} className="delete-button">Delete</button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       {selectedUser && (
-        <div className="user-details">
-          <h2>User Details</h2>
-          <p><strong>Username:</strong> {selectedUser.username}</p>
-          <p><strong>First Name:</strong> {selectedUser.firstName}</p>
-          <p><strong>Last Name:</strong> {selectedUser.lastName}</p>
-          <p><strong>Email:</strong> {selectedUser.email}</p>
-          <p><strong>Location:</strong> {selectedUser.location}</p>
-          <p><strong>Birth Date:</strong> {selectedUser.birthDate}</p>
-          <p><strong>Gender:</strong> {selectedUser.gender}</p>
-          <p><strong>Phone Number:</strong> {selectedUser.phoneNumber}</p>
-          <p><strong>ID:</strong> {selectedUser.id}</p>
-          <p><strong>Role:</strong> {selectedUser.role}</p>
-          <h3>Projects</h3>
-          <ol>
-            {selectedUser.projects && selectedUser.projects.map((project, index) => (
-              <li key={index}>{project}</li>
-            ))}
-          </ol>
+        <div className="user-details-popup">
+          <div className="user-details-content">
+            <h2>User Details</h2>
+            <p><strong>Username:</strong> {selectedUser.username}</p>
+            <p><strong>First Name:</strong> {selectedUser.firstName}</p>
+            <p><strong>Last Name:</strong> {selectedUser.lastName}</p>
+            <p><strong>Email:</strong> {selectedUser.email}</p>
+            <p><strong>Location:</strong> {selectedUser.location}</p>
+            <p><strong>Birth Date:</strong> {selectedUser.birthDate}</p>
+            <p><strong>Gender:</strong> {selectedUser.gender}</p>
+            <p><strong>Phone Number:</strong> {selectedUser.phoneNumber}</p>
+            <p><strong>ID:</strong> {selectedUser.id}</p>
+            <p><strong>Role:</strong> {selectedUser.role}</p>
+            <div className="popup-buttons">
+              <button onClick={handlePrint} className="print-popup-button">Print</button>
+              <button onClick={() => setSelectedUser(null)} className="close-popup-button">Close</button>
+            </div>
+            </div>
+            <div className="user-project-content">
+            <h3>Projects</h3>
+            <ol>
+              {selectedUser.projects && selectedUser.projects.map((project, index) => (
+                <li key={index}>{project}</li>
+              ))}
+            </ol>
+            </div>
         </div>
       )}
     </div>
