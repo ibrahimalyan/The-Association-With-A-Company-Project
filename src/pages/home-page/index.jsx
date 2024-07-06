@@ -5,9 +5,7 @@ import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-// import { doc, deleteDoc, getDocs, collection } from 'firebase/firestore';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
-
 import { db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 
@@ -25,6 +23,20 @@ export const HomePage = () => {
         endDate: ''
     });
 
+    const locations = [
+        'North region',
+        'South region',
+        'central area', 
+        'West region', 
+        'East region', 
+        'field of addictions', 
+        'the field of young people and the homeless',
+        'field of group work',
+        'ultra-orthodox field',
+        'national religious field',
+        'Education, training and employment, media, response'
+    ];
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -38,8 +50,8 @@ export const HomePage = () => {
     }, [auth, navigate]);
 
     useEffect(() => {
-        setFilteredProjects(projects);
-    }, [projects]);
+        applyFilter();
+    }, [projects, filter]);
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -73,24 +85,23 @@ export const HomePage = () => {
                 // Delete the project document
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
-    
+
                 // Retrieve all users
                 const usersSnapshot = await getDocs(collection(db, "users"));
                 usersSnapshot.forEach(async (userDoc) => {
                     const userData = userDoc.data();
                     if (userData.projects && userData.projects.includes(projectTitle)) {
                         // Remove the project title from the user's projects array
-                        console.log("delted");
+                        console.log("deleted");
                         const userDocRef = doc(db, "users", userDoc.id);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
-                    }
-                    else{
-                        console.log("not delted");
+                    } else {
+                        console.log("not deleted");
                     }
                 });
-    
+
                 alert("Project deleted successfully.");
                 // Refresh the page or remove the project from the state
                 window.location.reload();
@@ -100,7 +111,6 @@ export const HomePage = () => {
             }
         }
     };
-    
 
     const handleSignOut = async () => {
         try {
@@ -122,7 +132,7 @@ export const HomePage = () => {
 
     const handlePrint = () => {
         window.print();
-      };
+    };
 
     const applyFilter = () => {
         let filtered = projects;
@@ -131,7 +141,7 @@ export const HomePage = () => {
             filtered = filtered.filter(project => project.projectTitle.toLowerCase().includes(filter.name.toLowerCase()));
         }
         if (filter.location) {
-            filtered = filtered.filter(project => project.location.toLowerCase().includes(filter.location.toLowerCase()));
+            filtered = filtered.filter(project => Array.isArray(project.location) && project.location.some(loc => loc.toLowerCase().includes(filter.location.toLowerCase())));
         }
         if (filter.startDate) {
             filtered = filtered.filter(project => new Date(project.startDate) >= new Date(filter.startDate));
@@ -143,9 +153,17 @@ export const HomePage = () => {
         setFilteredProjects(filtered);
     };
 
-
-    const renderImage = (url) => {
-        return <img src={url} alt="Project" className="project-image" />;
+    const renderLocations = (locations) => {
+        if (locations && Array.isArray(locations)) {
+            return (
+                <div>
+                    {locations.map((location, index) => (
+                        <p key={index}>{location}</p>
+                    ))}
+                </div>
+            );
+        }
+        return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
 
 
@@ -173,13 +191,11 @@ export const HomePage = () => {
                     <button onClick={handleSignOut}>Sign Out</button>
                     <button>Register Admin</button>
                     <button>Register Worker</button>
-                    <button 
-                        onClick={handleUserProfile}>
-                        <img src={profileIcon} alt="profileIcon" className="profileIcon"/>
+                    <button onClick={handleUserProfile}>
+                        <img src={profileIcon} alt="profileIcon" className="profileIcon" />
                     </button>
                     <button onClick={handleAddProject}>Add Project</button>
                     <button onClick={handleParticipant}>Users</button>
-                    
                 </div>
                 <div className="header-right">
                     <button>Notify</button>
@@ -194,13 +210,17 @@ export const HomePage = () => {
                         value={filter.name}
                         onChange={handleFilterChange}
                     />
-                    <input
-                        type="text"
-                        name="location"
-                        placeholder="Location"
-                        value={filter.location}
-                        onChange={handleFilterChange}
-                    />
+                    <select
+                    name="location"
+                    value={filter.location}
+                    onChange={handleFilterChange}
+                    >
+                    <option value="">Select Location</option>
+                        {locations.map((location) => (
+                        <option key={location} value={location}>{location}</option>
+                    ))}
+                    </select>
+
                     <input
                         type="date"
                         name="startDate"
@@ -236,8 +256,8 @@ export const HomePage = () => {
                                     <td>{project.projectTitle}</td>
                                     <td>{project.startDate}</td>
                                     <td>{project.endDate}</td>
-                                    <td>{project.location}</td>
-                                    <td>{renderImage(project.imageUrl)}</td> {/* Render the image */}
+                                    <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
+                                    <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td> {/* Render the image */}
                                     <td>
                                         <button onClick={() => handleEditProject(project.id)}>
                                             Edit
@@ -251,16 +271,16 @@ export const HomePage = () => {
                                 </tr>
                                 {expandedRows.includes(project.id) && (
                                     <tr className="expanded-row">
-                                        <td colSpan="7">
+                                        <td colSpan="8">
                                             <div className="expanded-content">
-                                                <p><strong>project Title:</strong>{project.projectTitle}</p>
-                                                <p><strong>start Date:</strong>{project.startDate}</p>
-                                                <p><strong>end Date:</strong>{project.endDate}</p>
-                                                <p><strong>location:</strong>{project.location}</p>
+                                                <p><strong>Project Title:</strong> {project.projectTitle}</p>
+                                                <p><strong>Start Date:</strong> {project.startDate}</p>
+                                                <p><strong>End Date:</strong> {project.endDate}</p>
+                                                <p><strong>Location:</strong> {renderLocations(project.location) }</p>
                                                 <p><strong>Description:</strong> {project.description}</p>
-                                                <p><strong>Number Of Participant:</strong> {project.participants.length}</p>
+                                                <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
                                                 <p><strong>Participants:</strong> {project.participants.join(', ')}</p>
-                                                <p>{renderImage(project.imageUrl)}</p>
+                                                <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
                                                 {/* Add more project details here */}
                                             </div>
                                         </td>
