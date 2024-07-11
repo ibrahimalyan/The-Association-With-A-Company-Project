@@ -91,7 +91,7 @@ export const EditProject = () => {
                 }
                 setLoading(false);
             } else {
-                navigate('/signin');
+                navigate('/homePage');
             }
         });
 
