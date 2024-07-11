@@ -58,7 +58,7 @@ export const AddProject = () => {
             if (user) {
                 setAuthenticated(true);
             } else {
-                navigate('/signin'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
         });
 

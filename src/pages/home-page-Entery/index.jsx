@@ -1,19 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '../../config/firebase-config';
-import profileIcon from '../../images/profileIcon.png';
 
-export const HomePage = () => {
+
+export const HomePageEntery = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
-    const auth = getAuth();
-    const [authenticated, setAuthenticated] = useState(false);
     const [expandedRows, setExpandedRows] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [filter, setFilter] = useState({
@@ -37,33 +32,13 @@ export const HomePage = () => {
         'Education, training and employment, media, response'
     ];
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setAuthenticated(true);
-            } else {
-                navigate('/homePage'); // Redirect to sign-in page if not authenticated
-            }
-        });
-
-        return () => unsubscribe();
-    }, [auth, navigate]);
 
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
 
-    const handleUserProfile = () => {
-        navigate('/userProfile');
-    };
 
-    const handleAddProject = () => {
-        navigate('/addProject');
-    };
 
-    const handleParticipant = () => {
-        navigate('/participant');
-    };
 
     const handleRowClick = (projectId) => {
         const isExpanded = expandedRows.includes(projectId);
@@ -74,52 +49,10 @@ export const HomePage = () => {
         }
     };
 
-    const handleEditProject = (projectId) => {
-        navigate(`/editProject/${projectId}`);
-    };
 
-    const handleDeleteProject = async (projectId, projectTitle) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this project?");
-        if (confirmDelete) {
-            try {
-                // Delete the project document
-                const projectDocRef = doc(db, "projects", projectId);
-                await deleteDoc(projectDocRef);
-
-                // Retrieve all users
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                usersSnapshot.forEach(async (userDoc) => {
-                    const userData = userDoc.data();
-                    if (userData.projects && userData.projects.includes(projectTitle)) {
-                        // Remove the project title from the user's projects array
-                        console.log("deleted");
-                        const userDocRef = doc(db, "users", userDoc.id);
-                        await updateDoc(userDocRef, {
-                            projects: arrayRemove(projectTitle)
-                        });
-                    } else {
-                        console.log("not deleted");
-                    }
-                });
-
-                alert("Project deleted successfully.");
-                // Refresh the page or remove the project from the state
-                window.location.reload();
-            } catch (error) {
-                console.error("Error deleting document: ", error);
-                alert("Error deleting project. Please try again.");
-            }
-        }
-    };
-
-    const handleSignOut = async () => {
-        try {
-            await signOut(auth);
-            navigate('/homePage');
-        } catch (error) {
-            console.error("Error signing out: ", error);
-            alert("Error signing out. Please try again.");
-        }
+    const handleSignIn = async () => {
+        navigate('/signin');
+        
     };
 
     const handleFilterChange = (e) => {
@@ -128,10 +61,6 @@ export const HomePage = () => {
             ...filter,
             [name]: value
         });
-    };
-
-    const handlePrint = () => {
-        window.print();
     };
 
     const applyFilter = () => {
@@ -167,10 +96,6 @@ export const HomePage = () => {
     };
 
 
-    if (!authenticated) {
-        return null; // Or a loading spinner while checking authentication
-    }
-
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -188,17 +113,8 @@ export const HomePage = () => {
                 </div>
                 <div className="header-center">
                     <img src={logo} alt="Logo" className="logo" />
-                    <button onClick={handleSignOut}>Sign Out</button>
-                    <button>Register Admin</button>
-                    <button>Register Worker</button>
-                    <button onClick={handleUserProfile}>
-                        <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-                    </button>
-                    <button onClick={handleAddProject}>Add Project</button>
-                    <button onClick={handleParticipant}>Users</button>
-                </div>
-                <div className="header-right">
-                    <button>Notify</button>
+                    <button onClick={handleSignIn}>signIn</button>
+                    
                 </div>
             </header>
             <main className="main-content">
@@ -244,8 +160,6 @@ export const HomePage = () => {
                             <th>End Date</th>
                             <th>Location</th>
                             <th>Image</th>
-                            <th>Edit</th>
-                            <th>Delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -258,29 +172,19 @@ export const HomePage = () => {
                                     <td>{project.endDate}</td>
                                     <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
                                     <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td> {/* Render the image */}
-                                    <td>
-                                        <button onClick={() => handleEditProject(project.id)}>
-                                            Edit
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
-                                            Delete
-                                        </button>
-                                    </td>
+
                                 </tr>
                                 {expandedRows.includes(project.id) && (
                                     <tr className="expanded-row">
-                                        <td colSpan="8">
+                                        <td colSpan="6">
                                             <div className="expanded-content">
                                                 <p><strong>Project Title:</strong> {project.projectTitle}</p>
                                                 <p><strong>Start Date:</strong> {project.startDate}</p>
                                                 <p><strong>End Date:</strong> {project.endDate}</p>
                                                 <p><strong>Location:</strong> {renderLocations(project.location) }</p>
                                                 <p><strong>Description:</strong> {project.description}</p>
-                                                <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
-                                                <p><strong>Participants:</strong> {project.participants.join(', ')}</p>
                                                 <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
+                                                <button onClick={handleSignIn}>To Regist</button>
                                                 {/* Add more project details here */}
                                             </div>
                                         </td>
@@ -290,9 +194,6 @@ export const HomePage = () => {
                         ))}
                     </tbody>
                 </table>
-                <div className="action-buttons">
-                    <button onClick={handlePrint}>Print</button>
-                </div>
             </main>
             <footer className="footer">
                 <p>CONTACT US</p>
@@ -301,4 +202,4 @@ export const HomePage = () => {
     );
 };
 
-export default HomePage;
+export default HomePageEntery;

@@ -36,7 +36,7 @@ export const UserProfile = () => {
                 }
                 setLoading(false);
             } else {
-                navigate('/signin'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
         });
 

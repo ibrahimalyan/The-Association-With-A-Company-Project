@@ -23,7 +23,7 @@ export const Participent = () => {
             setAuthenticated(true);
             fetchUsersAndProjects();
         } else {
-            navigate('/signin'); // Redirect to sign-in page if not authenticated
+            navigate('/homePage'); // Redirect to sign-in page if not authenticated
         }
     });
 
