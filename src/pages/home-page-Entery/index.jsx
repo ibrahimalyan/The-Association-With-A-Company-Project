@@ -1,19 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '../../config/firebase-config';
-import profileIcon from '../../images/profileIcon.png';
+
 
 export const HomePageEntery = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
-//     const auth = getAuth();
-//     const [authenticated, setAuthenticated] = useState(false);
     const [expandedRows, setExpandedRows] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [filter, setFilter] = useState({
@@ -37,17 +32,6 @@ export const HomePageEntery = () => {
         'Education, training and employment, media, response'
     ];
 
-//     // useEffect(() => {
-//     //     const unsubscribe = onAuthStateChanged(auth, (user) => {
-//     //         if (user) {
-//     //             setAuthenticated(true);
-//     //         } else {
-//     //             navigate('/signin'); // Redirect to sign-in page if not authenticated
-//     //         }
-//     //     });
-
-//     //     return () => unsubscribe();
-//     // }, [auth, navigate]);
 
     useEffect(() => {
         applyFilter();
