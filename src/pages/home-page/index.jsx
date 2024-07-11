@@ -42,7 +42,7 @@ export const HomePage = () => {
             if (user) {
                 setAuthenticated(true);
             } else {
-                navigate('/signin'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
         });
 
@@ -115,7 +115,7 @@ export const HomePage = () => {
     const handleSignOut = async () => {
         try {
             await signOut(auth);
-            navigate('/signin');
+            navigate('/homePage');
         } catch (error) {
             console.error("Error signing out: ", error);
             alert("Error signing out. Please try again.");
