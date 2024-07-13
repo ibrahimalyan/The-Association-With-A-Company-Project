@@ -8,6 +8,7 @@ import { UserProfile } from './pages/update-Participent/index';
 import { EditProject } from './pages/update-Project/index';
 import { Participent } from './pages/participent/index';
 import { HomePageEntery } from './pages/home-page-Entery/index';
+import { Notifications } from './pages/notification/index';
 
 function App() {
     return (
@@ -20,6 +21,7 @@ function App() {
                 <Route path="/UserProfile" element={<UserProfile />} />
                 <Route path="/editProject/:id" element={<EditProject />} /> 
                 <Route path="/participant" element={<Participent />} /> 
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/" element={<HomePageEntery />} />
             </Routes>
         </Router>
