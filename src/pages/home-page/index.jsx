@@ -9,6 +9,7 @@ import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } f
 import { auth,db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
+import { useUserInfo } from '../../hooks/useUserInfo';
 
 
 Modal.setAppElement('#root');
@@ -20,6 +21,8 @@ export const HomePage = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [userFirstName, setUserFirstName] = useState(null);
+    const [userLastName, setUserLastName] = useState(null);
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
     const [expandedRows, setExpandedRows] = useState([]);
@@ -56,6 +59,8 @@ export const HomePage = () => {
                     const userData = userDoc.data();
                     setUserRole(userData.role);
                     setUserId(userData.id);
+                    setUserFirstName(userData.firstName);
+                    setUserLastName(userData.lastName);
                 } else {
                     console.error('User document not found');
                 }
@@ -239,9 +244,9 @@ export const HomePage = () => {
     };
     
     const isParticipant = (project) => {
-        const currentUserId = getUserID();
-        if (currentUserId && project.participants) {
-            return project.participants.includes(currentUserId);
+        const currentUser = userFirstName + " " + userLastName;
+        if (currentUser && project.participants) {
+            return project.participants.includes(currentUser);
         }
         return false;
       };
