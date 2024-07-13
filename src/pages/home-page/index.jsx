@@ -1,20 +1,30 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '../../config/firebase-config';
+import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
+import { auth,db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
+import Modal from 'react-modal';
+
+
+Modal.setAppElement('#root');
 
 export const HomePage = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
-    const auth = getAuth();
+    const toGetAuth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
+    const [userRole, setUserRole] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [workersInfo, setWorkersInfo] = useState({});
+    const [nameParticipants, setNameParticipants] = useState({});
     const [expandedRows, setExpandedRows] = useState([]);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [selectedUserData, setSelectedUserData] = useState(null);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [filter, setFilter] = useState({
         name: '',
@@ -38,20 +48,60 @@ export const HomePage = () => {
     ];
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 setAuthenticated(true);
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserRole(userData.role);
+                    setUserId(userData.id);
+                } else {
+                    console.error('User document not found');
+                }
+
             } else {
                 navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
         });
 
         return () => unsubscribe();
-    }, [auth, navigate]);
+    }, [navigate]);
 
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
+
+
+    useEffect(() => {
+        if (projects.length > 0) {
+            fetchWorkersInfo();
+        }
+    }, [projects]);
+
+    const fetchWorkersInfo = async () => {
+        let info = {};
+        let namesParticipants = {};
+        for (const project of projects) {
+            try {
+                const { bool, participantIds = []} = await isWorker(project);
+                info[project.id] = { bool, participantIds };
+                
+                // Fetch participant names and store in namesParticipants
+                const participantNames = await getNameParticipant(project);
+                namesParticipants[project.id] = participantNames; // Store names by project ID
+            
+            } catch (error) {
+                console.error(`Error fetching workers info for project ${project.id}:`, error);
+                info[project.id] = { bool: false, participantIds: [] };
+                namesParticipants[project.id] = [];
+            }
+        }
+        setWorkersInfo(info);
+        setNameParticipants(namesParticipants);
+    };
+    
+
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -114,7 +164,7 @@ export const HomePage = () => {
 
     const handleSignOut = async () => {
         try {
-            await signOut(auth);
+            await signOut(toGetAuth);
             navigate('/homePage');
         } catch (error) {
             console.error("Error signing out: ", error);
@@ -179,125 +229,298 @@ export const HomePage = () => {
         return <div>Error: {error}</div>;
     }
 
-    return (
-        <div className="dashboard">
-            <header className="header">
-                <div className="header-left">
-                    <button>AR</button>
-                    <button>Heb</button>
-                </div>
-                <div className="header-center">
-                    <img src={logo} alt="Logo" className="logo" />
-                    <button onClick={handleSignOut}>Sign Out</button>
-                    <button>Register Admin</button>
-                    <button>Register Worker</button>
-                    <button onClick={handleUserProfile}>
-                        <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-                    </button>
-                    <button onClick={handleAddProject}>Add Project</button>
-                    <button onClick={handleParticipant}>Users</button>
-                </div>
-                <div className="header-right">
-                    <button>Notify</button>
-                </div>
-            </header>
-            <main className="main-content">
-                <div className="filter-section">
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Project Name"
-                        value={filter.name}
-                        onChange={handleFilterChange}
-                    />
-                    <select
-                    name="location"
-                    value={filter.location}
-                    onChange={handleFilterChange}
-                    >
-                    <option value="">Select Location</option>
-                        {locations.map((location) => (
-                        <option key={location} value={location}>{location}</option>
-                    ))}
-                    </select>
 
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={filter.startDate}
-                        onChange={handleFilterChange}
-                    />
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={filter.endDate}
-                        onChange={handleFilterChange}
-                    />
-                    <button onClick={applyFilter}>Apply Filter</button>
-                </div>
-                <table className="projects-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Project Name</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Location</th>
-                            <th>Image</th>
-                            <th>Edit</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredProjects.map((project, index) => (
-                            <React.Fragment key={project.id}>
-                                <tr onClick={() => handleRowClick(project.id)}>
-                                    <td>{index + 1}</td>
-                                    <td>{project.projectTitle}</td>
-                                    <td>{project.startDate}</td>
-                                    <td>{project.endDate}</td>
-                                    <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
-                                    <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td> {/* Render the image */}
-                                    <td>
-                                        <button onClick={() => handleEditProject(project.id)}>
-                                            Edit
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                                {expandedRows.includes(project.id) && (
-                                    <tr className="expanded-row">
-                                        <td colSpan="8">
-                                            <div className="expanded-content">
-                                                <p><strong>Project Title:</strong> {project.projectTitle}</p>
-                                                <p><strong>Start Date:</strong> {project.startDate}</p>
-                                                <p><strong>End Date:</strong> {project.endDate}</p>
-                                                <p><strong>Location:</strong> {renderLocations(project.location) }</p>
-                                                <p><strong>Description:</strong> {project.description}</p>
-                                                <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
-                                                <p><strong>Participants:</strong> {project.participants.join(', ')}</p>
-                                                <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                {/* Add more project details here */}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </React.Fragment>
+    const getUserRole = () => {
+        return userRole;
+    };
+
+    const getUserID = () => {
+        return userId;
+    };
+    
+    const isParticipant = (project) => {
+        const currentUserId = getUserID();
+        if (currentUserId && project.participants) {
+            return project.participants.includes(currentUserId);
+        }
+        return false;
+      };
+     
+
+    const isWorker = async (project) => {
+        let bool = false;
+        let participantIds = [];
+        if (project.participants && project.participants.length > 0) {
+            for (const participantId of project.participants) {
+                try {
+                    const usersSnapshot = await getDocs(collection(db, "users"));
+                    for (const userDoc of usersSnapshot.docs) {
+                        const userData = userDoc.data();
+                        const fullName = userData.firstName + " " + userData.lastName;
+                        if (fullName === participantId) {
+                            if (userData.role === 'Worker') {
+                                bool = true;
+                                participantIds.push(fullName);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error fetching user data for participant ${participantId}:`, error);
+                }
+            }
+        }
+        return { bool, participantIds };
+        
+    };
+
+    const getNameParticipant = async (project) => {
+        
+        let participantIds = [];
+        if (project.participants && project.participants.length > 0) {
+            for (const participantId of project.participants) {
+                try {
+                    const usersSnapshot = await getDocs(collection(db, "users"));
+                    for (const userDoc of usersSnapshot.docs) {
+                        const userData = userDoc.data();
+                        const fullName = `${userData.firstName} ${userData.lastName}`;
+                        if (fullName === participantId) {
+                            participantIds.push(fullName);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error fetching user data for participant ${participantId}:`, error);
+                }
+            }
+        }
+        return participantIds; // Or any default value you prefer when locations is undefined or not an array
+    };
+
+    const openModal = (userData) => {
+        setSelectedUserData(userData);
+        setModalIsOpen(true);
+    };
+
+    const closeModal = () => {
+        setModalIsOpen(false);
+        setSelectedUserData(null);
+    };
+
+
+    const userInfo = async (name) => {
+        try {
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data();
+                const dataName = `${userData.firstName} ${userData.lastName}`;
+                if (dataName === name) {
+                    openModal(userData);
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching user data for ${name}:`, error);
+        }
+    };
+ 
+    
+    const renderUserInfo = (userData) => {
+        return (
+            <div>
+                <>
+                    <p>UserName: {userData.username}</p>
+                    <p>firstName: {userData.firstName}</p>
+                    <p>LastName: {userData.lastName}</p>
+                    <p>Email: {userData.email}</p>
+                    <p>Role: {userData.role}</p>
+                    <p>Phone: {userData.phoneNumber}</p>
+                    <p>Address: {userData.location}</p>
+                    <p>BirthDate: {userData.birthDate}</p>
+                    <p>Gender: {userData.gender}</p>
+                    <p>ID: {userData.id}</p>
+                </>               
+            </div>
+        );
+    };
+
+    return (
+        <>
+            <div id="root"></div>
+            <div className="dashboard">
+                <header className="header">
+                    <div className="header-left">
+                        <button>AR</button>
+                        <button>Heb</button>
+                    </div>
+                    <div className="header-center">
+                        <img src={logo} alt="Logo" className="logo" />
+                        <button onClick={handleSignOut}>Sign Out</button>
+                        {getUserRole() === 'Worker' && (<button>Register Admin</button>)}
+                        {getUserRole() === 'Guest' && (
+                            <>
+                                <button>Register Admin</button>
+                                <button>Register Worker</button>
+                            </>
+                        )}
+                        <button onClick={handleUserProfile}>
+                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                        </button>
+                        {getUserRole() === "Admin" && (
+                            <>
+                                <button onClick={handleAddProject}>Add Project</button>
+                                <button onClick={handleParticipant}>Users</button>
+                            </>
+                        )}  
+                    </div>
+                    <div className="header-right">
+                        <button onClick={isParticipant}>Notify</button>
+                    </div>
+                </header>
+                <main className="main-content">
+                    <div className="filter-section">
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Project Name"
+                            value={filter.name}
+                            onChange={handleFilterChange}
+                        />
+                        <select name="location" value={filter.location} onChange={handleFilterChange}>
+                        <option value="">Select Location</option>
+                            {locations.map((location) => (
+                            <option key={location} value={location}>{location}</option>
                         ))}
-                    </tbody>
-                </table>
-                <div className="action-buttons">
-                    <button onClick={handlePrint}>Print</button>
-                </div>
-            </main>
-            <footer className="footer">
-                <p>CONTACT US</p>
-            </footer>
-        </div>
+                        </select>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={filter.startDate}
+                            onChange={handleFilterChange}
+                        />
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={filter.endDate}
+                            onChange={handleFilterChange}
+                        />
+                        <button onClick={applyFilter}>Apply Filter</button>
+                    </div>
+                    <table className="projects-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Project Name</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Location</th>
+                                <th>Description</th>
+                                <th>Workers</th>
+                                <th>Image</th>
+                                {(getUserRole() === 'Admin' || getUserRole() === 'Worker') && (
+                                <>
+                                    <th>Edit</th>
+                                    <th>Delete</th>
+                                </>
+                            )}                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProjects.map((project, index) => (
+                                <React.Fragment key={project.id}>
+                                    <tr onClick={() => handleRowClick(project.id)}>
+                                        <td>{index + 1}</td>
+                                        <td>{project.projectTitle}</td>
+                                        <td>{project.startDate}</td>
+                                        <td>{project.endDate}</td>
+                                        <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
+                                        <td>{project.description}</td>
+                                        <td>
+                                            {workersInfo[project.id] ? (
+                                                workersInfo[project.id].bool ? (
+                                                    <div>
+                                                        {workersInfo[project.id].participantIds.map((id, index) => (
+                                                            <div key={index}>{id}</div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span>No Worker</span>
+                                                )
+                                            ) : (
+                                                <span>Loading...</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {project.imageUrl ? ( 
+                                                <img src={project.imageUrl} alt="Project" className="project-image" />
+                                            ) : ( 
+                                                'No Image'
+                                            )}
+                                        </td> 
+                                        {(getUserRole() === 'Admin' || (getUserRole() === 'Worker' && isParticipant(project))) && (
+                                        <>
+                                            <td>
+                                                <button onClick={() => handleEditProject(project.id)}>Edit</button>
+                                            </td>
+                                            <td>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>Delete</button>
+                                            </td>
+                                        </>
+                                    )}
+                                    </tr>
+                                    {expandedRows.includes(project.id) && (
+                                        <tr className="expanded-row">
+                                            <td colSpan="10">
+                                                <div className="expanded-content">
+                                                    <p><strong>Project Title:</strong> {project.projectTitle}</p>
+                                                    <p><strong>Start Date:</strong> {project.startDate}</p>
+                                                    <p><strong>End Date:</strong> {project.endDate}</p>
+                                                    <p><strong>Location:</strong> {renderLocations(project.location) }</p>
+                                                    <p><strong>Description:</strong> {project.description}</p>
+                                                    {(getUserRole() === 'Admin' || (getUserRole() === 'Worker' && isParticipant(project))) && (
+                                                        <>
+                                                            <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
+                                                            <p>
+                                                                <strong>Participants:</strong>
+                                                                {nameParticipants[project.id] ? (
+                                                                    <div>
+                                                                        {nameParticipants[project.id].map((name, index) => (
+                                                                            <button key={index} onClick={() => userInfo(name)} > {name}</button>
+                                                                        ))}
+                                                                    </div>
+                                                                ):(
+                                                                    <span>Loading...</span>
+                                                                )
+                                                            }
+                                                            </p>
+                                                        </>
+                                                    )}
+                                                    <Modal
+                                                        isOpen={modalIsOpen}
+                                                        onRequestClose={closeModal}
+                                                        contentLabel="User Information"
+                                                    >
+                                                        {selectedUserData && renderUserInfo(selectedUserData)}
+                                                        <button onClick={closeModal}>Close</button>
+                                                    </Modal>                             
+                                                    <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
+                                                    {((getUserRole() === 'Worker' && !isParticipant(project) )|| (getUserRole() === 'Guest')) && (
+                                                        <button>Regist to Project</button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="action-buttons">
+                        <button onClick={handlePrint}>Print</button>
+                    </div>
+                </main>
+                <footer className="footer">
+                    <p>CONTACT US</p>
+                </footer>
+            </div>
+        </>
     );
 };
 
