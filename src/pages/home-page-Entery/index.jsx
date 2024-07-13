@@ -159,7 +159,8 @@ export const HomePageEntery = () => {
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Location</th>
-                            <th>Image</th>
+                            <th>Description</th>
+                            <th>Logo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -170,13 +171,14 @@ export const HomePageEntery = () => {
                                     <td>{project.projectTitle}</td>
                                     <td>{project.startDate}</td>
                                     <td>{project.endDate}</td>
-                                    <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
-                                    <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td> {/* Render the image */}
+                                    <td>{renderLocations(project.location)}</td>
+                                    <td>{project.description}</td>
+                                    <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td>
 
                                 </tr>
                                 {expandedRows.includes(project.id) && (
                                     <tr className="expanded-row">
-                                        <td colSpan="6">
+                                        <td colSpan="7">
                                             <div className="expanded-content">
                                                 <p><strong>Project Title:</strong> {project.projectTitle}</p>
                                                 <p><strong>Start Date:</strong> {project.startDate}</p>
@@ -200,6 +202,7 @@ export const HomePageEntery = () => {
             </footer>
         </div>
     );
+
 };
 
 export default HomePageEntery;

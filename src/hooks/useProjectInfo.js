@@ -61,7 +61,7 @@ export const useProjectInfo = () => {
     };
 
     const handleParticipantSearch = async () => {
-        const q = query(collection(db, "users"), where("id", "==", participantQuery));
+        const q = query(collection(db, "users"), where("firstName", "==", participantQuery));
         try {
             const querySnapshot = await getDocs(q);
             const results = [];
@@ -80,16 +80,13 @@ export const useProjectInfo = () => {
 
     const handleAddParticipant = (participant) => {
         console.log("add: ", participant);
-        setParticipantList([...participantList, participant.id]);
+        setParticipantList([...participantList, participant.firstName + " " + participant.lastName]);
         setParticipants([]);
         setParticipantQuery("");
-        console.log("list: ", participantList);
     };
 
     const handleRemoveParticipant = (participant) => {
         console.log("remove: ", participant);
-        console.log("list: ", participantList);
-        console.log("filter: ", participantList.filter((id) => id!== participant.id));
         setParticipantList(participantList.filter(id => id !== participant));
         setParticipants([]);
         setParticipantQuery("");
@@ -116,18 +113,13 @@ export const useProjectInfo = () => {
     const updateParticipants = async () => {
         const batch = writeBatch(db);
         for (const participant of participantList) {
-            console.log(participant);
             const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
             userQuerySnapshot.forEach((doc) => {
                 const participantRef = doc.ref;
                 const userProjects = doc.data().projects || [];
                 if (doc.data().id === participant) {
-                    console.log("Participant found");
                     userProjects.push(projectTitle);
                     batch.update(participantRef, { projects: userProjects });
-                }
-                else{
-                    console.log("Participant not found");
                 }
             });
         }

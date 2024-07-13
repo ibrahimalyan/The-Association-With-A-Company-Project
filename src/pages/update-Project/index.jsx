@@ -13,6 +13,10 @@ import bird3 from '../../images/bird3.svg';
 
 import '../add-Project/addproject.css';
 
+import Modal from 'react-modal';
+
+Modal.setAppElement('#root-Edit');
+
 export const EditProject = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -20,6 +24,10 @@ export const EditProject = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
     const [lastProjectTitle, setLastProjectTitle] = useState("");
+    
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [selectedUserData, setSelectedUserData] = useState(null);
+
     const [userData, setUserData] = useState({
         projectTitle: '',
         startDate: '',
@@ -166,14 +174,6 @@ export const EditProject = () => {
     const handleUpdateProject = async (e) => {
         e.preventDefault();
         try {
-
-
-            // console.log("projecttitle: ", userData.projectTitle);
-            // const uploadedImageUrl = await uploadImage(imageFile, userData.projectTitle);
-            // console.log("uploadedImageUrl: ", uploadedImageUrl);
-
-            // setImageUrl(uploadedImageUrl);
-            
             console.log("outside image File: ");
             if (imageFile) {
                 // Delete previous image if it exists
@@ -216,7 +216,7 @@ export const EditProject = () => {
         if (!userData.participantList.includes(participant.id)) {
             setUserData(prevData => ({
                 ...prevData,
-                participantList: [...prevData.participantList, participant.id]
+                participantList: [...prevData.participantList, participant.firstName + " " + participant.lastName]
             }));
         }
         console.log("add: ", userData.participantList);
@@ -260,108 +260,171 @@ export const EditProject = () => {
         return <div>Loading...</div>;
     }
 
-    return (
-        <div className="container-wrapper">
-            
-            <img src={bird1} alt="bird" className="bird bird1" />
-            <img src={bird2} alt="bird" className="bird bird2" />
-            <img src={bird3} alt="bird" className="bird bird3" />
-            <div className="container2">
-            <img src={logo} alt="Logo" className="logo2" />
-            <form onSubmit={handleUpdateProject}>
-                <div>
-                    <label>Project Title:</label>
-                    <input
-                        type="text"
-                        name="projectTitle"
-                        value={userData.projectTitle}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-                <div>
-                    <label>Start Date:</label>
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={userData.startDate}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-                <div>
-                    <label>End Date:</label>
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={userData.endDate}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </div>
-                <div>
-                    <label>Select Locations:</label>
-                    {locations.map((location) => (
-                        <div key={location}>
-                            <input
-                                type="checkbox"
-                                name="location"
-                                value={location}
-                                onChange={handleCheckboxChange}
-                            />
-                            {location}
-                        </div>
-                    ))}
-                </div>
-                <div>
-                    <label>Description:</label>
-                    <textarea
-                        name="description"
-                        value={userData.description}
-                        onChange={handleInputChange}
-                        required
-                    ></textarea>
-                </div>
-                <div>
-                    <label>Project Image:</label>
-                    <input type="file" name="image" onChange={handleUploadImage} />
-                </div>
-                <div className="participant-search">
-                     <label>Add Participant:</label>
-                     <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
-                     <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
-                 </div>
-                 {participants.length > 0 && (
-                    <ul className="participant-search-results">
-                        {participants.map(participant => (
-                            <li key={participant.id}>
-                                {participant.name} ({participant.id})
-                                <button type="button" className="add-participant-button" onClick={() => handleAddParticipantToList(participant)}>Add</button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+  
+    const openModal = (userData) => {
+        setSelectedUserData(userData);
+        setModalIsOpen(true);
+    };
 
-                {error && <p className="error">{error}</p>}
-                    <div className="save-close-buttons">
-                        <button type="button" className="close-button" onClick={handleClose}>Close</button>
-                        <button type="submit" className="save-button">Save</button>
-                    </div>
-            </form>
+    const closeModal = () => {
+        setModalIsOpen(false);
+        setSelectedUserData(null);
+    };
+
+
+    const userInfo = async (name) => {
+        try {
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data();
+                if (userData.firstName === name) {
+                    openModal(userData);
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching user data for ${name}:`, error);
+        }
+    };
+
+
+    const renderUserInfo = (userData) => {
+        return (
+            <div>
+                <>
+                    <p>UserName: {userData.username}</p>
+                    <p>firstName: {userData.firstName}</p>
+                    <p>LastName: {userData.lastName}</p>
+                    <p>Email: {userData.email}</p>
+                    <p>Role: {userData.role}</p>
+                    <p>Phone: {userData.phoneNumber}</p>
+                    <p>Address: {userData.location}</p>
+                    <p>BirthDate: {userData.birthDate}</p>
+                    <p>Gender: {userData.gender}</p>
+                    <p>ID: {userData.id}</p>
+                    <p>Role: {userData.role}</p>
+                </>               
             </div>
-            <div className="container3">
-                <div>
-                    <label>Participant List:</label>
-                    <ul className="participant-list">
-                        {userData.participantList.map(id => (
-                            <li key={id}>
-                                {id}
-                                <button onClick={() => handleRemoveParticipantToList(id)}>remove</button></li>
+        );
+    };
+
+  
+  
+    return (
+        <>
+            <div id="root-Edit"></div>
+            <div className="container-wrapper">
+                
+                <img src={bird1} alt="bird" className="bird bird1" />
+                <img src={bird2} alt="bird" className="bird bird2" />
+                <img src={bird3} alt="bird" className="bird bird3" />
+                <div className="container2">
+                <img src={logo} alt="Logo" className="logo2" />
+                <form onSubmit={handleUpdateProject}>
+                    <div>
+                        <label>Project Title:</label>
+                        <input
+                            type="text"
+                            name="projectTitle"
+                            value={userData.projectTitle}
+                            onChange={handleInputChange}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>Start Date:</label>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={userData.startDate}
+                            onChange={handleInputChange}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>End Date:</label>
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={userData.endDate}
+                            onChange={handleInputChange}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>Select Locations:</label>
+                        {locations.map((location) => (
+                            <div key={location}>
+                                <input
+                                    type="checkbox"
+                                    name="location"
+                                    value={location}
+                                    onChange={handleCheckboxChange}
+                                />
+                                {location}
+                            </div>
                         ))}
-                    </ul>
+                    </div>
+                    <div>
+                        <label>Description:</label>
+                        <textarea
+                            name="description"
+                            value={userData.description}
+                            onChange={handleInputChange}
+                            required
+                        ></textarea>
+                    </div>
+                    <div>
+                        <label>Project Image:</label>
+                        <input type="file" name="image" onChange={handleUploadImage} />
+                    </div>
+                    <div className="participant-search">
+                        <label>Add Participant:</label>
+                        <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
+                        <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
+                    </div>
+                    {participants.length > 0 && (
+                        <>
+                            <ul className="participant-search-results">
+                                {participants.map(participant => (
+                                    <li key={participant.id}>
+                                        <button type="button" onClick={() => userInfo(participant.firstName)}>({participant.firstName} {participant.lastName})</button>
+                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipantToList(participant)}>Add</button>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <Modal
+                                isOpen={modalIsOpen}
+                                onRequestClose={closeModal}
+                                contentLabel="User Information"
+                            >
+                                {selectedUserData && renderUserInfo(selectedUserData)}
+                                <button onClick={closeModal}>Close</button>
+                            </Modal>
+                        </>
+                    )}
+
+                    {error && <p className="error">{error}</p>}
+                        <div className="save-close-buttons">
+                            <button type="button" className="close-button" onClick={handleClose}>Close</button>
+                            <button type="submit" className="save-button">Save</button>
+                        </div>
+                </form>
+                </div>
+                <div className="container3">
+                    <div>
+                        <label>Participant List:</label>
+                        <ul className="participant-list">
+                            {userData.participantList.map(id => (
+                                <li key={id}>
+                                    {id}
+                                    <button onClick={() => handleRemoveParticipantToList(id)}>remove</button></li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
