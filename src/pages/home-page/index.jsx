@@ -9,6 +9,7 @@ import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } f
 import { auth,db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
+import { useRegister } from '../../hooks/useRegister';
 
 
 Modal.setAppElement('#root');
@@ -18,8 +19,16 @@ export const HomePage = () => {
     const navigate = useNavigate();
     const toGetAuth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
-    const [userRole, setUserRole] = useState(null);
-    const [userId, setUserId] = useState(null);
+    const { registerUser } = useRegister();
+    const [userDetails, setUserDetails] = useState({
+        userId: '',
+        firstName: '',
+        lastName: '',
+        phoneNumber: '',
+        role: '', // Add role to state
+        uid: ''
+        }
+    );
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
     const [expandedRows, setExpandedRows] = useState([]);
@@ -54,8 +63,15 @@ export const HomePage = () => {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    setUserRole(userData.role);
-                    setUserId(userData.id);
+                    setUserDetails({
+                        userId: userData.id || '',
+                        firstName: userData.firstName || '',
+                        lastName: userData.lastName || '',
+                        phoneNumber: userData.phoneNumber || '',
+                        role: userData.role || '', // Set role
+                        uid: user.uid // Set uid
+                    });
+
                 } else {
                     console.error('User document not found');
                 }
@@ -228,20 +244,11 @@ export const HomePage = () => {
     if (error) {
         return <div>Error: {error}</div>;
     }
-
-
-    const getUserRole = () => {
-        return userRole;
-    };
-
-    const getUserID = () => {
-        return userId;
-    };
     
     const isParticipant = (project) => {
-        const currentUserId = getUserID();
-        if (currentUserId && project.participants) {
-            return project.participants.includes(currentUserId);
+        const currentUser = userDetails.firstName + " " + userDetails.lastName;
+        if (currentUser && project.participants) {
+            return project.participants.includes(currentUser);
         }
         return false;
       };
@@ -341,6 +348,31 @@ export const HomePage = () => {
         );
     };
 
+
+    const handleRegisterAdmin = async () => {
+        try {
+            await registerUser(userDetails.userId, userDetails.firstName, userDetails.lastName, userDetails.role, userDetails.phoneNumber, "Admin", userDetails.uid);
+            alert("Registration request for Admin submitted.");
+        } catch (error) {
+            alert("Error registering admin. Please try again.");
+        }
+    };
+
+    const handleRegisterWorker = async () => {
+        try {
+            await registerUser(userDetails.userId, userDetails.firstName, userDetails.lastName, userDetails.role, userDetails.phoneNumber, "Worker", userDetails.uid);
+            alert("Registration request for Worker submitted.");
+        } catch (error) {
+            console.error("Error registering worker:", error);
+            alert("Error registering worker. Please try again.");
+        }
+    };
+
+    const handleViewNotifications = () => {
+        navigate('/notifications');
+    };
+
+
     return (
         <>
             <div id="root"></div>
@@ -353,25 +385,23 @@ export const HomePage = () => {
                     <div className="header-center">
                         <img src={logo} alt="Logo" className="logo" />
                         <button onClick={handleSignOut}>Sign Out</button>
-                        {getUserRole() === 'Worker' && (<button>Register Admin</button>)}
-                        {getUserRole() === 'Guest' && (
+                        {userDetails.role === 'Worker' && (<button>Register Admin</button>)}
+                        {userDetails.role === 'Guest' && (
                             <>
-                                <button>Register Admin</button>
-                                <button>Register Worker</button>
+                                <button onClick={handleRegisterAdmin}>Register Admin</button>
+                                <button onClick={handleRegisterWorker}>Register Worker</button>
                             </>
                         )}
                         <button onClick={handleUserProfile}>
                             <img src={profileIcon} alt="profileIcon" className="profileIcon" />
                         </button>
-                        {getUserRole() === "Admin" && (
+                        {userDetails.role === "Admin" && (
                             <>
                                 <button onClick={handleAddProject}>Add Project</button>
                                 <button onClick={handleParticipant}>Users</button>
                             </>
-                        )}  
-                    </div>
-                    <div className="header-right">
-                        <button onClick={isParticipant}>Notify</button>
+                        )} 
+                        <button onClick={handleViewNotifications}>Notifications</button> 
                     </div>
                 </header>
                 <main className="main-content">
@@ -414,7 +444,7 @@ export const HomePage = () => {
                                 <th>Description</th>
                                 <th>Workers</th>
                                 <th>Logo</th>
-                                {(getUserRole() === 'Admin' || getUserRole() === 'Worker') && (
+                                {(userDetails.role === 'Admin' || userDetails.role === 'Worker') && (
                                 <>
                                     <th>Edit</th>
                                     <th>Delete</th>
@@ -454,7 +484,7 @@ export const HomePage = () => {
                                                 'No Image'
                                             )}
                                         </td> 
-                                        {(getUserRole() === 'Admin' || (getUserRole() === 'Worker' && isParticipant(project))) && (
+                                        {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                         <>
                                             <td>
                                                 <button onClick={() => handleEditProject(project.id)}>Edit</button>
@@ -474,7 +504,7 @@ export const HomePage = () => {
                                                     <p><strong>End Date:</strong> {project.endDate}</p>
                                                     <p><strong>Location:</strong> {renderLocations(project.location) }</p>
                                                     <p><strong>Description:</strong> {project.description}</p>
-                                                    {(getUserRole() === 'Admin' || (getUserRole() === 'Worker' && isParticipant(project))) && (
+                                                    {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                                         <>
                                                             <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
                                                             <p>
@@ -501,7 +531,7 @@ export const HomePage = () => {
                                                         <button onClick={closeModal}>Close</button>
                                                     </Modal>                             
                                                     <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                    {((getUserRole() === 'Worker' && !isParticipant(project) )|| (getUserRole() === 'Guest')) && (
+                                                    {((userDetails.role === 'Worker' && !isParticipant(project) )|| (userDetails.role === 'Guest')) && (
                                                         <button>Regist to Project</button>
                                                     )}
                                                 </div>

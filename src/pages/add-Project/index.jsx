@@ -223,7 +223,7 @@ export const AddProject = () => {
                             <input type="file" name="image" onChange={handleUploadImage} required/>
                         </div>
                         <div className="participant-search">
-                            <label>Add Participant:</label>
+                            <label>Add Participant (firstname):</label>
                             <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
                             <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
                         </div>
