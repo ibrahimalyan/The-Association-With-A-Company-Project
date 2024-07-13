@@ -15,7 +15,7 @@ import '../add-Project/addproject.css';
 
 import Modal from 'react-modal';
 
-Modal.setAppElement('#root-Edit');
+Modal.setAppElement('#root');
 
 export const EditProject = () => {
     const navigate = useNavigate();
@@ -120,28 +120,19 @@ export const EditProject = () => {
     const updateParticipants = async (notRemovedParticipant) => {
         const batch = writeBatch(db);
         for (const participant of userData.participantList) {
-            console.log(participant);
             const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
             userQuerySnapshot.forEach((doc) => {
                 const participantRef = doc.ref;
                 const userProjects = doc.data().projects || [];
                 const projectIndex = userProjects.indexOf(lastProjectTitle);
                 if (doc.data().id === participant) {
-                    console.log("Participant found");
-                    
                     if (projectIndex !== -1) {
-                        console.log(lastProjectTitle);
                         userProjects.splice(projectIndex, 1);
                     }
-                    console.log(userProjects);
                     if (notRemovedParticipant){
                         userProjects.push(userData.projectTitle);
-                        console.log(userProjects);
                     }
                     batch.update(participantRef, { projects: userProjects });
-                }
-                else{
-                    console.log("Participant not found");
                 }
             });
         }
@@ -174,19 +165,15 @@ export const EditProject = () => {
     const handleUpdateProject = async (e) => {
         e.preventDefault();
         try {
-            console.log("outside image File: ");
             if (imageFile) {
                 // Delete previous image if it exists
-                console.log("inside image File: ");
                 if (userData.imageUrl) {
                     const imageRef = ref(storage, userData.imageUrl);
-                    console.log("imageRef: ", imageRef);
                     await deleteObject(imageRef);
                 }
 
                 // Upload new image
                 const uploadedImageUrl = await uploadImage(imageFile, userData.projectTitle);
-                console.log("uploadedImageUrl: ", uploadedImageUrl);
                 setImageUrl(uploadedImageUrl);
             }
 
@@ -201,10 +188,7 @@ export const EditProject = () => {
                 imageUrl: userData.imageUrl,
                 participants: userData.participantList
             });
-            console.log("participant list: ", userData.participantList);
             updateParticipants(true);
-            console.log("participants updated");
-            console.log("Document updated with ID: ", id);
             navigate('/home');
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -231,8 +215,6 @@ export const EditProject = () => {
                 ...prevData,
                 participantList: updatedParticipantList
             }));
-            console.log("list: ", userData.participantList);
-            console.log("filter: ", updatedParticipantList);
             // Update Firestore document for each participant
             updateParticipants(false);
         } catch (error) {
@@ -272,17 +254,17 @@ export const EditProject = () => {
     };
 
 
-    const userInfo = async (name) => {
+    const userInfo = async (id) => {
         try {
             const usersSnapshot = await getDocs(collection(db, "users"));
             for (const userDoc of usersSnapshot.docs) {
                 const userData = userDoc.data();
-                if (userData.firstName === name) {
+                if (userData.id === id) {
                     openModal(userData);
                 }
             }
         } catch (error) {
-            console.error(`Error fetching user data for ${name}:`, error);
+            console.error(`Error fetching user data for ${id}:`, error);
         }
     };
 
@@ -310,10 +292,7 @@ export const EditProject = () => {
   
   
     return (
-        <>
-            <div id="root-Edit"></div>
-            <div className="container-wrapper">
-                
+            <div className="container-wrapper">         
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
@@ -387,7 +366,7 @@ export const EditProject = () => {
                             <ul className="participant-search-results">
                                 {participants.map(participant => (
                                     <li key={participant.id}>
-                                        <button type="button" onClick={() => userInfo(participant.firstName)}>({participant.firstName} {participant.lastName})</button>
+                                        <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipantToList(participant)}>Add</button>
                                     </li>
                                 ))}
@@ -424,7 +403,6 @@ export const EditProject = () => {
                     </div>
                 </div>
             </div>
-        </>
     );
 };
 
