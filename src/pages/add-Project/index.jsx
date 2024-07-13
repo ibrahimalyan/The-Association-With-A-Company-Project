@@ -12,7 +12,7 @@ import bird3 from '../../images/bird3.svg';
 import './addproject.css';
 import Modal from 'react-modal';
 
-Modal.setAppElement('#root-Add');
+Modal.setAppElement('#root');
 
 export const AddProject = () => {
     const navigate = useNavigate();
@@ -142,17 +142,17 @@ export const AddProject = () => {
     };
 
 
-    const userInfo = async (name) => {
+    const userInfo = async (id) => {
         try {
             const usersSnapshot = await getDocs(collection(db, "users"));
             for (const userDoc of usersSnapshot.docs) {
                 const userData = userDoc.data();
-                if (userData.firstName === name) {
+                if (userData.id === id) {
                     openModal(userData);
                 }
             }
         } catch (error) {
-            console.error(`Error fetching user data for ${name}:`, error);
+            console.error(`Error fetching user data for ${id}:`, error);
         }
     };
 
@@ -180,8 +180,7 @@ export const AddProject = () => {
 
 
     return (
-        <>
-            <div id="root-Add"></div>
+        
             <div className="container-wrapper">
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
@@ -233,7 +232,7 @@ export const AddProject = () => {
                             <ul className="participant-search-results">
                                 {participants.map(participant => (
                                     <li key={participant.id}>
-                                        <button type="button" onClick={() => userInfo(participant.firstName)}>({participant.firstName} {participant.lastName})</button>
+                                        <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipant(participant)}>Add</button>
                                     </li>
                                 ))}
@@ -270,7 +269,6 @@ export const AddProject = () => {
                     </div>
                 </div>
             </div>
-        </>
     );
 };
 

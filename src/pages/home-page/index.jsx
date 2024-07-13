@@ -413,7 +413,7 @@ export const HomePage = () => {
                                 <th>Location</th>
                                 <th>Description</th>
                                 <th>Workers</th>
-                                <th>Image</th>
+                                <th>Logo</th>
                                 {(getUserRole() === 'Admin' || getUserRole() === 'Worker') && (
                                 <>
                                     <th>Edit</th>
