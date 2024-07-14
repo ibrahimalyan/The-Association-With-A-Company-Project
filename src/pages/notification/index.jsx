@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useRegister';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
 
+
 export const Notifications = () => {
     const { registerList, loading, acceptUser, rejectUser, setLoading } = useRegister();
     const navigate = useNavigate();
