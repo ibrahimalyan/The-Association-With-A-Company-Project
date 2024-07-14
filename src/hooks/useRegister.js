@@ -87,10 +87,11 @@ export const useRegister = () => {
 
     return {
         registerList,
+        loading,
+        error,
         registerUser,
         acceptUser,
         rejectUser,  // Ensure rejectUser is included in the return object
-        loading,
-        error
+        setLoading
     };
 };
