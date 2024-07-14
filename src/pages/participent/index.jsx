@@ -5,6 +5,58 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import './participent.css'; // Ensure you have appropriate CSS
 
+
+const translations = {
+  ar: {
+      home: "الرئيسية",
+      participant: "المشاركين",
+      partner: "الشركاء",
+      filterByName: "الاسم",
+      filterById: "رقم الهوية",
+      filterByRole: "الدور",
+      applyFilters: "بحث",
+      participantName: "اسم المشارك",
+      id: "رقم الهوية",
+      role: "الدور",
+      delete: "حذف",
+      print: "طباعة",
+      userDetails: "تفاصيل المستخدم",
+      username: "اسم المستخدم",
+      firstName: "الاسم الأول",
+      lastName: "الاسم الأخير",
+      email: "البريد الإلكتروني",
+      location: "الموقع",
+      birthDate: "تاريخ الميلاد",
+      gender: "الجنس",
+      phoneNumber: "رقم الهاتف",
+      changeLanguage: "עברית"
+  },
+  heb: {
+      home: "בית",
+      participant: "משתתפים",
+      partner: "שותפים",
+      filterByName: "שם",
+      filterById: "ת.ז",
+      filterByRole: "תפקיד",
+      applyFilters: "חיפוש",
+      participantName: "שם המשתתף",
+      id: "ת.ז",
+      role: "תפקיד",
+      delete: "מחק",
+      print: "הדפס",
+      userDetails: "פרטי משתמש",
+      username: "שם משתמש",
+      firstName: "שם פרטי",
+      lastName: "שם משפחה",
+      email: "אימייל",
+      location: "מיקום",
+      birthDate: "תאריך לידה",
+      gender: "מין",
+      phoneNumber: "מספר טלפון",
+      changeLanguage: "العربية"
+  }
+};
+
 export const Participent = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,6 +65,7 @@ export const Participent = () => {
   const [filterId, setFilterId] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);  
+  const [language, setLanguage] = useState('ar');
   const [authenticated, setAuthenticated] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
