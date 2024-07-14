@@ -14,6 +14,54 @@ import './auth.css'; // Import the CSS file
 
 const db = getFirestore();
 
+
+
+const translations = {
+    ar: {
+        emailPlaceholder: "البريد الإلكتروني...",
+        passwordPlaceholder: "كلمة المرور...",
+        confirmPasswordPlaceholder: "تأكيد كلمة المرور...",
+        usernamePlaceholder: "اسم المستخدم...",
+        firstNamePlaceholder: "الاسم الأول...",
+        lastNamePlaceholder: "الاسم الأخير...",
+        locationPlaceholder: "الموقع...",
+        birthDatePlaceholder: "تاريخ الميلاد...",
+        genderPlaceholder: "الجنس...",
+        idPlaceholder: "رقم الهوية...",
+        phoneNumberPlaceholder: "رقم الهاتف...",
+        signUpButton: "تسجيل",
+        signInButton: "تسجيل الدخول",
+        alreadyHaveAccount: "هل لديك حساب؟ تسجيل الدخول",
+        signUp: "إنشاء حساب",
+        resetPasswordButton: "إعادة تعيين كلمة المرور",
+        changeLanguage: "עברית",
+        errorIncorrectEmailOrPassword: "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى."
+    },
+    heb: {
+        emailPlaceholder: "אימייל...",
+        passwordPlaceholder: "סיסמה...",
+        confirmPasswordPlaceholder: "אשר סיסמה...",
+        usernamePlaceholder: "שם משתמש...",
+        firstNamePlaceholder: "שם פרטי...",
+        lastNamePlaceholder: "שם משפחה...",
+        locationPlaceholder: "מיקום...",
+        birthDatePlaceholder: "תאריך לידה...",
+        genderPlaceholder: "מין...",
+        idPlaceholder: "תעודת זהות...",
+        phoneNumberPlaceholder: "מספר טלפון...",
+        signUpButton: "הירשם",
+        signInButton: "התחברות",
+        alreadyHaveAccount: "כבר יש לך חשבון? התחברות",
+        signUp: "הרשמה",
+        resetPasswordButton: "אפס סיסמה",
+        changeLanguage: "العربية",
+        errorIncorrectEmailOrPassword: "אימייל או סיסמה שגויים. אנא נסה שוב."
+    }
+};
+
+
+
+
 const Modal = ({ message, onClose }) => (
     <div className="modal">
         <div className="modal-content">
@@ -34,8 +82,17 @@ export const Auth = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const { additionalInfo, handleInputChange } = useUserInfo();
-
+    const [language, setLanguage] = useState('heb');
    
+    
+    const t = translations[language];
+
+    const toggleLanguage = () => {
+        setLanguage(prevLanguage => prevLanguage === 'ar' ? 'heb' : 'ar');
+    };
+
+    
+    
     const signIn = async (e) => {
         e.preventDefault(); // Prevent default form submission
         try {
@@ -45,7 +102,7 @@ export const Auth = () => {
             const userSnapshot = await getDocs(q);
             
             if (userSnapshot.empty) {
-                setError("No user found with this email.");
+                setError(t.errorIncorrectEmailOrPassword);
                 return;
             }
 
@@ -65,8 +122,7 @@ export const Auth = () => {
             console.log("User signed in: ", user);
             navigate('/home'); // Navigate to homepage on successful sign-in
         } catch (error) {
-            setError("Incorrect email or password. Please try again.");
-            console.error(error);
+            setError(t.errorIncorrectEmailOrPassword);
         }
     }; 
 
@@ -139,42 +195,42 @@ export const Auth = () => {
             <div className="container">
                 <img src={logo} alt="Logo" />
                 <form onSubmit={handleSubmit}>
-                    <input placeholder="Email..." required onChange={(e) => setEmail(e.target.value)} />
-                    <input placeholder="Password..." type='password' required onChange={(e) => setPassword(e.target.value)} />
+                    <input placeholder={t.emailPlaceholder} required onChange={(e) => setEmail(e.target.value)} />
+                    <input placeholder={t.passwordPlaceholder} type='password' required onChange={(e) => setPassword(e.target.value)} />
                     {isSignUp && (
                         <>
-                             <input placeholder="Confirm Password..." type="password" required onChange={(e) => setConfirmPassword(e.target.value)} />
+                            <input placeholder={t.confirmPasswordPlaceholder} type="password" required onChange={(e) => setConfirmPassword(e.target.value)} />
                             <div className="input-group">
-                                <input placeholder="Username..." name="username" required onChange={handleInputChange} />
-                                <input placeholder="First Name..." name="firstName" required onChange={handleInputChange} />
+                                <input placeholder={t.usernamePlaceholder} name="username" required onChange={handleInputChange} />
+                                <input placeholder={t.firstNamePlaceholder} name="firstName" required onChange={handleInputChange} />
                             </div>
                             <div className="input-group">
-                                <input placeholder="Last Name..." name="lastName" required onChange={handleInputChange} />
-                                <input placeholder="Location..." name="location" required onChange={handleInputChange} />
+                                <input placeholder={t.lastNamePlaceholder} name="lastName" required onChange={handleInputChange} />
+                                <input placeholder={t.locationPlaceholder} name="location" required onChange={handleInputChange} />
                             </div>
                             <div className="input-group">
-                                <input placeholder="Birth Date..." type="date" name="birthDate" required onChange={handleInputChange} />
-                                <input placeholder="Gender..." name="gender" required onChange={handleInputChange} />
+                                <input placeholder={t.birthDatePlaceholder} type="date" name="birthDate" required onChange={handleInputChange} />
+                                <input placeholder={t.genderPlaceholder} name="gender" required onChange={handleInputChange} />
                             </div>
                             <div className="input-group">
-                                <input placeholder="ID..." type="number" name="id" required onChange={handleInputChange} />
-                                <input placeholder="Phone Number..." type="number" name="phoneNumber" required onChange={handleInputChange} />
+                                <input placeholder={t.idPlaceholder} type="number" name="id" required onChange={handleInputChange} />
+                                <input placeholder={t.phoneNumberPlaceholder} type="number" name="phoneNumber" required onChange={handleInputChange} />
                             </div>
                         </>
                     )}
                     {error && <p>{error}</p>}
                     {!showSaveButton ? (
                         <>
-                            <button type="submit">{isSignUp ? "Sign Up" : "Sign In"}</button>
+                            <button type="submit">{isSignUp ? t.signUpButton : t.signInButton}</button>
                             <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(""); }}>
-                                {isSignUp ? "Already have an account? Sign In" : "Sign Up"}
+                                {isSignUp ? t.alreadyHaveAccount : t.signUp}
                             </button>
                             {!isSignUp && (
-                                <button type="button" onClick={resetPassword}>Reset Password</button>
+                                <button type="button" onClick={resetPassword}>{t.resetPasswordButton}</button>
                             )}
                         </>
                     ) : (
-                        <button type="submit">Save</button>
+                        <button type="submit">{t.signUpButton}</button>
                     )}
                 </form>
             </div>
