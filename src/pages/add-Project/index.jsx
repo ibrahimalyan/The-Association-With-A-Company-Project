@@ -15,7 +15,6 @@ import Modal from 'react-modal';
 Modal.setAppElement('#root');
 
 
-
 const translations = {
     ar: {
         projectTitle: "عنوان المشروع",
