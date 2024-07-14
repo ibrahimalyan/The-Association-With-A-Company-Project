@@ -15,6 +15,7 @@ import { useRegister } from '../../hooks/useRegister';
 Modal.setAppElement('#root');
 
 
+
 const translations = {
     ar: {
         signOut: "تسجيل الخروج",
