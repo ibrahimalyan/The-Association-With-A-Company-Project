@@ -17,6 +17,42 @@ import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
 
+
+const translations = {
+    ar: {
+        projectTitle: "عنوان المشروع",
+        startDate: "تاريخ البدء",
+        endDate: "تاريخ الانتهاء",
+        location: "الموقع",
+        description: "الوصف",
+        projectImage: "صورة المشروع",
+        addParticipant: " (إضافة مشارك (الاسم الشخصي",
+        search: "بحث",
+        close: "إغلاق",
+        save: "حفظ",
+        participantList: "قائمة المشاركين",
+        remove: "إزالة",
+        changeLanguage: "עברית"
+    },
+    heb: {
+        projectTitle: "כותרת הפרויקט",
+        startDate: "תאריך התחלה",
+        endDate: "תאריך סיום",
+        location: "מקום",
+        description: "תיאור",
+        projectImage: "תמונת הפרויקט",
+        addParticipant: "הוסף משתתף (שם פרטי)",
+        search: "חפש",
+        close: "סגור",
+        save: "שמור",
+        participantList: "רשימת משתתפים",
+        remove: "הסר",
+        changeLanguage: "العربية"
+    }
+};
+
+
+
 export const EditProject = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -27,7 +63,7 @@ export const EditProject = () => {
     
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
-
+    const [language, setLanguage] = useState('ar');
     const [userData, setUserData] = useState({
         projectTitle: '',
         startDate: '',
@@ -53,19 +89,33 @@ export const EditProject = () => {
     const [error, setError] = useState('');
 
     const [selectedLocations, setSelectedLocations] = useState([]);
-    const locations = [
-        'North region',
-        'South region',
-        'Central area',
-        'West region',
-        'East region',
-        'Field of addictions',
-        'The field of young people and the homeless',
-        'Field of group work',
-        'Ultra-Orthodox field',
-        'National religious field',
-        'Education, training and employment, media, response'
-    ];
+    const locations = language === 'ar' 
+        ? [
+            'المنطقة الشمالية',
+            'المنطقة الجنوبية',
+            'المنطقة المركزية',
+            'المنطقة الغربية',
+            'المنطقة الشرقية',
+            'مجال الإدمانات',
+            'مجال الشباب والمشردين',
+            'مجال العمل الجماعي',
+            'مجال المتدينين',
+            'المجال الديني الوطني',
+            'التعليم والتدريب والتوظيف والإعلام والاستجابة'
+          ]
+        : [
+            'North region',
+            'South region',
+            'Central area',
+            'West region',
+            'East region',
+            'Field of addictions',
+            'The field of young people and the homeless',
+            'Field of group work',
+            'Ultra-Orthodox field',
+            'National religious field',
+            'Education, training and employment, media, response'
+          ];
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -183,7 +233,7 @@ export const EditProject = () => {
                 projectTitle: userData.projectTitle,
                 startDate: userData.startDate,
                 endDate: userData.endDate,
-                location: userData.location,
+                location: selectedLocations,
                 description: userData.description,
                 imageUrl: userData.imageUrl,
                 participants: userData.participantList
@@ -291,6 +341,14 @@ export const EditProject = () => {
 
   
   
+    const toggleLanguage = () => {
+        setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+    };
+
+    const t = translations[language];
+
+
+
     return (
             <div className="container-wrapper">         
                 <img src={bird1} alt="bird" className="bird bird1" />
@@ -300,7 +358,7 @@ export const EditProject = () => {
                 <img src={logo} alt="Logo" className="logo2" />
                 <form onSubmit={handleUpdateProject}>
                     <div>
-                        <label>Project Title:</label>
+                        <label>{t.projectTitle}:</label>
                         <input
                             type="text"
                             name="projectTitle"
@@ -310,7 +368,7 @@ export const EditProject = () => {
                         />
                     </div>
                     <div>
-                        <label>Start Date:</label>
+                        <label>{t.startDate}:</label>
                         <input
                             type="date"
                             name="startDate"
@@ -320,7 +378,7 @@ export const EditProject = () => {
                         />
                     </div>
                     <div>
-                        <label>End Date:</label>
+                        <label>{t.endDate}:</label>
                         <input
                             type="date"
                             name="endDate"
@@ -330,13 +388,14 @@ export const EditProject = () => {
                         />
                     </div>
                     <div>
-                        <label>Select Locations:</label>
+                        <label>{t.location}:</label>
                         {locations.map((location) => (
                             <div key={location}>
                                 <input
                                     type="checkbox"
                                     name="location"
                                     value={location}
+                                    checked={selectedLocations.includes(location)}
                                     onChange={handleCheckboxChange}
                                 />
                                 {location}
@@ -344,7 +403,7 @@ export const EditProject = () => {
                         ))}
                     </div>
                     <div>
-                        <label>Description:</label>
+                        <label>{t.description}:</label>
                         <textarea
                             name="description"
                             value={userData.description}
@@ -353,13 +412,13 @@ export const EditProject = () => {
                         ></textarea>
                     </div>
                     <div>
-                        <label>Project Image:</label>
+                        <label>{t.projectImage}:</label>
                         <input type="file" name="image" onChange={handleUploadImage} />
                     </div>
                     <div className="participant-search">
-                        <label>Add Participant:</label>
+                        <label>{t.addParticipant}:</label>
                         <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
-                        <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
+                        <button type="button" className="search-button" onClick={handleParticipantSearch}>{t.search}</button>
                     </div>
                     {participants.length > 0 && (
                         <>
@@ -378,30 +437,31 @@ export const EditProject = () => {
                                 contentLabel="User Information"
                             >
                                 {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button onClick={closeModal}>Close</button>
+                                <button onClick={closeModal}>{t.close}</button>
                             </Modal>
                         </>
                     )}
 
                     {error && <p className="error">{error}</p>}
                         <div className="save-close-buttons">
-                            <button type="button" className="close-button" onClick={handleClose}>Close</button>
-                            <button type="submit" className="save-button">Save</button>
+                            <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                            <button type="submit" className="save-button">{t.save}</button>
                         </div>
                 </form>
                 </div>
                 <div className="container3">
                     <div>
-                        <label>Participant List:</label>
+                        <label>{t.participantList}:</label>
                         <ul className="participant-list">
                             {userData.participantList.map(id => (
                                 <li key={id}>
                                     {id}
-                                    <button onClick={() => handleRemoveParticipantToList(id)}>remove</button></li>
+                                    <button onClick={() => handleRemoveParticipantToList(id)}>{t.remove}</button></li>
                             ))}
                         </ul>
                     </div>
                 </div>
+                <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
             </div>
     );
 };
