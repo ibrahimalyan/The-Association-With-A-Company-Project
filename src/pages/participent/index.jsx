@@ -5,6 +5,61 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import './participent.css'; // Ensure you have appropriate CSS
 
+
+
+const translations = {
+  ar: {
+      home: "الرئيسية",
+      participant: "المشاركين",
+      partner: "الشركاء",
+      filterByName: "الاسم",
+      filterById: "رقم الهوية",
+      filterByRole: "الدور",
+      applyFilters: "بحث",
+      participantName: "اسم المشارك",
+      id: "رقم الهوية",
+      role: "الدور",
+      delete: "حذف",
+      print: "طباعة",
+      userDetails: "تفاصيل المستخدم",
+      username: "اسم المستخدم",
+      firstName: "الاسم الأول",
+      lastName: "الاسم الأخير",
+      email: "البريد الإلكتروني",
+      location: "الموقع",
+      birthDate: "تاريخ الميلاد",
+      gender: "الجنس",
+      phoneNumber: "رقم الهاتف",
+      changeLanguage: "עברית"
+  },
+  heb: {
+      home: "בית",
+      participant: "משתתפים",
+      partner: "שותפים",
+      filterByName: "שם",
+      filterById: "ת.ז",
+      filterByRole: "תפקיד",
+      applyFilters: "חיפוש",
+      participantName: "שם המשתתף",
+      id: "ת.ז",
+      role: "תפקיד",
+      delete: "מחק",
+      print: "הדפס",
+      userDetails: "פרטי משתמש",
+      username: "שם משתמש",
+      firstName: "שם פרטי",
+      lastName: "שם משפחה",
+      email: "אימייל",
+      location: "מיקום",
+      birthDate: "תאריך לידה",
+      gender: "מין",
+      phoneNumber: "מספר טלפון",
+      changeLanguage: "العربية"
+  }
+};
+
+
+
 export const Participent = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,6 +69,7 @@ export const Participent = () => {
   const [filterRole, setFilterRole] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);  
   const [authenticated, setAuthenticated] = useState(false);
+  const [language, setLanguage] = useState('ar');
   const navigate = useNavigate();
   const auth = getAuth();
   
@@ -121,41 +177,46 @@ export const Participent = () => {
     setFilteredUsers(filtered);
   };
 
+  const toggleLanguage = () => {
+    setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+};
+
+const t = translations[language];
   return (
     <div className="users-list-dashboard">
       <div className="users-list-content">
         <div className="users-list-buttons">
-          <button onClick={handleHomePage} className="home-button">Home</button>
-          <button onClick={handlePrint} className="print-button">Print</button>
+          <button onClick={handleHomePage} className="home-button">{t.home}</button>
+          <button onClick={handlePrint} className="print-button">{t.print}</button>
         </div>
         <div className="users-list-filter-bar">
           <input 
             type="text" 
-            placeholder="Filter by name" 
+            placeholder={t.filterByName} 
             value={filterName} 
             onChange={(e) => setFilterName(e.target.value)} 
           />
           <input 
             type="text" 
-            placeholder="Filter by ID #" 
+            placeholder={t.filterById}
             value={filterId} 
             onChange={(e) => setFilterId(e.target.value)} 
           />
           <input 
             type="text" 
-            placeholder="Filter by role" 
+            placeholder={t.filterByRole} 
             value={filterRole} 
             onChange={(e) => setFilterRole(e.target.value)} 
           />
-          <button onClick={applyFilters} className="apply-filters-button">Apply Filters</button>
+          <button onClick={applyFilters} className="apply-filters-button">{t.applyFilters}</button>
         </div>
         <div className="users-list-table-wrapper">
           <div className="users-list-table">
             <div className="users-list-table-header">
               <span>#</span>
-              <span>Participant Name</span>
-              <span>ID #</span>
-              <span>Role</span>
+              <span>{t.participantName}</span>
+              <span>{t.id}</span>
+              <span>{t.role}</span>
             </div>
             {filteredUsers.map((user, index) => (
               <div className="users-list-table-row" key={user.id} onClick={() => handleRowClick(user)}>
@@ -163,7 +224,7 @@ export const Participent = () => {
                 <span>{user.firstName} {user.lastName}</span>
                 <span>{user.id}</span>
                 <span>{user.role}</span>
-                <button onClick={() => handleDelete(user.id)} className="delete-button">Delete</button>
+                <button onClick={() => handleDelete(user.id)} className="delete-button">{t.delete}</button>
               </div>
             ))}
           </div>
@@ -173,18 +234,18 @@ export const Participent = () => {
         <div className="user-details-popup">
           <div className="user-details-content">
             <h2>User Details</h2>
-            <p><strong>Username:</strong> {selectedUser.username}</p>
-            <p><strong>First Name:</strong> {selectedUser.firstName}</p>
-            <p><strong>Last Name:</strong> {selectedUser.lastName}</p>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Location:</strong> {selectedUser.location}</p>
-            <p><strong>Birth Date:</strong> {selectedUser.birthDate}</p>
-            <p><strong>Gender:</strong> {selectedUser.gender}</p>
-            <p><strong>Phone Number:</strong> {selectedUser.phoneNumber}</p>
-            <p><strong>ID:</strong> {selectedUser.id}</p>
-            <p><strong>Role:</strong> {selectedUser.role}</p>
+            <p><strong>{t.username}:</strong> {selectedUser.username}</p>
+            <p><strong>{t.firstName}:</strong> {selectedUser.firstName}</p>
+            <p><strong>{t.lastName}:</strong> {selectedUser.lastName}</p>
+            <p><strong>{t.email}:</strong> {selectedUser.email}</p>
+            <p><strong>{t.location}:</strong> {selectedUser.location}</p>
+            <p><strong>{t.birthDate}:</strong> {selectedUser.birthDate}</p>
+            <p><strong>{t.gender}:</strong> {selectedUser.gender}</p>
+            <p><strong>{t.phoneNumber}:</strong> {selectedUser.phoneNumber}</p>
+            <p><strong>{t.id}:</strong> {selectedUser.id}</p>
+            <p><strong>{t.role}:</strong> {selectedUser.role}</p>
             <div className="popup-buttons">
-              <button onClick={handlePrint} className="print-popup-button">Print</button>
+              <button onClick={handlePrint} className="print-popup-button">{t.print}</button>
               <button onClick={() => setSelectedUser(null)} className="close-popup-button">Close</button>
             </div>
             </div>
@@ -195,9 +256,11 @@ export const Participent = () => {
                 <li key={index}>{project}</li>
               ))}
             </ol>
-            </div>
+          </div>
+          <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
         </div>
       )}
+      <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
     </div>
   );
 };

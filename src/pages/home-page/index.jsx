@@ -6,13 +6,115 @@ import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
-import { auth,db } from '../../config/firebase-config';
+import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
 
 
 Modal.setAppElement('#root');
+
+
+
+const translations = {
+    ar: {
+        signOut: "تسجيل الخروج",
+        registerAdmin: "تسجيل مشرف",
+        registerWorker: "تسجيل عامل",
+        addProject: "إضافة مشروع",
+        users: "المستخدمين",
+        notify: "إشعارات",
+        filter: {
+            projectName: "اسم المشروع",
+            location: "الموقع",
+            startDate: "تاريخ البدء",
+            endDate: "تاريخ الانتهاء",
+            image: "صورة",
+            description: "الوصف",
+            Workers: "مسؤلين المشورع",
+            applyFilter: "بحث"
+        },
+        tableHeaders: {
+            edit: "تعديل",
+            delete: "حذف",
+            print: "طباعة"
+        },
+        expandedContent: {
+            projectTitle: "عنوان المشروع",
+            startDate: "تاريخ البدء",
+            endDate: "تاريخ الانتهاء",
+            location: "الموقع",
+            description: "الوصف",
+            numberOfParticipants: "عدد المشاركين",
+            participants: "المشاركون",
+            register: "التسجيل في المشروع"
+        },
+        changeLanguage: "עברית",
+        locations: [
+            'منطقة الشمال',
+            'منطقة الجنوب',
+            'المنطقة المركزية',
+            'منطقة الغرب',
+            'منطقة الشرق',
+            'مجال الإدمان',
+            'مجال الشباب والمشردين',
+            'مجال العمل الجماعي',
+            'المجال الأرثوذكسي المتشدد',
+            'المجال الديني الوطني',
+            'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
+        ]
+    },
+    heb: {
+        signOut: "התנתק",
+        registerAdmin: "רשום מנהל",
+        registerWorker: "רשום עובד",
+        addProject: "הוסף פרויקט",
+        users: "משתמשים",
+        notify: "עדכונים",
+        filter: {
+            projectName: "שם הפרויקט",
+            location: "מקום",
+            startDate: "תאריך התחלה",
+            endDate: "תאריך סיום",
+            image: "תמונה",
+            description: "תיאור",
+            Workers: "עובדים",
+            applyFilter: "חיפוש"
+        },
+        tableHeaders: {
+            image: "תמונה",
+            edit: "עריכה",
+            delete: "מחק",
+            print: "הדפס"
+        },
+        expandedContent: {
+            projectTitle: "כותרת הפרויקט",
+            startDate: "תאריך התחלה",
+            endDate: "תאריך סיום",
+            location: "מיקום",
+            description: "תיאור",
+            numberOfParticipants: "מספר משתתפים",
+            participants: "משתתפים",
+            register: "הירשם לפרויקט"
+        },
+        changeLanguage: "العربية",
+        locations: [
+            'אזור הצפון',
+            'אזור הדרום',
+            'אזור המרכז',
+            'אזור המערב',
+            'אזור המזרח',
+            'תחום ההתמכרויות',
+            'תחום הצעירים והחסרי בית',
+            'תחום העבודה הקבוצתית',
+            'תחום האורתודוקסי',
+            'תחום הדתי הלאומי',
+            'חינוך, הכשרה ותעסוקה, מדיה, מענה'
+        ]
+    }
+};
+
+
 
 export const HomePage = () => {
     const { projects, loading, error } = useProjects();
@@ -42,19 +144,8 @@ export const HomePage = () => {
         endDate: ''
     });
 
-    const locations = [
-        'North region',
-        'South region',
-        'central area', 
-        'West region', 
-        'East region', 
-        'field of addictions', 
-        'the field of young people and the homeless',
-        'field of group work',
-        'ultra-orthodox field',
-        'national religious field',
-        'Education, training and employment, media, response'
-    ];
+    const [language, setLanguage] = useState('ar');
+    const locations = translations[language].locations;
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -373,23 +464,28 @@ export const HomePage = () => {
     };
 
 
+    const toggleLanguage = () => {
+        setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+    };
+
+    const t = translations[language];
+
     return (
         <>
             <div id="root"></div>
             <div className="dashboard">
                 <header className="header">
                     <div className="header-left">
-                        <button>AR</button>
-                        <button>Heb</button>
+                        <button onClick={toggleLanguage}>{t.changeLanguage}</button>
                     </div>
                     <div className="header-center">
                         <img src={logo} alt="Logo" className="logo" />
-                        <button onClick={handleSignOut}>Sign Out</button>
-                        {userDetails.role === 'Worker' && (<button>Register Admin</button>)}
+                        <button onClick={handleSignOut}>{t.signOut}</button>
+                        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
                         {userDetails.role === 'Guest' && (
                             <>
-                                <button onClick={handleRegisterAdmin}>Register Admin</button>
-                                <button onClick={handleRegisterWorker}>Register Worker</button>
+                                 <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
+                                 <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
                             </>
                         )}
                         <button onClick={handleUserProfile}>
@@ -397,11 +493,11 @@ export const HomePage = () => {
                         </button>
                         {userDetails.role === "Admin" && (
                             <>
-                                <button onClick={handleAddProject}>Add Project</button>
-                                <button onClick={handleParticipant}>Users</button>
+                                <button onClick={handleAddProject}>{t.addProject}</button>
+                                <button onClick={handleParticipant}>{t.users}</button>
                             </>
                         )} 
-                        <button onClick={handleViewNotifications}>Notifications</button> 
+                        <button onClick={handleViewNotifications}>{t.notify}</button> 
                     </div>
                 </header>
                 <main className="main-content">
@@ -409,12 +505,12 @@ export const HomePage = () => {
                         <input
                             type="text"
                             name="name"
-                            placeholder="Project Name"
+                            placeholder={t.filter.projectName}
                             value={filter.name}
                             onChange={handleFilterChange}
                         />
                         <select name="location" value={filter.location} onChange={handleFilterChange}>
-                        <option value="">Select Location</option>
+                        <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
                             <option key={location} value={location}>{location}</option>
                         ))}
@@ -431,23 +527,23 @@ export const HomePage = () => {
                             value={filter.endDate}
                             onChange={handleFilterChange}
                         />
-                        <button onClick={applyFilter}>Apply Filter</button>
-                    </div>
+                            <button onClick={applyFilter}>{t.filter.applyFilter}</button>
+                        </div>
                     <table className="projects-table">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Project Name</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Location</th>
-                                <th>Description</th>
-                                <th>Workers</th>
-                                <th>Logo</th>
+                                <th>{t.filter.projectName}</th>
+                                <th>{t.filter.startDate}</th>
+                                <th>{t.filter.endDate}</th>
+                                <th>{t.filter.location}</th>
+                                <th>{t.filter.description}</th>
+                                <th>{t.filter.Workers}</th>
+                                <th>{t.filter.image}</th>
                                 {(userDetails.role === 'Admin' || userDetails.role === 'Worker') && (
                                 <>
-                                    <th>Edit</th>
-                                    <th>Delete</th>
+                                     <th>{t.tableHeaders.edit}</th>
+                                     <th>{t.tableHeaders.delete}</th>
                                 </>
                             )}                
                             </tr>
@@ -487,10 +583,10 @@ export const HomePage = () => {
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                         <>
                                             <td>
-                                                <button onClick={() => handleEditProject(project.id)}>Edit</button>
+                                                <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
                                             </td>
                                             <td>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>Delete</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
                                             </td>
                                         </>
                                     )}
@@ -499,16 +595,16 @@ export const HomePage = () => {
                                         <tr className="expanded-row">
                                             <td colSpan="10">
                                                 <div className="expanded-content">
-                                                    <p><strong>Project Title:</strong> {project.projectTitle}</p>
-                                                    <p><strong>Start Date:</strong> {project.startDate}</p>
-                                                    <p><strong>End Date:</strong> {project.endDate}</p>
-                                                    <p><strong>Location:</strong> {renderLocations(project.location) }</p>
-                                                    <p><strong>Description:</strong> {project.description}</p>
+                                                    <p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p>
+                                                    <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}</p>
+                                                    <p><strong>{t.expandedContent.endDate}:</strong> {project.endDate}</p>
+                                                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location) }</p>
+                                                    <p><strong>{t.expandedContent.description}:</strong> {project.description}</p>
                                                     {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                                         <>
-                                                            <p><strong>Number Of Participants:</strong> {project.participants.length}</p>
+                                                            <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}</p>
                                                             <p>
-                                                                <strong>Participants:</strong>
+                                                                <strong>{t.expandedContent.participants}:</strong>
                                                                 {nameParticipants[project.id] ? (
                                                                     <div>
                                                                         {nameParticipants[project.id].map((name, index) => (
@@ -532,7 +628,7 @@ export const HomePage = () => {
                                                     </Modal>                             
                                                     <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
                                                     {((userDetails.role === 'Worker' && !isParticipant(project) )|| (userDetails.role === 'Guest')) && (
-                                                        <button>Regist to Project</button>
+                                                        <button>{t.expandedContent.register}</button>
                                                     )}
                                                 </div>
                                             </td>
@@ -543,7 +639,7 @@ export const HomePage = () => {
                         </tbody>
                     </table>
                     <div className="action-buttons">
-                        <button onClick={handlePrint}>Print</button>
+                        <button onClick={handlePrint}>{t.tableHeaders.print}</button>
                     </div>
                 </main>
                 <footer className="footer">

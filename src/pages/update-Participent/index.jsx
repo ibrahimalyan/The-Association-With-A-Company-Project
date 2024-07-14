@@ -7,6 +7,42 @@ import './userprofileedite.css'; // Make sure to create a corresponding CSS file
 
 const db = getFirestore();
 
+
+const translations = {
+    ar: {
+        firstName: "الاسم الأول",
+        lastName: "الاسم الأخير",
+        id: "رقم الهوية",
+        phoneNumber: "رقم الهاتف",
+        username: "اسم المستخدم",
+        email: "البريد الإلكتروني",
+        gender: "الجنس",
+        birthDate: "تاريخ الميلاد",
+        location: "الموقع",
+        role: "الدور",
+        close: "إغلاق",
+        save: "حفظ",
+        changeLanguage: "עברית"
+    },
+    heb: {
+        firstName: "שם פרטי",
+        lastName: "שם משפחה",
+        id: "ת.ז",
+        phoneNumber: "מספר טלפון",
+        username: "שם משתמש",
+        email: "אימייל",
+        gender: "מין",
+        birthDate: "תאריך לידה",
+        location: "מיקום",
+        role: "תפקיד",
+        close: "סגור",
+        save: "שמור",
+        changeLanguage: "العربية"
+    }
+};
+
+
+
 export const UserProfile = () => {
     const auth = getAuth();
     const navigate = useNavigate();
@@ -25,6 +61,8 @@ export const UserProfile = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [language, setLanguage] = useState('ar');
+
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -69,6 +107,13 @@ export const UserProfile = () => {
         navigate('/home'); // Navigate back to the previous page
     };
 
+    const toggleLanguage = () => {
+        setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+    };
+
+    const t = translations[language];
+
+
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -82,33 +127,34 @@ export const UserProfile = () => {
             <img src={duck1} alt="duck" className="duck duck5" />
             <form onSubmit={handleSubmit} className="user-profile-form">
                 <div className="form-group">
-                    <label className="form-label">First Name:</label>
+                    <label className="form-label">{t.firstName}:</label>
                     <input className="form-input" type="text" name="firstName" value={userData.firstName} onChange={handleInputChange} required />
-                    <label className="form-label">Last Name:</label>
+                    <label className="form-label">{t.lastName}:</label>
                     <input className="form-input" type="text" name="lastName" value={userData.lastName} onChange={handleInputChange} required />
-                    <label className="form-label">ID:</label>
+                    <label className="form-label">{t.id}:</label>
                     <input className="form-input" type="text" name="id" value={userData.id} onChange={handleInputChange} required />
-                    <label className="form-label">Phone Number:</label>
+                    <label className="form-label">{t.phoneNumber}:</label>
                     <input className="form-input" type="text" name="phoneNumber" value={userData.phoneNumber} onChange={handleInputChange} required />
-                    <label className="form-label">Username:</label>
+                    <label className="form-label">{t.username}:</label>
                     <input className="form-input" type="text" name="username" value={userData.username} onChange={handleInputChange} required />
-                    <label className="form-label">Email:</label>
+                    <label className="form-label">{t.email}:</label>
                     <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
-                    <label className="form-label">Gender:</label>
+                    <label className="form-label">{t.gender}:</label>
                     <input className="form-input" type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
-                    <label className="form-label">Birth Date:</label>
+                    <label className="form-label">{t.gender}:</label>
                     <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
-                    <label className="form-label">Location:</label>
+                    <label className="form-label">{t.location}:</label>
                     <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />
-                    <label className="form-label">Role:</label>
+                    <label className="form-label">{t.role}:</label>
                     <span className="form-input">{userData.role}</span>
                 </div>
                 {error && <p className="error-message">{error}</p>}
                 <div className="save-close-buttons">
-                    <button type="button" className="close-button" onClick={handleClose}>Close</button>
-                    <button type="submit" className="save-button">Save</button>
+                    <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                    <button type="submit" className="save-button">{t.save}</button>
                 </div>
             </form>
+            <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
         </div>
     );
 };

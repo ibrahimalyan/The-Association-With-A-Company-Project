@@ -6,6 +6,80 @@ import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
 
 
+
+
+const translations = {
+    ar: {
+        signIn: "تسجيل الدخول",
+        filter: {
+            projectName: "اسم المشروع",
+            location: "الموقع",
+            startDate: "تاريخ البدء",
+            endDate: "تاريخ الانتهاء",
+            applyFilter: "بحث"
+        },
+        tableHeaders: {
+            projectName: "اسم المشروع",
+            startDate: "تاريخ البدء",
+            endDate: "تاريخ الانتهاء",
+            location: "الموقع",
+            description: "الوصف",
+            Logo: "صورة"
+        },
+        changeLanguage: "עברית",
+        toRegister: "للتسجيل",
+        locations: [
+            'منطقة الشمال',
+            'منطقة الجنوب',
+            'المنطقة المركزية',
+            'منطقة الغرب',
+            'منطقة الشرق',
+            'مجال الإدمان',
+            'مجال الشباب والمشردين',
+            'مجال العمل الجماعي',
+            'المجال الأرثوذكسي المتشدد',
+            'المجال الديني الوطني',
+            'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
+        ]
+    },
+    heb: {
+        signIn: "התחבר",
+        filter: {
+            projectName: "שם הפרויקט",
+            location: "מקום",
+            startDate: "תאריך התחלה",
+            endDate: "תאריך סיום",
+            applyFilter: "חיפוש"
+        },
+        tableHeaders: {
+            projectName: "שם הפרויקט",
+            startDate: "תאריך התחלה",
+            endDate: "תאריך סיום",
+            location: "מקום",
+            description: "תיאור",
+            Logo: "תמונה"
+        },
+        changeLanguage: "العربية",
+        toRegister: "להרשמה",
+        locations: [
+            'אזור הצפון',
+            'אזור הדרום',
+            'אזור המרכז',
+            'אזור המערב',
+            'אזור המזרח',
+            'תחום ההתמכרויות',
+            'תחום הצעירים והחסרי בית',
+            'תחום העבודה הקבוצתית',
+            'תחום האורתודוקסי',
+            'תחום הדתי הלאומי',
+            'חינוך, הכשרה ותעסוקה, מדיה, מענה'
+        ]
+    }
+};
+
+
+
+
 export const HomePageEntery = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
@@ -18,19 +92,10 @@ export const HomePageEntery = () => {
         endDate: ''
     });
 
-    const locations = [
-        'North region',
-        'South region',
-        'central area', 
-        'West region', 
-        'East region', 
-        'field of addictions', 
-        'the field of young people and the homeless',
-        'field of group work',
-        'ultra-orthodox field',
-        'national religious field',
-        'Education, training and employment, media, response'
-    ];
+    const [language, setLanguage] = useState('ar'); // Default language is Arabic
+    const changeLanguage = () => {
+        setLanguage((prevLang) => (prevLang === 'ar' ? 'heb' : 'ar'));
+    };
 
 
     useEffect(() => {
@@ -108,8 +173,9 @@ export const HomePageEntery = () => {
         <div className="dashboard">
             <header className="header">
                 <div className="header-left">
-                    <button>AR</button>
-                    <button>Heb</button>
+                   {/* <button>AR</button>
+                    <button>Heb</button>*/}
+                    <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
                 </div>
                 <div className="header-center">
                     <img src={logo} alt="Logo" className="logo" />
@@ -122,18 +188,18 @@ export const HomePageEntery = () => {
                     <input
                         type="text"
                         name="name"
-                        placeholder="Project Name"
+                        placeholder={translations[language].filter.projectName}
                         value={filter.name}
                         onChange={handleFilterChange}
                     />
                     <select
-                    name="location"
-                    value={filter.location}
-                    onChange={handleFilterChange}
+                        name="location"
+                        value={filter.location}
+                        onChange={handleFilterChange}
                     >
-                    <option value="">Select Location</option>
-                        {locations.map((location) => (
-                        <option key={location} value={location}>{location}</option>
+                    <option value="">{translations[language].filter.location}</option>
+                        {translations[language].locations.map((location,index) => (
+                        <option key={index} value={location}>{location}</option>
                     ))}
                     </select>
 
@@ -149,18 +215,18 @@ export const HomePageEntery = () => {
                         value={filter.endDate}
                         onChange={handleFilterChange}
                     />
-                    <button onClick={applyFilter}>Apply Filter</button>
+                    <button onClick={applyFilter}>{translations[language].filter.applyFilter}</button>
                 </div>
                 <table className="projects-table">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Project Name</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Location</th>
-                            <th>Description</th>
-                            <th>Logo</th>
+                            <th>index</th>
+                            <th>{translations[language].tableHeaders.projectName}</th>
+                            <th>{translations[language].tableHeaders.startDate}</th>
+                            <th>{translations[language].tableHeaders.endDate}</th>
+                            <th>{translations[language].tableHeaders.location}</th>
+                            <th>{translations[language].tableHeaders.description}</th>
+                            <th>{translations[language].tableHeaders.Logo}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -180,13 +246,14 @@ export const HomePageEntery = () => {
                                     <tr className="expanded-row">
                                         <td colSpan="7">
                                             <div className="expanded-content">
-                                                <p><strong>Project Title:</strong> {project.projectTitle}</p>
-                                                <p><strong>Start Date:</strong> {project.startDate}</p>
-                                                <p><strong>End Date:</strong> {project.endDate}</p>
-                                                <p><strong>Location:</strong> {renderLocations(project.location) }</p>
-                                                <p><strong>Description:</strong> {project.description}</p>
+                                            <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
+                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
+                                                <p><strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                                <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                                <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p>
                                                 <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                <button onClick={handleSignIn}>To Regist</button>
+                                                
+                                                <button onClick={handleSignIn}>{translations[language].toRegister}</button>
                                                 {/* Add more project details here */}
                                             </div>
                                         </td>

@@ -14,6 +14,68 @@ import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
 
+
+const translations = {
+    ar: {
+        projectTitle: "عنوان المشروع",
+        location: "الموقع",
+        startDate: "تاريخ البدء",
+        endDate: "تاريخ الانتهاء",
+        description: "الوصف",
+        projectImage: "صورة المشروع",
+        addParticipant: " (إضافة مشارك (الاسم الشخصي",
+        search: "بحث",
+        close: "إغلاق",
+        save: "حفظ",
+        participantList: "قائمة المشاركين",
+        remove: "إزالة",
+        changeLanguage: "עברית",
+        locations: [
+            'منطقة الشمال',
+            'منطقة الجنوب',
+            'المنطقة المركزية',
+            'منطقة الغرب',
+            'منطقة الشرق',
+            'مجال الإدمان',
+            'مجال الشباب والمشردين',
+            'مجال العمل الجماعي',
+            'المجال الأرثوذكسي المتشدد',
+            'المجال الديني الوطني',
+            'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
+        ]
+    },
+    heb: {
+        projectTitle: "כותרת הפרויקט",
+        location: "מקום",
+        startDate: "תאריך התחלה",
+        endDate: "תאריך סיום",
+        description: "תיאור",
+        projectImage: "תמונת הפרויקט",
+        addParticipant: "הוסף משתתף (שם פרטי)",
+        search: "חפש",
+        close: "סגור",
+        save: "שמור",
+        participantList: "רשימת משתתפים",
+        remove: "הסר",
+        changeLanguage: "العربية",
+        locations: [
+            'אזור הצפון',
+            'אזור הדרום',
+            'אזור המרכז',
+            'אזור המערב',
+            'אזור המזרח',
+            'תחום ההתמכרויות',
+            'תחום הצעירים והחסרי בית',
+            'תחום העבודה הקבוצתית',
+            'תחום האורתודוקסי',
+            'תחום הדתי הלאומי',
+            'חינוך, הכשרה ותעסוקה, מדיה, מענה'
+        ]
+    }
+};
+
+
+
 export const AddProject = () => {
     const navigate = useNavigate();
     const auth = getAuth();
@@ -22,20 +84,9 @@ export const AddProject = () => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
 
+    const [language, setLanguage] = useState('ar');
+
     const [selectedLocations, setSelectedLocations] = useState([]);
-    const locations = [
-        'North region',
-        'South region',
-        'central area', 
-        'West region', 
-        'East region', 
-        'field of addictions', 
-        'the field of young people and the homeless',
-        'field of group work',
-        'ultra-orthodox field',
-        'national religious field',
-        'Education, training and employment, media, response'
-    ];
     
     const {
         projectTitle,
@@ -179,6 +230,12 @@ export const AddProject = () => {
 
 
 
+    const toggleLanguage = () => {
+        setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+    };
+
+    const t = translations[language];
+
     return (
         
             <div className="container-wrapper">
@@ -189,12 +246,12 @@ export const AddProject = () => {
                     <img src={logo} alt="Logo" className="logo2" />
                     <form onSubmit={handleAddProject}>
                         <div>
-                            <label>Project Title:</label>
+                            <label>{t.projectTitle}:</label>
                             <input type="text" name="projectTitle" value={projectTitle} onChange={handleInputChange} required />
                         </div>
                         <div>
-                            <label>Select Locations:</label>
-                            {locations.map((location) => (
+                            <label>{t.location}:</label>
+                            {t.locations.map((location) => (
                                 <div key={location}>
                                     <input
                                         type="checkbox"
@@ -207,23 +264,23 @@ export const AddProject = () => {
                             ))}
                         </div>
                         <div>
-                            <label>Start Date:</label>
+                            <label>{t.startDate}:</label>
                             <input type="date" name="startDate" value={startDate} onChange={handleInputChange} required />
                         </div>
                         <div>
-                            <label>End Date:</label>
+                            <label>{t.endDate}:</label>
                             <input type="date" name="endDate" value={endDate} onChange={handleInputChange} required />
                         </div>
                         <div>
-                            <label>Description:</label>
+                            <label>{t.description}:</label>
                             <textarea name="description" value={description} onChange={handleInputChange} required></textarea>
                         </div>
                         <div>
-                            <label>Project Image:</label>
+                            <label>{t.projectImage}:</label>
                             <input type="file" name="image" onChange={handleUploadImage} required/>
                         </div>
                         <div className="participant-search">
-                            <label>Add Participant (firstname):</label>
+                            <label>{t.addParticipant}:</label>
                             <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
                             <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
                         </div>
@@ -244,31 +301,33 @@ export const AddProject = () => {
                                 contentLabel="User Information"
                             >
                                 {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button onClick={closeModal}>Close</button>
+                                <button onClick={closeModal}>{t.close}</button>
                             </Modal>
                         </>
                         )}
 
                         {error && <p className="error">{error}</p>}
                         <div className="save-close-buttons">
-                            <button type="button" className="close-button" onClick={handleClose}>Close</button>
-                            <button type="submit" className="save-button">Save</button>
+                            <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                            <button type="submit" className="save-button">{t.save}</button>
                         </div>
                     </form>
                 </div>
                 <div className="container3">
                     <div>
-                        <label>Participant List:</label>
+                        <label>{t.participantList}:</label>
                         <ul className="participant-list">
                             {participantList.map(id => (
                                 <li key={id}>
                                     {id}
-                                    <button onClick={() => handleRemoveParticipant(id)}>remove</button></li>
+                                    <button onClick={() => handleRemoveParticipant(id)}>{t.remove}</button></li>
                             ))}
                         </ul>
                     </div>
                 </div>
+                <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
             </div>
+            
     );
 };
 
