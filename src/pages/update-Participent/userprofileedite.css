@@ -1,0 +1,144 @@
+.user-profile-container {
+    position: relative; /* Ensure the container is positioned relative for absolute positioning */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.user-profile-container .user-profile-form {
+    position: relative; /* Ensure the form is also positioned relative */
+    background: rgba(41, 31, 31, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    color: black;
+    padding: 20px;
+    width: 400px;
+    max-width: 100%;
+    z-index: 1; /* Ensure form is above other elements except the bird */
+}
+
+.user-profile-container .user-profile-form .form-group {
+    display: grid;
+    gap: 3px;
+}
+
+.user-profile-container .user-profile-form .form-label {
+    font-weight: bold;
+    text-align: left;
+    padding-right: 10px;
+}
+
+.user-profile-container .user-profile-form .form-input {
+    width: calc(100% - 10px);
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #000;
+}
+
+.user-profile-container .user-profile-form .form-input[type="date"] {
+    width: calc(100% - 10px);
+}
+
+.user-profile-container .user-profile-form .error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.user-profile-container .save-close-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+    width: 102%;
+}
+
+.user-profile-container .save-button,
+.close-button {
+    padding: 8px 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+}
+
+.user-profile-container .save-button {
+    background: #eef7a0;
+    color: #000;
+}
+
+.user-profile-container .close-button {
+    background: #d9534f;
+    color: #fff;
+}
+
+.user-profile-container .save-button:hover,
+.close-button:hover {
+    opacity: 0.8;
+}
+
+.user-profile-container .loading {
+    font-size: 20px;
+    color: #000;
+}
+
+.user-profile-container .duck1 {
+    animation: swimaround 25s linear infinite;
+    width: 50px;
+    height: auto;
+    position: absolute;
+    animation-delay: 0.1s;
+}
+.user-profile-container .duck2 {
+    animation: swimaround 25s linear infinite;
+    width: 25px;
+    height: auto;
+    position: absolute;
+    animation-delay: 0.5s;
+}
+.user-profile-container .duck3 {
+    animation: swimaround 25s linear infinite;
+    width: 25px;
+    height: auto;
+    position: absolute;
+    animation-delay: 1s;
+}
+.user-profile-container .duck4 {
+    animation: swimaround 25s linear infinite;
+    width: 25px;
+    height: auto;
+    position: absolute;
+    animation-delay: 1.5s;
+
+}
+.user-profile-container .duck5 {
+    animation: swimaround 25s linear infinite;
+    width: 25px;
+    height: auto;
+    position: absolute;
+    animation-delay: 2s;
+
+}
+
+@keyframes swimaround {
+    0% {
+        transform: rotate(0deg) translate(600px) rotate(0deg) scaleX(1);
+    }
+    25% {
+        transform: rotate(90deg) translate(300px) rotate(-90deg) scaleX(1);
+    }
+    50% {
+        transform: rotate(180deg) translate(600px) rotate(-180deg) scaleX(-1);
+    }
+    75% {
+        transform: rotate(270deg) translate(300px) rotate(-270deg) scaleX(-1);
+    }
+    100% {
+        transform: rotate(360deg) translate(600px) rotate(-360deg) scaleX(1);
+    }
+}
