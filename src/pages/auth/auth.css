@@ -7,7 +7,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 120vh;
-    /* background: linear-gradient(180deg, #9BAAD8 0%, #4455A6 100%); */
+    background: linear-gradient(180deg, hsl(219, 100%, 63%) 0%, #f69494 100%);
     overflow: hidden;
 }
 

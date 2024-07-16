@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth,signOut, onAuthStateChanged } from 'firebase/auth';
+import logo from '../../images/logo.jpeg';
+import profileIcon from '../../images/profileIcon.png';
 import { db } from '../../config/firebase-config';
 import './participent.css'; // Ensure you have appropriate CSS
 
@@ -9,6 +11,12 @@ import './participent.css'; // Ensure you have appropriate CSS
 
 const translations = {
   ar: {
+    signOut: "تسجيل الخروج",
+        registerAdmin: "تسجيل مشرف",
+        registerWorker: "تسجيل عامل",
+        addProject: "إضافة مشروع",
+        users: "المستخدمين",
+        notify: "إشعارات",
       home: "الرئيسية",
       participant: "المشاركين",
       partner: "الشركاء",
@@ -33,6 +41,12 @@ const translations = {
       changeLanguage: "עברית"
   },
   heb: {
+    signOut: "התנתק",
+        registerAdmin: "רשום מנהל",
+        registerWorker: "רשום עובד",
+        addProject: "הוסף פרויקט",
+        users: "משתמשים",
+        notify: "עדכונים",
       home: "בית",
       participant: "משתתפים",
       partner: "שותפים",
@@ -65,10 +79,20 @@ export const Participent = () => {
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [filterName, setFilterName] = useState('');
+  const toGetAuth = getAuth();
   const [filterId, setFilterId] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);  
   const [authenticated, setAuthenticated] = useState(false);
+  const [userDetails, setUserDetails] = useState({
+    userId: '',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    role: '', // Add role to state
+    uid: ''
+    }
+);
   const [language, setLanguage] = useState('ar');
   const navigate = useNavigate();
   const auth = getAuth();
@@ -97,6 +121,10 @@ export const Participent = () => {
   const handleHomePage = () => {
     navigate('/home');
   };
+
+  const handleViewNotifications = () => {
+    navigate('/notifications');
+};
 
   const handleRowClick = (user) => {
     setSelectedUser(user);
@@ -167,6 +195,27 @@ export const Participent = () => {
   const handlePrint = () => {
     window.print();
   };
+const handleUserProfile = () => {
+        navigate('/userProfile');
+    };
+
+    const handleAddProject = () => {
+        navigate('/addProject');
+    };
+
+    const handleParticipant = () => {
+        navigate('/participant');
+    };
+
+  const handleSignOut = async () => {
+    try {
+        await signOut(toGetAuth);
+        navigate('/homePage');
+    } catch (error) {
+        console.error("Error signing out: ", error);
+        alert("Error signing out. Please try again.");
+    }
+};
 
   const applyFilters = () => {
     const filtered = users.filter(user => 
@@ -184,11 +233,28 @@ export const Participent = () => {
 const t = translations[language];
   return (
     <div className="users-list-dashboard">
+                <header className="header">
+                        {/* <button onClick={handlePrint}>{t.tableHeaders.print}</button> */}
+                        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+                        <button onClick={handlePrint} className="print-button">{t.print}</button>
+                        <div className="header-center">
+                        <button onClick={handleSignOut}>{t.signOut}</button>
+                        <button onClick={handleHomePage} className="home-button">{t.home}</button>
+                        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                        <button onClick={handleViewNotifications}>{t.notify}</button> 
+                                 <button onClick={handleUserProfile}>
+                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                        </button>
+                        {userDetails.role === "Admin" && (
+                            <>
+                                <button onClick={handleAddProject}>{t.addProject}</button>
+                                <button onClick={handleParticipant}>{t.users}</button>
+                            </>
+                        )} 
+                    </div>
+                    <img src={logo} alt="Logo" className="logo" />
+                </header>
       <div className="users-list-content">
-        <div className="users-list-buttons">
-          <button onClick={handleHomePage} className="home-button">{t.home}</button>
-          <button onClick={handlePrint} className="print-button">{t.print}</button>
-        </div>
         <div className="users-list-filter-bar">
           <input 
             type="text" 
@@ -234,16 +300,16 @@ const t = translations[language];
         <div className="user-details-popup">
           <div className="user-details-content">
             <h2>User Details</h2>
-            <p><strong>{t.username}:</strong> {selectedUser.username}</p>
-            <p><strong>{t.firstName}:</strong> {selectedUser.firstName}</p>
-            <p><strong>{t.lastName}:</strong> {selectedUser.lastName}</p>
-            <p><strong>{t.email}:</strong> {selectedUser.email}</p>
-            <p><strong>{t.location}:</strong> {selectedUser.location}</p>
-            <p><strong>{t.birthDate}:</strong> {selectedUser.birthDate}</p>
-            <p><strong>{t.gender}:</strong> {selectedUser.gender}</p>
-            <p><strong>{t.phoneNumber}:</strong> {selectedUser.phoneNumber}</p>
-            <p><strong>{t.id}:</strong> {selectedUser.id}</p>
-            <p><strong>{t.role}:</strong> {selectedUser.role}</p>
+            <p>{selectedUser.username} :<strong>{t.username}</strong></p>
+            <p>{selectedUser.firstName} :<strong>{t.firstName}</strong></p>
+            <p>{selectedUser.lastName} : <strong>{t.lastName}</strong></p>
+            <p>{selectedUser.email} :<strong>{t.email}</strong></p>
+            <p>{selectedUser.location} :<strong>{t.location}</strong></p>
+            <p>{selectedUser.birthDate} :<strong>{t.birthDate}</strong></p>
+            <p>{selectedUser.gender} :<strong>{t.gender}</strong></p>
+            <p><strong>{t.phoneNumber} :</strong> {selectedUser.phoneNumber}</p>
+            <p><strong>{t.id} :</strong> {selectedUser.id}</p>
+            <p>{selectedUser.role}: <strong>{t.role}</strong></p>
             <div className="popup-buttons">
               <button onClick={handlePrint} className="print-popup-button">{t.print}</button>
               <button onClick={() => setSelectedUser(null)} className="close-popup-button">Close</button>
@@ -257,10 +323,8 @@ const t = translations[language];
               ))}
             </ol>
           </div>
-          <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
         </div>
       )}
-      <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
     </div>
   );
 };

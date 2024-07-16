@@ -133,8 +133,9 @@ export const HomePage = () => {
     );
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
-    const [expandedRows, setExpandedRows] = useState([]);
+    // const [expandedRows, setExpandedRows] = useState([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [modalType, setModalType] = useState(null); // State to track modal type (user or project)
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [filter, setFilter] = useState({
@@ -222,14 +223,14 @@ export const HomePage = () => {
         navigate('/participant');
     };
 
-    const handleRowClick = (projectId) => {
-        const isExpanded = expandedRows.includes(projectId);
-        if (isExpanded) {
-            setExpandedRows(expandedRows.filter(id => id !== projectId));
-        } else {
-            setExpandedRows([...expandedRows, projectId]);
-        }
-    };
+    // const handleRowClick = (projectId) => {
+    //     const isExpanded = expandedRows.includes(projectId);
+    //     if (isExpanded) {
+    //         setExpandedRows(expandedRows.filter(id => id !== projectId));
+    //     } else {
+    //         setExpandedRows([...expandedRows, projectId]);
+    //     }
+    // };
 
     const handleEditProject = (projectId) => {
         navigate(`/editProject/${projectId}`);
@@ -393,16 +394,22 @@ export const HomePage = () => {
         return participantIds; // Or any default value you prefer when locations is undefined or not an array
     };
 
-    const openModal = (userData) => {
+    const openUserModal = (userData) => {
         setSelectedUserData(userData);
+        setModalType('user');
         setModalIsOpen(true);
     };
 
     const closeModal = () => {
         setModalIsOpen(false);
-        setSelectedUserData(null);
+        setModalType(null);
     };
 
+    const openProjectModal = (project) => {
+        setSelectedUserData(project);
+        setModalType('project');
+        setModalIsOpen(true);
+    };
 
     const userInfo = async (name) => {
         try {
@@ -411,7 +418,7 @@ export const HomePage = () => {
                 const userData = userDoc.data();
                 const dataName = `${userData.firstName} ${userData.lastName}`;
                 if (dataName === name) {
-                    openModal(userData);
+                    openUserModal(userData);
                 }
             }
         } catch (error) {
@@ -421,8 +428,10 @@ export const HomePage = () => {
  
     
     const renderUserInfo = (userData) => {
+        if (!selectedUserData) return null;
+
         return (
-            <div>
+            <div className="modaluser-content">
                 <>
                     <p>UserName: {userData.username}</p>
                     <p>firstName: {userData.firstName}</p>
@@ -438,6 +447,70 @@ export const HomePage = () => {
             </div>
         );
     };
+
+    const renderProjectInfo = (project) => {
+        if (!project) return null;
+        return (
+                            <div className="expanded-content">
+                                        <p>
+                                            <strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}
+                                        </p>
+                                        <p>
+                                            <strong>{t.expandedContent.startDate}:</strong> {project.startDate}
+                                        </p>
+                                        <p>
+                                            <strong>{t.expandedContent.endDate}:</strong> {project.endDate}
+                                        </p>
+                                        <p>
+                                            <strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}
+                                        </p>
+                                        <p>
+                                            <strong>{t.expandedContent.description}:</strong> {project.description}
+                                        </p>
+                                        {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
+                                            <>
+                                                <p>
+                                                    <strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}
+                                                </p>
+                                                <p>
+                                                    <strong>{t.expandedContent.participants}:</strong>
+                                                    {nameParticipants[project.id] ? (
+                                                        <div>
+                                                            {nameParticipants[project.id].map((name, index) => (
+                                                                <button key={index} onClick={() => userInfo(name)}>
+                                                                    {name}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span>Loading...</span>
+                                                    )}
+                                                </p>
+                                            </>
+                                        )}
+                                         <Modal 
+                                        //  isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="User Information"
+                                         >
+                                         {
+                                         modalType === 'user' &&
+                                          selectedUserData &&
+                                          renderUserInfo(selectedUserData)}
+                                         <button onClick={closeModal}>Close</button>
+                                     </Modal>   
+                                        <p>
+                                            {project.imageUrl ? (
+                                                <img src={project.imageUrl} alt="Project" className="project-image" />
+                                            ) : (
+                                                'No Image'
+                                            )}
+                                        </p>
+                                        {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
+                                            <button>{t.expandedContent.register}</button>
+                                        )}
+              </div>
+        );
+    };
+
 
 
     const handleRegisterAdmin = async () => {
@@ -480,12 +553,14 @@ export const HomePage = () => {
                         <div className="header-center">
                         <button onClick={handleSignOut}>{t.signOut}</button>
                         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                        <button onClick={handleViewNotifications}>{t.notify}</button> 
+                        <button onClick={handleUserProfile}>
+                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                        </button>
                         {userDetails.role === 'Guest' && (
                             <>
                                  <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
-                                 <button onClick={handleUserProfile}>
-                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-                        </button>
+                                 
                                  <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
                             </>
                         )}
@@ -495,7 +570,6 @@ export const HomePage = () => {
                                 <button onClick={handleParticipant}>{t.users}</button>
                             </>
                         )} 
-                        <button onClick={handleViewNotifications}>{t.notify}</button> 
                     </div>
                     <img src={logo} alt="Logo" className="logo" />
                 </header>
@@ -534,17 +608,18 @@ export const HomePage = () => {
             <td colSpan="10">
                 <div className="projects-grid">
                     {filteredProjects.map((project, index) => (
-                        <div className="project-card" key={project.id}>
+                         <div className="project-card" key={project.id}>
                             <React.Fragment key={project.id}>
-                                <div className="project-image-wrapper" onClick={() => handleRowClick(project.id)}>
+                                <div className="project-image-wrapper" 
+                                onClick={() => openProjectModal(project)}
+                                >
                                     {project.imageUrl ? (
                                         <img src={project.imageUrl} alt="Project" className="project-image" />
                                     ) : (
                                         <span>No Image</span>
                                     )}
-                                        {project.projectTitle}<br />
-                                        {project.startDate}<br />
-                                        {project.endDate}<br />
+                                        <h1>{project.projectTitle}<br /></h1>
+                                        {project.startDate} - {project.endDate}<br />
                                         {renderLocations(project.location)} {/* Updated to show multiple locations */}<br />
                                         {/* {project.description}<br /> */}
                                             {workersInfo[project.id] ? (
@@ -567,60 +642,15 @@ export const HomePage = () => {
                                         </>
                                     )}
                                 </div>
-                                {expandedRows.includes(project.id) && (
-                                    <div className="expanded-content">
-                                        <p>
-                                            <strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.startDate}:</strong> {project.startDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.endDate}:</strong> {project.endDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.description}:</strong> {project.description}
-                                        </p>
-                                        {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                            <>
-                                                <p>
-                                                    <strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}
-                                                </p>
-                                                <p>
-                                                    <strong>{t.expandedContent.participants}:</strong>
-                                                    {nameParticipants[project.id] ? (
-                                                        <div>
-                                                            {nameParticipants[project.id].map((name, index) => (
-                                                                <button key={index} onClick={() => userInfo(name)}>
-                                                                    {name}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span>Loading...</span>
-                                                    )}
-                                                </p>
-                                            </>
-                                        )}
-                                        <Modal isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="User Information">
-                                            {selectedUserData && renderUserInfo(selectedUserData)}
+                                <Modal 
+                                isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Project Information"
+                                >
+                                            {
+                                            modalType === 'project' &&
+                                             selectedUserData &&
+                                              renderProjectInfo(selectedUserData)}
                                             <button onClick={closeModal}>Close</button>
                                         </Modal>
-                                        <p>
-                                            {project.imageUrl ? (
-                                                <img src={project.imageUrl} alt="Project" className="project-image" />
-                                            ) : (
-                                                'No Image'
-                                            )}
-                                        </p>
-                                        {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
-                                            <button>{t.expandedContent.register}</button>
-                                        )}
-                                    </div>
-                                )}
                             </React.Fragment>
                         </div>
                     ))}
