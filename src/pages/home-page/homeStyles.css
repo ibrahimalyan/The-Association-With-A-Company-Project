@@ -1,8 +1,9 @@
 /* Dashboard Styles */
 .dashboard {
     position: relative;
-    min-height: 115vh;
-    min-width: 215vh;
+    min-height: 810px;
+    min-width: 1400px;
+    margin-top: -10px;
     }
 /* Footer Styles */
 .dashboard .footer {

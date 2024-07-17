@@ -18,6 +18,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 150px;
 }
 
 .auth-wrapper .container {
@@ -32,7 +33,7 @@ body {
     text-align: center;
 }
 .auth-wrapper .container img {
-    width: 100%;
+    width: 70%;
     height: auto;
     margin-bottom: 20px;
     background: #525440b9;
@@ -145,6 +146,7 @@ body {
 }
 /* Fish animation */
 .auth-wrapper .fish {
+    top: 550px;
     position: absolute;
     width: 50px; /* Adjust size as needed */
     height: auto;
@@ -152,7 +154,7 @@ body {
     right: 700px;
 }
 .auth-wrapper .fish1{
-    top: 250px;
+    top: 300px;
     animation: swim 36s linear infinite;
     animation-delay: 10s;
     animation-fill-mode: forwards;
@@ -160,20 +162,21 @@ body {
     opacity: 0; 
 }
 .auth-wrapper .fish2{
-    top: 5px;
+    top: 150px;
     animation: swim 51s linear infinite;
     animation-delay: 0s; /* Start after 18 seconds */
     animation-fill-mode: both;
     opacity: 0; 
 }
 .auth-wrapper .fish3{
-    bottom: 250px;
+    top: 400px;
     animation: swim 23.5s linear infinite;
     animation-delay: 7s; /* Start after 18 seconds */
     animation-fill-mode: both;
     opacity: 0; 
 }
 .auth-wrapper .fish4{
+    top: 25px;
     animation: swim 13s linear infinite;
     animation-delay: 3s; /* Start after 18 seconds */
     animation-fill-mode: both;

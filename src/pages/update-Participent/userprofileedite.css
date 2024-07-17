@@ -4,6 +4,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
+    margin-bottom: 140px;
 }
 
 .user-profile-container .user-profile-form {
@@ -57,7 +58,7 @@
     width: 102%;
 }
 
-.user-profile-container .save-button,
+.user-profile-container .save-button,.language-button ,
 .close-button {
     padding: 8px 12px;
     font-size: 16px;
@@ -77,7 +78,12 @@
     color: #fff;
 }
 
-.user-profile-container .save-button:hover,
+.user-profile-container .language-button {
+    background: #4fd996;
+    color: black;
+}
+
+.user-profile-container .save-button:hover,.language-button:hover,
 .close-button:hover {
     opacity: 0.8;
 }

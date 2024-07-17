@@ -1,14 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth,signOut, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
-import logo from '../../images/logo.jpeg';
 import bird1 from '../../images/bird1.svg';
 import bird2 from '../../images/bird2.svg';
 import bird3 from '../../images/bird3.svg';
+import profileIcon from '../../images/profileIcon.png';
+import logo from '../../images/logo.jpeg';
 import './addproject.css';
 import Modal from 'react-modal';
 
@@ -17,6 +18,12 @@ Modal.setAppElement('#root');
 
 const translations = {
     ar: {
+        signOut: "تسجيل الخروج",
+        registerAdmin: "تسجيل مشرف",
+        registerWorker: "تسجيل عامل",
+        addProject: "إضافة مشروع",
+        users: "المستخدمين",
+        notify: "إشعارات",
         projectTitle: "عنوان المشروع",
         location: "الموقع",
         startDate: "تاريخ البدء",
@@ -45,6 +52,12 @@ const translations = {
         ]
     },
     heb: {
+        signOut: "התנתק",
+        registerAdmin: "רשום מנהל",
+        registerWorker: "רשום עובד",
+        addProject: "הוסף פרויקט",
+        users: "משתמשים",
+        notify: "עדכונים",
         projectTitle: "כותרת הפרויקט",
         location: "מקום",
         startDate: "תאריך התחלה",
@@ -80,7 +93,16 @@ export const AddProject = () => {
     const navigate = useNavigate();
     const auth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
-    
+    const toGetAuth = getAuth();
+    const [userDetails, setUserDetails] = useState({
+        userId: '',
+        firstName: '',
+        lastName: '',
+        phoneNumber: '',
+        role: '', // Add role to state
+        uid: ''
+        }
+    );
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
 
@@ -134,6 +156,11 @@ export const AddProject = () => {
         });
     };
 
+    const handleViewNotifications = () => {
+        navigate('/notifications');
+    };
+
+
     const handleAddProject = async (e) => {
         e.preventDefault();
         
@@ -166,6 +193,13 @@ export const AddProject = () => {
         }
     };
     
+    const handleUserProfile = () => {
+        navigate('/userProfile');
+    };
+
+    const handleParticipant = () => {
+        navigate('/participant');
+    };
 
     const handleUploadImage = (e) => {
         const { files } = e.target;
@@ -207,6 +241,16 @@ export const AddProject = () => {
         }
     };
 
+    const handleSignOut = async () => {
+        try {
+            await signOut(toGetAuth);
+            navigate('/homePage');
+        } catch (error) {
+            console.error("Error signing out: ", error);
+            alert("Error signing out. Please try again.");
+        }
+    };
+
 
     const renderUserInfo = (userData) => {
         return (
@@ -237,13 +281,30 @@ export const AddProject = () => {
     const t = translations[language];
 
     return (
-        
+        <div className="big-container">
+        <header className="header">
+        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+        <div className="header-center">
+        <button onClick={handleSignOut}>{t.signOut}</button>
+        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+        <button onClick={handleViewNotifications}>{t.notify}</button> 
+        <button onClick={handleUserProfile}>
+            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+        </button>
+        {userDetails.role === "Admin" && (
+            <>
+                <button onClick={handleAddProject}>{t.addProject}</button>
+                <button onClick={handleParticipant}>{t.users}</button>
+            </>
+        )} 
+    </div>
+    <img src={logo} alt="Logo" className="logo" />
+</header>
             <div className="container-wrapper">
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">
-                    <img src={logo} alt="Logo" className="logo2" />
                     <form onSubmit={handleAddProject}>
                         <div>
                             <label>{t.projectTitle}:</label>
@@ -325,7 +386,7 @@ export const AddProject = () => {
                         </ul>
                     </div>
                 </div>
-                <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+            </div>
             </div>
             
     );
