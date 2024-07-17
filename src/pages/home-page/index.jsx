@@ -1,20 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
-import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
-
+import { useFirebase } from '../../hooks/FirebaseContext';
 
 Modal.setAppElement('#root');
-
-
 
 const translations = {
     ar: {
@@ -114,28 +108,19 @@ const translations = {
     }
 };
 
-
-
 export const HomePage = () => {
-    const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
     const toGetAuth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
     const { registerUser } = useRegister();
-    const [userDetails, setUserDetails] = useState({
-        userId: '',
-        firstName: '',
-        lastName: '',
-        phoneNumber: '',
-        role: '', // Add role to state
-        uid: ''
-        }
-    );
+    const [projects, setProjects] = useState([]);
+    const [userDetails, setUserDetails] = useState(null);
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
     const [expandedRows, setExpandedRows] = useState([]);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
+    const [roleUserData, setRoleUserData] = useState(null); // State to store the role
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [filter, setFilter] = useState({
         name: '',
@@ -143,44 +128,34 @@ export const HomePage = () => {
         startDate: '',
         endDate: ''
     });
-
     const [language, setLanguage] = useState('ar');
     const locations = translations[language].locations;
 
+    const { getProjects, deleteProjects, getUsers } = useFirebase();
+
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        const unsubscribe = onAuthStateChanged(toGetAuth, async (user) => {
             if (user) {
                 setAuthenticated(true);
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setUserDetails({
-                        userId: userData.id || '',
-                        firstName: userData.firstName || '',
-                        lastName: userData.lastName || '',
-                        phoneNumber: userData.phoneNumber || '',
-                        role: userData.role || '', // Set role
-                        uid: user.uid // Set uid
-                    });
-
-                } else {
-                    console.error('User document not found');
-                }
-
+                const users = await getUsers();
+                const currentUser = users.find(u => u.uid === user.uid);
+                setUserDetails(currentUser);
+                const getAllProjects = await getProjects();
+                setProjects(getAllProjects);
             } else {
-                navigate('/homePage'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage');
             }
         });
 
         return () => unsubscribe();
-    }, [navigate]);
+    }, [toGetAuth, navigate, getUsers]);
 
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
 
-
     useEffect(() => {
+        
         if (projects.length > 0) {
             fetchWorkersInfo();
         }
@@ -191,13 +166,12 @@ export const HomePage = () => {
         let namesParticipants = {};
         for (const project of projects) {
             try {
-                const { bool, participantIds = []} = await isWorker(project);
+                const { bool, participantIds = [] } = await isWorker(project);
                 info[project.id] = { bool, participantIds };
-                
-                // Fetch participant names and store in namesParticipants
+
                 const participantNames = await getNameParticipant(project);
-                namesParticipants[project.id] = participantNames; // Store names by project ID
-            
+                namesParticipants[project.id] = participantNames;
+
             } catch (error) {
                 console.error(`Error fetching workers info for project ${project.id}:`, error);
                 info[project.id] = { bool: false, participantIds: [] };
@@ -207,18 +181,16 @@ export const HomePage = () => {
         setWorkersInfo(info);
         setNameParticipants(namesParticipants);
     };
-    
-
 
     const handleUserProfile = () => {
         navigate('/userProfile');
     };
 
-    const handleAddProject = () => {
+    const handleAddProjectPage = () => {
         navigate('/addProject');
     };
 
-    const handleParticipant = () => {
+    const usersPage = () => {
         navigate('/participant');
     };
 
@@ -239,28 +211,10 @@ export const HomePage = () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
-                // Delete the project document
-                const projectDocRef = doc(db, "projects", projectId);
-                await deleteDoc(projectDocRef);
-
-                // Retrieve all users
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                usersSnapshot.forEach(async (userDoc) => {
-                    const userData = userDoc.data();
-                    if (userData.projects && userData.projects.includes(projectTitle)) {
-                        // Remove the project title from the user's projects array
-                        console.log("deleted");
-                        const userDocRef = doc(db, "users", userDoc.id);
-                        await updateDoc(userDocRef, {
-                            projects: arrayRemove(projectTitle)
-                        });
-                    } else {
-                        console.log("not deleted");
-                    }
-                });
-
+                console.log(projects);
+                const project = projects.find(p => p.id === projectId);
+                await deleteProjects(project);
                 alert("Project deleted successfully.");
-                // Refresh the page or remove the project from the state
                 window.location.reload();
             } catch (error) {
                 console.error("Error deleting document: ", error);
@@ -291,7 +245,7 @@ export const HomePage = () => {
         window.print();
     };
 
-    const applyFilter = () => {
+    const applyFilter = async () => {
         let filtered = projects;
 
         if (filter.name) {
@@ -323,40 +277,29 @@ export const HomePage = () => {
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
 
-
-    if (!authenticated) {
+    if (!authenticated || !userDetails) {
         return null; // Or a loading spinner while checking authentication
     }
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
-    
     const isParticipant = (project) => {
-        const currentUser = userDetails.firstName + " " + userDetails.lastName;
+        const currentUser = `${userDetails.firstName} ${userDetails.lastName}`;
         if (currentUser && project.participants) {
             return project.participants.includes(currentUser);
         }
         return false;
-      };
-     
+    };
 
     const isWorker = async (project) => {
         let bool = false;
         let participantIds = [];
         if (project.participants && project.participants.length > 0) {
+            const users = await getUsers();
             for (const participantId of project.participants) {
                 try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = userData.firstName + " " + userData.lastName;
+                    for (const user of users) {
+                        const fullName = `${user.firstName} ${user.lastName}`;
                         if (fullName === participantId) {
-                            if (userData.role === 'Worker') {
+                            if (user.role === 'Worker') {
                                 bool = true;
                                 participantIds.push(fullName);
                             }
@@ -368,19 +311,16 @@ export const HomePage = () => {
             }
         }
         return { bool, participantIds };
-        
     };
 
     const getNameParticipant = async (project) => {
-        
         let participantIds = [];
         if (project.participants && project.participants.length > 0) {
+            const users = await getUsers();
             for (const participantId of project.participants) {
                 try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = `${userData.firstName} ${userData.lastName}`;
+                    for (const user of users) {
+                        const fullName = `${user.firstName} ${user.lastName}`;
                         if (fullName === participantId) {
                             participantIds.push(fullName);
                         }
@@ -390,11 +330,11 @@ export const HomePage = () => {
                 }
             }
         }
-        return participantIds; // Or any default value you prefer when locations is undefined or not an array
+        return participantIds;
     };
 
     const openModal = (userData) => {
-        setSelectedUserData(userData);
+        
         setModalIsOpen(true);
     };
 
@@ -403,42 +343,137 @@ export const HomePage = () => {
         setSelectedUserData(null);
     };
 
-
     const userInfo = async (name) => {
         try {
-            const usersSnapshot = await getDocs(collection(db, "users"));
-            for (const userDoc of usersSnapshot.docs) {
-                const userData = userDoc.data();
-                const dataName = `${userData.firstName} ${userData.lastName}`;
-                if (dataName === name) {
-                    openModal(userData);
-                }
+            console.log("userInfo: ", name);
+            const users = await getUsers();
+            const user = users.find(user => `${user.firstName} ${user.lastName}` === name);
+            if (user) {
+                
+                setSelectedUserData(user);
+                
+                    
+                    openModal(user);
+                
+                
             }
         } catch (error) {
             console.error(`Error fetching user data for ${name}:`, error);
         }
     };
- 
+
     
+
     const renderUserInfo = (userData) => {
         return (
             <div>
                 <>
-                    <p>UserName: {userData.username}</p>
-                    <p>firstName: {userData.firstName}</p>
-                    <p>LastName: {userData.lastName}</p>
-                    <p>Email: {userData.email}</p>
-                    <p>Role: {userData.role}</p>
-                    <p>Phone: {userData.phoneNumber}</p>
-                    <p>Address: {userData.location}</p>
-                    <p>BirthDate: {userData.birthDate}</p>
-                    <p>Gender: {userData.gender}</p>
-                    <p>ID: {userData.id}</p>
-                </>               
+                    <table>
+                        <thead>
+                            <tr>
+                                
+                                <th>UserName</th>
+                                <th>firstName</th>
+                                <th>LastName</th>
+                                <th>Role</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>BirthDate</th>
+                                <th>Gender</th>
+                                <th>ID</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{userData.username}</td>
+                                <td>{userData.firstName}</td>
+                                <td>{userData.lastName}</td>
+                                <td>{userData.role}</td>
+                                <td>{userData.phoneNumber}</td>
+                                <td>{userData.location}</td>
+                                <td>{userData.birthDate}</td>
+                                <td>{userData.gender}</td>
+                                <td>{userData.id}</td>
+                                <td>{userData.email}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </>
             </div>
         );
     };
 
+    const renderSpecificProject = (project) => {
+        return (
+            <div>
+                <table className="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>{t.expandedContent.projectTitle}</th>
+                            <th>{t.expandedContent.startDate}</th>
+                            <th>{t.expandedContent.endDate}</th>
+                            <th>{t.expandedContent.location}</th>
+                            <th>{t.expandedContent.description}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colSpan="5">
+                                <td>{project.projectTitle}</td>
+                                <td>{project.startDate}</td>
+                                <td>{project.endDate}</td>
+                                <td>{renderLocations(project.locations)}</td>
+                                <td>{project.description}</td>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
+                    <>
+                        <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}</p>
+                        <p>
+                            <strong>{t.expandedContent.participants}:</strong>
+                            <table className='participants-table' >
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>User</th>           
+                                                </tr>
+                                            </thead>
+                                            {nameParticipants[project.id] ? (
+                                            <div>
+                                            {nameParticipants[project.id].map((name, index) => (
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{index +1}</td>
+                                                        <button key={index} onClick={() => userInfo(name)}>{name}</button>          
+                                                    </tr>
+                                                </tbody>
+                                            ))}
+                                    </div>
+                            ) : (
+                                <span>Loading...</span>
+                            )}
+                            </table>
+                        </p>
+                    </>
+                )}
+                <Modal
+                    isOpen={modalIsOpen}
+                    onRequestClose={closeModal}
+                    contentLabel="User Information"
+                >
+                    {selectedUserData && renderUserInfo(selectedUserData)}
+                    <button onClick={closeModal}>Close</button>
+                </Modal>
+                <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
+                {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest')) && (
+                    <button>{t.expandedContent.register}</button>
+                )}
+            </div>
+        )
+    }
 
     const handleRegisterAdmin = async () => {
         try {
@@ -463,7 +498,6 @@ export const HomePage = () => {
         navigate('/notifications');
     };
 
-
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
     };
@@ -484,8 +518,8 @@ export const HomePage = () => {
                         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
                         {userDetails.role === 'Guest' && (
                             <>
-                                 <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
-                                 <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
+                                <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
+                                <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
                             </>
                         )}
                         <button onClick={handleUserProfile}>
@@ -493,11 +527,11 @@ export const HomePage = () => {
                         </button>
                         {userDetails.role === "Admin" && (
                             <>
-                                <button onClick={handleAddProject}>{t.addProject}</button>
-                                <button onClick={handleParticipant}>{t.users}</button>
+                                <button onClick={handleAddProjectPage}>{t.addProject}</button>
+                                <button onClick={usersPage}>{t.users}</button>
                             </>
-                        )} 
-                        <button onClick={handleViewNotifications}>{t.notify}</button> 
+                        )}
+                        <button onClick={handleViewNotifications}>{t.notify}</button>
                     </div>
                 </header>
                 <main className="main-content">
@@ -510,10 +544,10 @@ export const HomePage = () => {
                             onChange={handleFilterChange}
                         />
                         <select name="location" value={filter.location} onChange={handleFilterChange}>
-                        <option value="">{t.filter.location}</option>
+                            <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
-                            <option key={location} value={location}>{location}</option>
-                        ))}
+                                <option key={location} value={location}>{location}</option>
+                            ))}
                         </select>
                         <input
                             type="date"
@@ -527,8 +561,8 @@ export const HomePage = () => {
                             value={filter.endDate}
                             onChange={handleFilterChange}
                         />
-                            <button onClick={applyFilter}>{t.filter.applyFilter}</button>
-                        </div>
+                        <button onClick={applyFilter}>{t.filter.applyFilter}</button>
+                    </div>
                     <table className="projects-table">
                         <thead>
                             <tr>
@@ -541,11 +575,11 @@ export const HomePage = () => {
                                 <th>{t.filter.Workers}</th>
                                 <th>{t.filter.image}</th>
                                 {(userDetails.role === 'Admin' || userDetails.role === 'Worker') && (
-                                <>
-                                     <th>{t.tableHeaders.edit}</th>
-                                     <th>{t.tableHeaders.delete}</th>
-                                </>
-                            )}                
+                                    <>
+                                        <th>{t.tableHeaders.edit}</th>
+                                        <th>{t.tableHeaders.delete}</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -556,7 +590,7 @@ export const HomePage = () => {
                                         <td>{project.projectTitle}</td>
                                         <td>{project.startDate}</td>
                                         <td>{project.endDate}</td>
-                                        <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
+                                        <td>{renderLocations(project.locations)}</td>
                                         <td>{project.description}</td>
                                         <td>
                                             {workersInfo[project.id] ? (
@@ -574,62 +608,29 @@ export const HomePage = () => {
                                             )}
                                         </td>
                                         <td>
-                                            {project.imageUrl ? ( 
+                                            {project.imageUrl ? (
                                                 <img src={project.imageUrl} alt="Project" className="project-image" />
-                                            ) : ( 
+                                            ) : (
                                                 'No Image'
                                             )}
-                                        </td> 
+                                        </td>
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                        <>
-                                            <td>
-                                                <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
-                                            </td>
-                                            <td>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
-                                            </td>
-                                        </>
-                                    )}
+                                            <>
+                                                <td>
+                                                    <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
+                                                </td>
+                                                <td>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
+                                                </td>
+                                            </>
+                                        )}
                                     </tr>
                                     {expandedRows.includes(project.id) && (
                                         <tr className="expanded-row">
                                             <td colSpan="10">
                                                 <div className="expanded-content">
-                                                    <p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p>
-                                                    <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}</p>
-                                                    <p><strong>{t.expandedContent.endDate}:</strong> {project.endDate}</p>
-                                                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location) }</p>
-                                                    <p><strong>{t.expandedContent.description}:</strong> {project.description}</p>
-                                                    {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                                        <>
-                                                            <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}</p>
-                                                            <p>
-                                                                <strong>{t.expandedContent.participants}:</strong>
-                                                                {nameParticipants[project.id] ? (
-                                                                    <div>
-                                                                        {nameParticipants[project.id].map((name, index) => (
-                                                                            <button key={index} onClick={() => userInfo(name)} > {name}</button>
-                                                                        ))}
-                                                                    </div>
-                                                                ):(
-                                                                    <span>Loading...</span>
-                                                                )
-                                                            }
-                                                            </p>
-                                                        </>
-                                                    )}
-                                                    <Modal
-                                                        isOpen={modalIsOpen}
-                                                        onRequestClose={closeModal}
-                                                        contentLabel="User Information"
-                                                    >
-                                                        {selectedUserData && renderUserInfo(selectedUserData)}
-                                                        <button onClick={closeModal}>Close</button>
-                                                    </Modal>                             
-                                                    <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                    {((userDetails.role === 'Worker' && !isParticipant(project) )|| (userDetails.role === 'Guest')) && (
-                                                        <button>{t.expandedContent.register}</button>
-                                                    )}
+                                                    
+                                                {renderSpecificProject(project)}
                                                 </div>
                                             </td>
                                         </tr>
@@ -651,3 +652,5 @@ export const HomePage = () => {
 };
 
 export default HomePage;
+
+
