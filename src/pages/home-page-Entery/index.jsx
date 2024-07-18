@@ -203,8 +203,7 @@ export const HomePageEntery = () => {
     }
     const t = translations[language];
     return (
-        <div className="dashboard">
-            <header className="header">
+<div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>            <header className="header">
                 <div className="header-left">
                     <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
                 </div>
@@ -267,7 +266,7 @@ export const HomePageEntery = () => {
                                     ) : (
                                         <span>No Image</span>
                                     )}
-                                        {/* <h1>{project.projectTitle}<br /></h1> */}
+                                        <h1>{project.projectTitle}<br /></h1>
                                         {project.startDate} - {project.endDate}<br />
                                         {renderLocations(project.location)} {/* Updated to show multiple locations */}<br />
                                         {/* {project.description}<br /> */}
@@ -298,3 +297,46 @@ export const HomePageEntery = () => {
 };
 
 export default HomePageEntery;
+
+
+
+
+
+
+
+
+
+
+
+
+
+// <table className="projects-table">
+// <tbody>
+// <tr>
+// <td colSpan="10">
+// <div className="projects-grid">
+//     {filteredProjects.map((project, index) => (
+//      <div className="project-card" key={project.id}>
+//         <React.Fragment key={project.id}>
+//             {expandedRows.includes(project.id) && (
+//                 <tr className="expanded-row">
+//                     <td colSpan="7">
+//                         <div className="expanded-content">
+//                         <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
+//                             <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
+//                             <p><strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+//                             <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+//                             <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p>
+//                             <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
+                            
+//                             <button onClick={handleSignIn}>{translations[language].toRegister}</button>
+//                             {/* Add more project details here */}
+//                         </div>
+//                     </td>
+//                 </tr>
+//             )}
+//         </React.Fragment>
+//     ))}
+// </tbody>
+// </table>
+// </main>

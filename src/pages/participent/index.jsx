@@ -232,7 +232,7 @@ const handleUserProfile = () => {
 
 const t = translations[language];
   return (
-    <div className="users-list-dashboard">
+    <div className={`users-list-dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
                 <header className="header">
                         {/* <button onClick={handlePrint}>{t.tableHeaders.print}</button> */}
                         <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
@@ -300,16 +300,16 @@ const t = translations[language];
         <div className="user-details-popup">
           <div className="user-details-content">
             <h2>User Details</h2>
-            <p>{selectedUser.username} :<strong>{t.username}</strong></p>
-            <p>{selectedUser.firstName} :<strong>{t.firstName}</strong></p>
-            <p>{selectedUser.lastName} : <strong>{t.lastName}</strong></p>
-            <p>{selectedUser.email} :<strong>{t.email}</strong></p>
-            <p>{selectedUser.location} :<strong>{t.location}</strong></p>
-            <p>{selectedUser.birthDate} :<strong>{t.birthDate}</strong></p>
-            <p>{selectedUser.gender} :<strong>{t.gender}</strong></p>
-            <p><strong>{t.phoneNumber} :</strong> {selectedUser.phoneNumber}</p>
-            <p><strong>{t.id} :</strong> {selectedUser.id}</p>
-            <p>{selectedUser.role}: <strong>{t.role}</strong></p>
+            <p><strong>{t.username}:</strong> {selectedUser.username}</p>
+            <p><strong>{t.firstName}:</strong> {selectedUser.firstName}</p>
+            <p><strong>{t.lastName}:</strong> {selectedUser.lastName}</p>
+            <p><strong>{t.email}:</strong> {selectedUser.email}</p>
+            <p><strong>{t.location}:</strong> {selectedUser.location}</p>
+            <p><strong>{t.birthDate}:</strong> {selectedUser.birthDate}</p>
+            <p><strong>{t.gender}:</strong> {selectedUser.gender}</p>
+            <p><strong>{t.phoneNumber}:</strong> {selectedUser.phoneNumber}</p>
+            <p><strong>{t.id}:</strong> {selectedUser.id}</p>
+            <p><strong>{t.role}:</strong> {selectedUser.role}</p>
             <div className="popup-buttons">
               <button onClick={handlePrint} className="print-popup-button">{t.print}</button>
               <button onClick={() => setSelectedUser(null)} className="close-popup-button">Close</button>

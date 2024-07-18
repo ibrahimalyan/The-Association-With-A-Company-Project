@@ -546,8 +546,8 @@ export const HomePage = () => {
     return (
         <>
             <div id="root"></div>
-            <div className="dashboard">
-                <header className="header">
+            <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
+            <header className="header">
                         <button onClick={toggleLanguage}>{t.changeLanguage}</button>
                         <button onClick={handlePrint}>{t.tableHeaders.print}</button>
                         <div className="header-center">

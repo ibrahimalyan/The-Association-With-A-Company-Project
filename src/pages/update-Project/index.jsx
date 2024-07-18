@@ -350,8 +350,8 @@ export const EditProject = () => {
 
 
     return (
-            <div className="container-wrapper">         
-                <img src={bird1} alt="bird" className="bird bird1" />
+<div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
+<img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">

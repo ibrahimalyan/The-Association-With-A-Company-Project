@@ -22,7 +22,8 @@ const translations = {
         role: "الدور",
         close: "إغلاق",
         save: "حفظ",
-        changeLanguage: "עברית"
+        changeLanguage: "עברית",
+        dir:"rtl"
     },
     heb: {
         firstName: "שם פרטי",
@@ -37,7 +38,8 @@ const translations = {
         role: "תפקיד",
         close: "סגור",
         save: "שמור",
-        changeLanguage: "العربية"
+        changeLanguage: "العربية",
+        dir:"rtl"
     }
 };
 
@@ -119,7 +121,7 @@ export const UserProfile = () => {
     }
 
     return (
-        <div className="user-profile-container">
+        <div className="user-profile-container" dir ={t.dir}>
             <img src={duck1} alt="duck" className="duck duck1" />
             <img src={duck1} alt="duck" className="duck duck2" />
             <img src={duck1} alt="duck" className="duck duck3" />
@@ -142,7 +144,7 @@ export const UserProfile = () => {
                     <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
                     <label className="form-label">{t.gender}:</label>
                     <input className="form-input" type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
-                    <label className="form-label">{t.gender}:</label>
+                    <label className="form-label">{t.birthDate}:</label>
                     <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
                     <label className="form-label">{t.location}:</label>
                     <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />

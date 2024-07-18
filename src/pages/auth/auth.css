@@ -19,6 +19,7 @@ body {
     justify-content: center;
     align-items: center;
     margin-bottom: 150px;
+    direction: rtl;
 }
 
 .auth-wrapper .container {
@@ -60,6 +61,7 @@ body {
     background: rgba(255, 255, 255, 0.15);
     color: black;   
     height: 30px;
+    text-align: right;
 }
 
 .auth-wrapper input {
@@ -73,6 +75,7 @@ body {
 
 .auth-wrapper input::placeholder {
     color: rgba(255, 255, 255, 0.7);
+    text-align: right;
 }
 
 .auth-wrapper button {
