@@ -4,17 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
-import { useProjects } from '../../hooks/useGetProjectsInfo';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
+import { getStorage, ref, deleteObject } from 'firebase/storage';
 
 
 Modal.setAppElement('#root');
-
-
 
 const translations = {
     ar: {
@@ -114,12 +112,12 @@ const translations = {
     }
 };
 
-
-
 export const HomePage = () => {
-    const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
     const toGetAuth = getAuth();
+    const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
     const { registerUser } = useRegister();
     const [userDetails, setUserDetails] = useState({
@@ -148,67 +146,95 @@ export const HomePage = () => {
     const locations = translations[language].locations;
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = toGetAuth.currentUser;
             if (user) {
                 setAuthenticated(true);
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setUserDetails({
-                        userId: userData.id || '',
-                        firstName: userData.firstName || '',
-                        lastName: userData.lastName || '',
-                        phoneNumber: userData.phoneNumber || '',
-                        role: userData.role || '', // Set role
-                        uid: user.uid // Set uid
+                try {
+                    const [userDoc, projectDocs, usersDocs] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDocs(collection(db, 'projects')),
+                        getDocs(collection(db, 'users'))
+                    ]);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserDetails({
+                            userId: userData.id || '',
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            phoneNumber: userData.phoneNumber || '',
+                            role: userData.role || '', // Set role
+                            uid: user.uid // Set uid
+                        });
+                    } else {
+                        console.error('User document not found');
+                    }
+
+                    const projectsList = [];
+                    projectDocs.forEach((doc) => {
+                        projectsList.push({ id: doc.id, ...doc.data() });
                     });
 
-                } else {
-                    console.error('User document not found');
-                }
+                    const usersList = [];
+                    
+                    usersDocs.forEach((userDoc) => {
+                       usersList.push({ id: userDoc.id, ...userDoc.data() });
+                    });
 
+                    const workersInfo = {};
+                    const nameParticipants = {};
+
+                    // console.log("projectsList", projectsList);
+                    // console.log("usersList", usersList);
+                    projectsList.forEach((project) => {
+                        const workerParticipants = [];
+                        const participantNames = [];
+
+                        if (project.participants && project.participants.length > 0) {
+                            project.participants.forEach((fullName) => {
+                            participantNames.push(fullName);
+                            usersList.forEach((user) => {
+                                const userFullName = user.firstName + ' ' + user.lastName;
+                                if (userFullName === fullName) {
+                                    if (user.role === 'Worker') {
+                                        workerParticipants.push(fullName);
+                                    }
+                                }
+                            });
+                        })
+
+                        workersInfo[project.id] = { bool: workerParticipants.length > 0, participantIds: workerParticipants };
+                        nameParticipants[project.id] = participantNames;
+                        console.log("workerInfo: ", workersInfo[project.id])   
+                    }
+                    });
+
+                    setProjects(projectsList);
+                    setUsers(usersList);
+                    setWorkersInfo(workersInfo);
+                    setNameParticipants(nameParticipants);
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
             } else {
                 navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
+            setLoading(false);
+        };
+
+        // Fetch data on mount and when auth state changes
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
 
         return () => unsubscribe();
-    }, [navigate]);
+    }, [navigate, toGetAuth]);
 
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
-
-
-    useEffect(() => {
-        if (projects.length > 0) {
-            fetchWorkersInfo();
-        }
-    }, [projects]);
-
-    const fetchWorkersInfo = async () => {
-        let info = {};
-        let namesParticipants = {};
-        for (const project of projects) {
-            try {
-                const { bool, participantIds = []} = await isWorker(project);
-                info[project.id] = { bool, participantIds };
-                
-                // Fetch participant names and store in namesParticipants
-                const participantNames = await getNameParticipant(project);
-                namesParticipants[project.id] = participantNames; // Store names by project ID
-            
-            } catch (error) {
-                console.error(`Error fetching workers info for project ${project.id}:`, error);
-                info[project.id] = { bool: false, participantIds: [] };
-                namesParticipants[project.id] = [];
-            }
-        }
-        setWorkersInfo(info);
-        setNameParticipants(namesParticipants);
-    };
-    
-
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -239,6 +265,20 @@ export const HomePage = () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
+
+                console.log("projects", projects);
+                const storage = getStorage();
+                projects.forEach(async (project) => {
+                    if (project.id === projectId) {
+                        const imageFileName = project.imageName;
+                        console.log("imageFileName", imageFileName , "\nprojectTitle", projectTitle);
+                        if (imageFileName) {
+                            const imageRef = ref(storage, `images/${projectTitle}/${imageFileName}`);
+                            await deleteObject(imageRef);
+                        }
+                    }
+                });
+                
                 // Delete the project document
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
@@ -323,74 +363,20 @@ export const HomePage = () => {
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
 
-
     if (!authenticated) {
-        return null; // Or a loading spinner while checking authentication
+        return null; 
     }
 
     if (loading) {
         return <div>Loading...</div>;
     }
 
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
-    
     const isParticipant = (project) => {
-        const currentUser = userDetails.firstName + " " + userDetails.lastName;
+        const currentUser = `${userDetails.firstName} ${userDetails.lastName}`;
         if (currentUser && project.participants) {
             return project.participants.includes(currentUser);
         }
         return false;
-      };
-     
-
-    const isWorker = async (project) => {
-        let bool = false;
-        let participantIds = [];
-        if (project.participants && project.participants.length > 0) {
-            for (const participantId of project.participants) {
-                try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = userData.firstName + " " + userData.lastName;
-                        if (fullName === participantId) {
-                            if (userData.role === 'Worker') {
-                                bool = true;
-                                participantIds.push(fullName);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error fetching user data for participant ${participantId}:`, error);
-                }
-            }
-        }
-        return { bool, participantIds };
-        
-    };
-
-    const getNameParticipant = async (project) => {
-        
-        let participantIds = [];
-        if (project.participants && project.participants.length > 0) {
-            for (const participantId of project.participants) {
-                try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = `${userData.firstName} ${userData.lastName}`;
-                        if (fullName === participantId) {
-                            participantIds.push(fullName);
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error fetching user data for participant ${participantId}:`, error);
-                }
-            }
-        }
-        return participantIds; // Or any default value you prefer when locations is undefined or not an array
     };
 
     const openModal = (userData) => {
@@ -402,7 +388,6 @@ export const HomePage = () => {
         setModalIsOpen(false);
         setSelectedUserData(null);
     };
-
 
     const userInfo = async (name) => {
         try {
@@ -418,8 +403,7 @@ export const HomePage = () => {
             console.error(`Error fetching user data for ${name}:`, error);
         }
     };
- 
-    
+
     const renderUserInfo = (userData) => {
         return (
             <div>
@@ -434,11 +418,10 @@ export const HomePage = () => {
                     <p>BirthDate: {userData.birthDate}</p>
                     <p>Gender: {userData.gender}</p>
                     <p>ID: {userData.id}</p>
-                </>               
+                </>
             </div>
         );
     };
-
 
     const handleRegisterAdmin = async () => {
         try {
@@ -463,7 +446,6 @@ export const HomePage = () => {
         navigate('/notifications');
     };
 
-
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
     };
@@ -484,8 +466,8 @@ export const HomePage = () => {
                         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
                         {userDetails.role === 'Guest' && (
                             <>
-                                 <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
-                                 <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
+                                <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
+                                <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
                             </>
                         )}
                         <button onClick={handleUserProfile}>
@@ -496,8 +478,8 @@ export const HomePage = () => {
                                 <button onClick={handleAddProject}>{t.addProject}</button>
                                 <button onClick={handleParticipant}>{t.users}</button>
                             </>
-                        )} 
-                        <button onClick={handleViewNotifications}>{t.notify}</button> 
+                        )}
+                        <button onClick={handleViewNotifications}>{t.notify}</button>
                     </div>
                 </header>
                 <main className="main-content">
@@ -510,10 +492,10 @@ export const HomePage = () => {
                             onChange={handleFilterChange}
                         />
                         <select name="location" value={filter.location} onChange={handleFilterChange}>
-                        <option value="">{t.filter.location}</option>
+                            <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
-                            <option key={location} value={location}>{location}</option>
-                        ))}
+                                <option key={location} value={location}>{location}</option>
+                            ))}
                         </select>
                         <input
                             type="date"
@@ -527,8 +509,8 @@ export const HomePage = () => {
                             value={filter.endDate}
                             onChange={handleFilterChange}
                         />
-                            <button onClick={applyFilter}>{t.filter.applyFilter}</button>
-                        </div>
+                        <button onClick={applyFilter}>{t.filter.applyFilter}</button>
+                    </div>
                     <table className="projects-table">
                         <thead>
                             <tr>
@@ -541,11 +523,11 @@ export const HomePage = () => {
                                 <th>{t.filter.Workers}</th>
                                 <th>{t.filter.image}</th>
                                 {(userDetails.role === 'Admin' || userDetails.role === 'Worker') && (
-                                <>
-                                     <th>{t.tableHeaders.edit}</th>
-                                     <th>{t.tableHeaders.delete}</th>
-                                </>
-                            )}                
+                                    <>
+                                        <th>{t.tableHeaders.edit}</th>
+                                        <th>{t.tableHeaders.delete}</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -574,22 +556,22 @@ export const HomePage = () => {
                                             )}
                                         </td>
                                         <td>
-                                            {project.imageUrl ? ( 
+                                            {project.imageUrl ? (
                                                 <img src={project.imageUrl} alt="Project" className="project-image" />
-                                            ) : ( 
+                                            ) : (
                                                 'No Image'
                                             )}
-                                        </td> 
+                                        </td>
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                        <>
-                                            <td>
-                                                <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
-                                            </td>
-                                            <td>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
-                                            </td>
-                                        </>
-                                    )}
+                                            <>
+                                                <td>
+                                                    <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
+                                                </td>
+                                                <td>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
+                                                </td>
+                                            </>
+                                        )}
                                     </tr>
                                     {expandedRows.includes(project.id) && (
                                         <tr className="expanded-row">
@@ -598,23 +580,23 @@ export const HomePage = () => {
                                                     <p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p>
                                                     <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}</p>
                                                     <p><strong>{t.expandedContent.endDate}:</strong> {project.endDate}</p>
-                                                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location) }</p>
+                                                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}</p>
                                                     <p><strong>{t.expandedContent.description}:</strong> {project.description}</p>
                                                     {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                                         <>
-                                                            <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}</p>
+                                                            <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants ? project.participants.length : 0}</p>
                                                             <p>
                                                                 <strong>{t.expandedContent.participants}:</strong>
+
                                                                 {nameParticipants[project.id] ? (
                                                                     <div>
                                                                         {nameParticipants[project.id].map((name, index) => (
                                                                             <button key={index} onClick={() => userInfo(name)} > {name}</button>
                                                                         ))}
                                                                     </div>
-                                                                ):(
+                                                                ) : (
                                                                     <span>Loading...</span>
-                                                                )
-                                                            }
+                                                                )}
                                                             </p>
                                                         </>
                                                     )}
@@ -625,9 +607,9 @@ export const HomePage = () => {
                                                     >
                                                         {selectedUserData && renderUserInfo(selectedUserData)}
                                                         <button onClick={closeModal}>Close</button>
-                                                    </Modal>                             
+                                                    </Modal>
                                                     <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                    {((userDetails.role === 'Worker' && !isParticipant(project) )|| (userDetails.role === 'Guest')) && (
+                                                    {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest')) && (
                                                         <button>{t.expandedContent.register}</button>
                                                     )}
                                                 </div>
