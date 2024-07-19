@@ -5,11 +5,12 @@ import { getAuth, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, addDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
+import { getStorage, ref, deleteObject } from 'firebase/storage';
 
 
 Modal.setAppElement('#root');
@@ -117,9 +118,12 @@ const translations = {
 
 
 export const HomePage = () => {
-    const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
     const toGetAuth = getAuth();
+    const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [notifies, setNotifies] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
     const { registerUser } = useRegister();
     const [userDetails, setUserDetails] = useState({
@@ -128,7 +132,8 @@ export const HomePage = () => {
         lastName: '',
         phoneNumber: '',
         role: '', // Add role to state
-        uid: ''
+        uid: '',
+        username: ''
         }
     );
     const [workersInfo, setWorkersInfo] = useState({});
@@ -149,67 +154,101 @@ export const HomePage = () => {
     const locations = translations[language].locations;
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = toGetAuth.currentUser;
             if (user) {
                 setAuthenticated(true);
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    setUserDetails({
-                        userId: userData.id || '',
-                        firstName: userData.firstName || '',
-                        lastName: userData.lastName || '',
-                        phoneNumber: userData.phoneNumber || '',
-                        role: userData.role || '', // Set role
-                        uid: user.uid // Set uid
+                try {
+                    const [userDoc, projectDocs, usersDocs, registProject] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDocs(collection(db, 'projects')),
+                        getDocs(collection(db, 'users')),
+                        getDocs(collection(db,'projectsRegisters'))
+                    ]);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserDetails({
+                            userId: userData.id || '',
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            phoneNumber: userData.phoneNumber || '',
+                            role: userData.role || '', // Set role
+                            uid: user.uid, // Set uid
+                            username: userData.username || ''
+                        });
+                    } else {
+                        console.error('User document not found');
+                    }
+
+                    const projectsList = [];
+                    projectDocs.forEach((doc) => {
+                        projectsList.push({ id: doc.id, ...doc.data() });
                     });
 
-                } else {
-                    console.error('User document not found');
-                }
+                    const usersList = [];
+                    
+                    usersDocs.forEach((userDoc) => {
+                       usersList.push({ id: userDoc.id, ...userDoc.data() });
+                    });
 
+                    const registProjects = [];
+                    registProject.forEach((registDoc) => {
+                        registProjects.push({ id: registDoc.id, ...registDoc.data() });
+                    });
+
+                    const workersInfo = {};
+                    const nameParticipants = {};
+
+                    projectsList.forEach((project) => {
+                        const workerParticipants = [];
+                        const participantNames = [];
+
+                        if (project.participants && project.participants.length > 0) {
+                            project.participants.forEach((fullName) => {
+                            participantNames.push(fullName);
+                            usersList.forEach((user) => {
+                                const userFullName = user.firstName + ' ' + user.lastName;
+                                if (userFullName === fullName) {
+                                    if (user.role === 'Worker') {
+                                        workerParticipants.push(fullName);
+                                    }
+                                }
+                            });
+                        })
+
+                        workersInfo[project.id] = { bool: workerParticipants.length > 0, participantIds: workerParticipants };
+                        nameParticipants[project.id] = participantNames;
+                           
+                    }
+                    });
+
+                    setProjects(projectsList);
+                    setUsers(usersList);
+                    setWorkersInfo(workersInfo);
+                    setNameParticipants(nameParticipants);
+                    setNotifies(registProjects)
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
             } else {
-                navigate('/homePage'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage'); 
             }
+            setLoading(false);
+        };
+
+        
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
 
         return () => unsubscribe();
-    }, [navigate]);
+    }, [navigate, toGetAuth]);
 
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
-
-
-    useEffect(() => {
-        if (projects.length > 0) {
-            fetchWorkersInfo();
-        }
-    }, [projects]);
-
-    const fetchWorkersInfo = async () => {
-        let info = {};
-        let namesParticipants = {};
-        for (const project of projects) {
-            try {
-                const { bool, participantIds = []} = await isWorker(project);
-                info[project.id] = { bool, participantIds };
-                
-                // Fetch participant names and store in namesParticipants
-                const participantNames = await getNameParticipant(project);
-                namesParticipants[project.id] = participantNames; // Store names by project ID
-            
-            } catch (error) {
-                console.error(`Error fetching workers info for project ${project.id}:`, error);
-                info[project.id] = { bool: false, participantIds: [] };
-                namesParticipants[project.id] = [];
-            }
-        }
-        setWorkersInfo(info);
-        setNameParticipants(namesParticipants);
-    };
-    
-
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -240,18 +279,30 @@ export const HomePage = () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
+                console.log("projects", projects);
+                const storage = getStorage();
+                projects.forEach(async (project) => {
+                    if (project.id === projectId) {
+                        const imageFileName = project.imageName;
+                        console.log("imageFileName", imageFileName , "\nprojectTitle", projectTitle);
+                        if (imageFileName) {
+                            const imageRef = ref(storage, `images/${projectTitle}/${imageFileName}`);
+                            await deleteObject(imageRef);
+                        }
+                    }
+                });
                 // Delete the project document
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
 
                 // Retrieve all users
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                usersSnapshot.forEach(async (userDoc) => {
-                    const userData = userDoc.data();
-                    if (userData.projects && userData.projects.includes(projectTitle)) {
+                // const usersSnapshot = await getDocs(collection(db, "users"));
+                users.forEach(async (user) => {
+                    
+                    if (user.projects && user.projects.includes(projectTitle)) {
                         // Remove the project title from the user's projects array
                         console.log("deleted");
-                        const userDocRef = doc(db, "users", userDoc.id);
+                        const userDocRef = doc(db, "users", user.id);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
@@ -259,6 +310,7 @@ export const HomePage = () => {
                         console.log("not deleted");
                     }
                 });
+
 
                 alert("Project deleted successfully.");
                 // Refresh the page or remove the project from the state
@@ -332,67 +384,15 @@ export const HomePage = () => {
     if (loading) {
         return <div>Loading...</div>;
     }
-
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
     
     const isParticipant = (project) => {
-        const currentUser = userDetails.firstName + " " + userDetails.lastName;
+        const currentUser = `${userDetails.firstName} ${userDetails.lastName}`;
         if (currentUser && project.participants) {
             return project.participants.includes(currentUser);
         }
         return false;
-      };
-     
-
-    const isWorker = async (project) => {
-        let bool = false;
-        let participantIds = [];
-        if (project.participants && project.participants.length > 0) {
-            for (const participantId of project.participants) {
-                try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = userData.firstName + " " + userData.lastName;
-                        if (fullName === participantId) {
-                            if (userData.role === 'Worker') {
-                                bool = true;
-                                participantIds.push(fullName);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error fetching user data for participant ${participantId}:`, error);
-                }
-            }
-        }
-        return { bool, participantIds };
-        
     };
-
-    const getNameParticipant = async (project) => {
-        
-        let participantIds = [];
-        if (project.participants && project.participants.length > 0) {
-            for (const participantId of project.participants) {
-                try {
-                    const usersSnapshot = await getDocs(collection(db, "users"));
-                    for (const userDoc of usersSnapshot.docs) {
-                        const userData = userDoc.data();
-                        const fullName = `${userData.firstName} ${userData.lastName}`;
-                        if (fullName === participantId) {
-                            participantIds.push(fullName);
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error fetching user data for participant ${participantId}:`, error);
-                }
-            }
-        }
-        return participantIds; // Or any default value you prefer when locations is undefined or not an array
-    };
+ 
 
     const openUserModal = (userData) => {
         setSelectedUserData(userData);
@@ -488,6 +488,7 @@ export const HomePage = () => {
                                                 </p>
                                             </>
                                         )}
+                                        {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
                                          <Modal 
                                         //  isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="User Information"
                                          >
@@ -505,7 +506,7 @@ export const HomePage = () => {
                                             )}
                                         </p>
                                         {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
-                                            <button>{t.expandedContent.register}</button>
+                                            <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
                                         )}
               </div>
         );
@@ -536,6 +537,96 @@ export const HomePage = () => {
         navigate('/notifications');
     };
 
+    
+    const handleAddNotification = async(project, isAdmin) => {
+        
+        const adminsList = [];
+        const workerList = [];
+        if (isAdmin){  
+            project.participants.forEach((participantName) => {
+                users.forEach((user) => {
+                    const userFullName = `${user.firstName} ${user.lastName}`;
+                    if (userFullName === participantName)
+                        if (user.role === "Admin")
+                            adminsList.push(user.uid);
+                })
+            })
+            console.log("adminsList: ", adminsList);
+        }else{
+            workersInfo[project.id].participantIds.forEach((participantName) => {
+                users.forEach((user) => {
+                    const userFullName = `${user.firstName} ${user.lastName}`;
+                    if (userFullName === participantName)
+                        workerList.push(user.uid);
+                })
+            })
+        }
+        console.log("workerList: ", workerList);
+        await addDoc(collection(db, "projectsRegisters"), {
+            workerID:(!isAdmin) ? (workerList):(adminsList),
+            projectId: project.id,
+            userId: userDetails.uid,
+        });
+        setNotifies(prevNotify => ({
+            ...prevNotify,
+            [project.id]: [
+                ...(prevNotify[project.id] || []),
+                {
+                    workerID: (!isAdmin) ? (workerList):(adminsList),
+                    projectId: project.id,
+                    userId: userDetails.uid,
+                }
+            ]
+        }));
+        
+        
+    };
+    const rendersWorkersSpecificProject = (projectId) => {
+        if (workersInfo[projectId].bool){
+            return (
+                <div>
+                    {workersInfo[projectId].participantIds.map((name, index) => (
+                        <button key={index} onClick={() => userInfo(name)} > {name}</button>
+                    ))}
+                </div>
+            )
+        }
+        return (
+            <p>No Workers</p>
+        )
+    }
+    const handleSendRegistProject = async (project) =>{
+        console.log("notifies: ", notifies);
+        let notification = {};
+        
+        
+        const confirmRegist = window.confirm("Are you sure you want to regist to this project?");    
+        if (confirmRegist){
+            console.log("notifies: ", notifies);
+            if (workersInfo[project.id].bool){
+                console.log("workerParticipant: ", workersInfo[project.id].participantIds)
+                try{
+                    if (notifies){
+                        for (notification of notifies){
+                            console.log("notification: ", notification);
+                            if (notification.projectId === project.id && notification.userId === userDetails.uid){
+                                alert ("Notification already sent to this worker.");
+                                return;
+                            }
+                        }
+                    }
+                    await handleAddNotification(project, false);
+                    // console.log("afterNotifies: ", notifies);
+                    window.location.reload();
+                }catch(error){
+                    console.log("Error adding project register: ", error);
+                }
+            }else{
+                console.log("admin");
+                await handleAddNotification(project, true);
+            }
+        }
+    }
 
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
@@ -548,15 +639,11 @@ export const HomePage = () => {
             <div id="root"></div>
             <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
             <header className="header">
-                        <button onClick={toggleLanguage}>{t.changeLanguage}</button>
-                        <button onClick={handlePrint}>{t.tableHeaders.print}</button>
+            <img src={logo} alt="Logo" className="logo" />  
                         <div className="header-center">
                         <button onClick={handleSignOut}>{t.signOut}</button>
-                        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                        {userDetails.role === 'Worker' && (<button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>)}
                         <button onClick={handleViewNotifications}>{t.notify}</button> 
-                        <button onClick={handleUserProfile}>
-                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-                        </button>
                         {userDetails.role === 'Guest' && (
                             <>
                                  <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
@@ -571,7 +658,12 @@ export const HomePage = () => {
                             </>
                         )} 
                     </div>
-                    <img src={logo} alt="Logo" className="logo" />
+                        <button onClick={toggleLanguage}>{t.changeLanguage}</button>
+                        <button onClick={handlePrint}>{t.tableHeaders.print}</button>
+                        <button onClick={handleUserProfile} className='user-profile-button'>
+                                {userDetails.username}
+                                <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                        </button>
                 </header>
                 <main className="main-content">
                     <div className="filter-section">
@@ -659,10 +751,13 @@ export const HomePage = () => {
         </tr>
     </tbody>
 </table>
+<footer className="footer">
+        <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
+        050-312-1883<br />
+        רונית סבטי - ronit_se@jerusalem.muni.il<br />
+        051-548-0763</p>
+      </footer>
                 </main>
-                <footer className="footer">
-    <p>contact us</p>
-</footer>
             </div>
         </>
     );
