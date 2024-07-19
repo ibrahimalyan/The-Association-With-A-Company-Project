@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
+import intro from '../../images/welcome.jfif';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
 import Modal from 'react-modal';
 
@@ -152,21 +153,10 @@ export const HomePageEntery = () => {
         if (!project) return null;
         return (
                             <div className="expanded-content">
-                                        <p>
-                                            <strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.startDate}:</strong> {project.startDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.endDate}:</strong> {project.endDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.description}:</strong> {project.description}
-                                        </p>   
+                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
+                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                        <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p> 
                                         <p>
                                             {project.imageUrl ? (
                                                 <img src={project.imageUrl} alt="Project" className="project-image" />
@@ -203,18 +193,19 @@ export const HomePageEntery = () => {
     }
     const t = translations[language];
     return (
-<div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>            <header className="header">
+<div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
+            <header className="header">
                 <div className="header-left">
                     <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
                 </div>
                 <div className="header-center">
-                <button onClick={handleSignIn}>signIn</button>
+                <button onClick={handleSignIn}>{translations[language].signIn}</button>
                 </div>
                 <img src={logo} alt="Logo" className="logo" />
             </header>
             <main className="main-content">
             <div className="welcome">
-                {/* welcome photos */}
+            <img src={intro} alt = "intro"  className = "intro"/>
                 </div>
                 <div className="filter-section">
                     <input
@@ -266,11 +257,11 @@ export const HomePageEntery = () => {
                                     ) : (
                                         <span>No Image</span>
                                     )}
-                                        <h1>{project.projectTitle}<br /></h1>
-                                        {project.startDate} - {project.endDate}<br />
-                                        {renderLocations(project.location)} {/* Updated to show multiple locations */}<br />
-                                        {/* {project.description}<br /> */}
-                                </div>
+                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
+                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                        {/* <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p> */}
+                                        </div>
                                 <Modal 
                                 isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Project Information"
                                 >
@@ -287,56 +278,17 @@ export const HomePageEntery = () => {
         </tr>
     </tbody>
 </table>
+<footer className="footer">
+        <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
+        050-312-1883<br />
+        רונית סבטי - ronit_se@jerusalem.muni.il<br />
+        051-548-0763</p>
+      </footer>
                 </main>
-            <footer className="footer">
-                <p>CONTACT US</p>
-            </footer>
-        </div>
+                
+    </div>
     );
 
 };
 
 export default HomePageEntery;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// <table className="projects-table">
-// <tbody>
-// <tr>
-// <td colSpan="10">
-// <div className="projects-grid">
-//     {filteredProjects.map((project, index) => (
-//      <div className="project-card" key={project.id}>
-//         <React.Fragment key={project.id}>
-//             {expandedRows.includes(project.id) && (
-//                 <tr className="expanded-row">
-//                     <td colSpan="7">
-//                         <div className="expanded-content">
-//                         <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
-//                             <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
-//                             <p><strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
-//                             <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
-//                             <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p>
-//                             <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                            
-//                             <button onClick={handleSignIn}>{translations[language].toRegister}</button>
-//                             {/* Add more project details here */}
-//                         </div>
-//                     </td>
-//                 </tr>
-//             )}
-//         </React.Fragment>
-//     ))}
-// </tbody>
-// </table>
-// </main>
