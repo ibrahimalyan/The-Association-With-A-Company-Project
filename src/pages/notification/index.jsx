@@ -1,17 +1,22 @@
-// src/pages/notifications/Notifications.js
+    // src/pages/notifications/Notifications.js
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../config/firebase-config';
 import { useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useRegister';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
-
+import { getAuth } from 'firebase/auth';
 
 export const Notifications = () => {
+    const toGetAuth = getAuth();
     const { registerList, loading, acceptUser, rejectUser, setLoading } = useRegister();
     const navigate = useNavigate();
     const [authenticated, setAuthenticated] = useState(false);
+    const [notificationWorkerDeleted, setNotificationWorkerDeleted] = useState(false);
+    const [notificationAdminDeleted, setNotificationAdminDeleted] = useState(false);
+    const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [notifies, setNotifies] = useState([]);
     const [acceptanceList, setAcceptanceList] = useState([]);
-
     const [userDetails, setUserDetails] = useState({
         userId: '',
         firstName: '',
@@ -24,12 +29,22 @@ export const Notifications = () => {
     
     
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        
+        setLoading(true);
+        const fetchData = async () => {
+            const user = toGetAuth.currentUser;
             if (user) {
                 setAuthenticated(true);
-                setLoading(true);
+                
                 try{
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const [userDoc, projectDocs, usersDocs, registProject, acceptanceList] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDocs(collection(db, 'projects')),
+                        getDocs(collection(db, 'users')),
+                        getDocs(collection(db,'projectsRegisters')),
+                        getDocs(collection(db,'acceptance'))
+                        
+                    ]);
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         setUserDetails({
@@ -44,21 +59,44 @@ export const Notifications = () => {
                     } else {
                         console.error('User document not found');
                     }
-                
-                const querySnapshot = await getDocs(collection(db, "acceptance"));
-                const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setAcceptanceList(list);
+                    const projectsList = [];
+                    projectDocs.forEach((doc) => {
+                        projectsList.push({ id: doc.id, ...doc.data() });
+                    });
+                    const usersList = [];
+                    
+                    usersDocs.forEach((userDoc) => {
+                       usersList.push({ id: userDoc.id, ...userDoc.data() });
+                    });
+                    const registProjects = [];
+                    registProject.forEach((registDoc) => {
+                        registProjects.push({ id: registDoc.id, ...registDoc.data() });
+                    });
+
+                    const acceptanceListArray = [];
+                    acceptanceList.forEach((acceptanceDoc) => {
+                        acceptanceListArray.push({ id: acceptanceDoc.id, ...acceptanceDoc.data() });
+                    });
+                    setProjects(projectsList);
+                    setUsers(usersList);
+                    setAcceptanceList(acceptanceListArray);
+                    setNotifies(registProjects);
+
                 }catch(error){
                     console.error('Error fetching user document', error);
                 } 
-                setLoading(false);
+                
             } else {
                 navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
+            setLoading(false);
+        };
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
 
         return () => unsubscribe();
-    }, [navigate]);
+    }, [navigate, toGetAuth]);
 
 
     if (!authenticated) {
@@ -69,9 +107,39 @@ export const Notifications = () => {
         return <div>Loading...</div>;
     }
   
-    const renderRegisterListAdmin = () => {        
+    const renderRegisterListAdmin = () => { 
+        const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
+        let registerTo = "";
+        let notificationUidAdmin = "";
+        
+        for (const notification of userNotifications) {
+            registerTo = notification.registTo;
+            if (notification.registTo === 'Admin'){
+                notificationUidAdmin = notification.id;
+                  
+            }
+            
+        }     
+        
         return (
-            registerList.length === 0 ? (
+            <>
+            {acceptanceList.length === 0 ? (
+                <p>There is no any Notifications</p>
+            ):(
+                <>  
+                    {registerTo !== "" && (
+                        <div>
+                            {(notificationAdminDeleted === false) && notificationUidAdmin && (
+                                    <>
+                                        <h3>the request is accepted to change the role to: {registerTo}</h3>
+                                        <button onClick={() => deleteNotification(notificationUidAdmin, true)}>close</button>                                        
+                                    </>
+                            )} 
+                        </div>
+                    )}
+                </>
+            )}
+            {registerList.length === 0 ? (
                 <p>No pending registrations.</p>
             ) : (
                 <div className="register-list">
@@ -89,44 +157,108 @@ export const Notifications = () => {
                         </div>
                     ))}
                 </div>
-            )
+            )}
+            </>
         )
     }
 
-    const deleteNotification = (notificationId) => {
+    const deleteNotification = (notificationId, isAdmin) => {
+        if(isAdmin){
+            setNotificationAdminDeleted(true);
+        }
+        else{
+            setNotificationWorkerDeleted(true);
+        }
+        setLoading(true);
         const notificationRef = doc(db, "acceptance", notificationId);
         deleteDoc(notificationRef);
+        setLoading(false)
     }
 
 
     const renderRegisterListWorker = () => {
         const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
         let registerTo = "";
-        // let notificationUid = "";
+        let notificationUidWorker = "";
+        
         for (const notification of userNotifications) {
+            registerTo = notification.registTo;
             if (notification.registTo === 'Worker'){
-                registerTo = notification.registTo;
+                notificationUidWorker = notification.id;
                 // notificationUid = notification.uid;    
             }
             
         }
-
+        const render = renderRegistProjects();
+        console.log("render",render)
         return (
+            
             acceptanceList.length === 0 ? (
-                <p>There is no any Notifications</p>
+                <>
+                    <p>There is no any Notifications</p>
+                    {render}
+                </>
             ):(
                 <>  
                     {registerTo !== "" && (
                         <div>
-                            <h3>the request is accepted to change the role to: {registerTo}</h3>
-                            <button >close</button>
+                            {(notificationWorkerDeleted === false) && notificationUidWorker && (
+                                    <>                                
+                                        <h3>the request is accepted to change the role to: {registerTo}</h3>
+                                        <button onClick={() => deleteNotification(notificationUidWorker, false)}>close</button>
+                                    </>
+                            )}
                         </div>
-                    )}
+                    )} 
                 </>
             )
         )
         
     }
+
+    const renderProjectUsersDetails = (projectId, userID) => {
+        const projectDetails = projects.filter(project => project.id === projectId);
+        const project = projectDetails[0];
+        console.log("userID inside:",userID)
+        const userDetails = users.filter(user => user.uid === userID);
+        console.log("user inside: ",userDetails)
+        const user = userDetails[0];
+        if (!project || !user) {
+          return null; // Return null if project or user not found
+        }
+      
+        return (
+          <div key={`${project.id}-${user.uid}`} className="register-item-project">
+            <h3>Project Details</h3>
+            <p><strong>ProjectTitle: </strong> {project.projectTitle}</p>
+            <p><strong>Description: </strong> {project.description}</p>
+            <p><strong>StartDate: </strong> {project.startDate}</p>
+            <p><strong>EndDate: </strong> {project.endDate}</p>
+            <h3>User Details</h3>
+            <p><strong>First Name: </strong> {user.firstName}</p>
+            <p><strong>Last Name: </strong> {user.lastName}</p>
+            <p><strong>Location: </strong> {user.location}</p>
+            <p><strong>Email: </strong> {user.email} </p>
+            <p><strong>PhoneNumber: </strong> {user.phoneNumber}</p>
+            <button>Accept</button>
+            <button>Reject</button>
+          </div>
+        );
+      };
+
+    
+      const renderRegistProjects = () => {
+        const projectElements = notifies
+          .filter(notify => notify.workerID.includes(userDetails.uid))
+          .map(notify => renderProjectUsersDetails(notify.projectId, notify.userId))
+          .filter(projectElement => projectElement !== null); // Filter out null elements
+      
+        return (
+          <div>
+            {projectElements.length > 0 ? projectElements : <p>No projects found.</p>}
+          </div>
+        );
+      };
 
     const handleBack = () => {
         navigate('/home'); // Navigate back to the homepage
@@ -139,18 +271,11 @@ export const Notifications = () => {
                 <h1>Pending Registrations</h1>
             </header>
             <main className="main-content">
-                
                 {userDetails.role === 'Admin' ? (
                     renderRegisterListAdmin()
                 ):(
-                    userDetails.role === 'Worker' ? (
-                        renderRegisterListWorker()
-                    ):(
-                        <h1>Guest</h1>
-                    )
-                )
-
-            }
+                    renderRegisterListWorker()     
+                )}
             </main>
         </div>
     );
