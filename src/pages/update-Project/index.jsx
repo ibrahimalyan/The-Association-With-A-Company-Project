@@ -60,11 +60,12 @@ export const EditProject = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
     const [lastProjectTitle, setLastProjectTitle] = useState("");
-    
+    const [lastImageName, setLastImageName] = useState("");
+    const [addImageFile, setAddImageFile] = useState(null);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [language, setLanguage] = useState('ar');
-    const [userData, setUserData] = useState({
+    const [projectData, setProjectData] = useState({
         projectTitle: '',
         startDate: '',
         endDate: '',
@@ -125,24 +126,25 @@ export const EditProject = () => {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     
-                    const projectData = docSnap.data();
+                    const projectDataDoc = docSnap.data();
                     
-                    setUserData({
-                        ...userData,
-                        projectTitle: projectData.projectTitle,
-                        startDate: projectData.startDate,
-                        endDate: projectData.endDate,
-                        location: projectData.location,
-                        description: projectData.description,
-                        participants: projectData.participants || [],
-                        imageUrl: projectData.imageUrl || '',
-                        participantList: projectData.participants || [],
+                    setProjectData({
+                        ...projectData,
+                        projectTitle: projectDataDoc.projectTitle,
+                        startDate: projectDataDoc.startDate,
+                        endDate: projectDataDoc.endDate,
+                        location: projectDataDoc.location,
+                        description: projectDataDoc.description,
+                        participants: projectDataDoc.participants || [],
+                        imageUrl: projectDataDoc.imageUrl || '',
+                        imageName: projectDataDoc.imageName || '',
+                        participantList: projectDataDoc.participants || [],
                     });
                     
-                    setLastProjectTitle(projectData.projectTitle || ''); // Update lastProjectTitle
-                
+                    setLastProjectTitle(projectDataDoc.projectTitle || ''); // Update lastProjectTitle
+                    setLastImageName(projectDataDoc.imageName || ''); // Update lastImageName
                        // Preselect locations based on projectData
-                       setSelectedLocations(projectData.location || []);
+                       setSelectedLocations(projectDataDoc.location || []);
 
                 } else {
                     console.log("No such document!");
@@ -169,7 +171,7 @@ export const EditProject = () => {
 
     const updateParticipants = async (notRemovedParticipant) => {
         const batch = writeBatch(db);
-        for (const participant of userData.participantList) {
+        for (const participant of projectData.participantList) {
             const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
             userQuerySnapshot.forEach((doc) => {
                 const participantRef = doc.ref;
@@ -180,7 +182,7 @@ export const EditProject = () => {
                         userProjects.splice(projectIndex, 1);
                     }
                     if (notRemovedParticipant){
-                        userProjects.push(userData.projectTitle);
+                        userProjects.push(projectData.projectTitle);
                     }
                     batch.update(participantRef, { projects: userProjects });
                 }
@@ -193,19 +195,16 @@ export const EditProject = () => {
     const handleInputChange = (e) => {
         const { name, value, files } = e.target;
         if (name === 'image') {
-            setUserData((prevDetails) => ({
-                ...prevDetails,
-                imageFile: files[0]
-            }));
+            setAddImageFile(files[0]);
         } else if (name === 'location') {
-            setUserData((prevDetails) => ({
+            setProjectData((prevDetails) => ({
                 ...prevDetails,
                 location: value
             }));
         } else if (name === 'participantQuery') {
             setParticipantQuery(value);
         } else {
-            setUserData((prevDetails) => ({
+            setProjectData((prevDetails) => ({
                 ...prevDetails,
                 [name]: value
             }));
@@ -215,28 +214,34 @@ export const EditProject = () => {
     const handleUpdateProject = async (e) => {
         e.preventDefault();
         try {
-            if (imageFile) {
+            console.log("projectData: ", projectData);
+            console.log("lastProjectTitle: ", lastProjectTitle);
+            console.log("lastImageName: ", lastImageName);
+            console.log("addImageFile: ", addImageFile);
+            if (addImageFile) {
                 // Delete previous image if it exists
-                if (userData.imageUrl) {
-                    const imageRef = ref(storage, userData.imageUrl);
+               console.log("projectData: ", projectData);
+                if (projectData.imageUrl) {
+                    const imageRef = ref(storage, `images/${lastProjectTitle}/${lastImageName}`);
                     await deleteObject(imageRef);
                 }
-
+                console.log("projectData: ", projectData);
                 // Upload new image
-                const uploadedImageUrl = await uploadImage(imageFile, userData.projectTitle);
+                const uploadedImageUrl = await uploadImage(imageFile, projectData.projectTitle);
                 setImageUrl(uploadedImageUrl);
             }
 
             const docRef = doc(db, "projects", id);
 
             await updateDoc(docRef, {
-                projectTitle: userData.projectTitle,
-                startDate: userData.startDate,
-                endDate: userData.endDate,
+                projectTitle: projectData.projectTitle,
+                startDate: projectData.startDate,
+                endDate: projectData.endDate,
                 location: selectedLocations,
-                description: userData.description,
-                imageUrl: userData.imageUrl,
-                participants: userData.participantList
+                description: projectData.description,
+                imageUrl: projectData.imageUrl,
+                imageName: projectData.imageName || '',
+                participants: projectData.participantList
             });
             updateParticipants(true);
             navigate('/home');
@@ -247,21 +252,21 @@ export const EditProject = () => {
     };
 
     const handleAddParticipantToList = (participant) => {
-        if (!userData.participantList.includes(participant.id)) {
-            setUserData(prevData => ({
+        if (!projectData.participantList.includes(participant.id)) {
+            setProjectData(prevData => ({
                 ...prevData,
                 participantList: [...prevData.participantList, participant.firstName + " " + participant.lastName]
             }));
         }
-        console.log("add: ", userData.participantList);
+        console.log("add: ", projectData.participantList);
     };
 
     const handleRemoveParticipantToList = async (participantId) => {
         try {
             console.log("remove: ", participantId);
             // Remove participant from local state
-            const updatedParticipantList = userData.participantList.filter(id => id !== participantId);
-            setUserData(prevData => ({
+            const updatedParticipantList = projectData.participantList.filter(id => id !== participantId);
+            setProjectData(prevData => ({
                 ...prevData,
                 participantList: updatedParticipantList
             }));
@@ -350,8 +355,8 @@ export const EditProject = () => {
 
 
     return (
-<div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
-<img src={bird1} alt="bird" className="bird bird1" />
+            <div className="container-wrapper">         
+                <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">
@@ -362,7 +367,7 @@ export const EditProject = () => {
                         <input
                             type="text"
                             name="projectTitle"
-                            value={userData.projectTitle}
+                            value={projectData.projectTitle}
                             onChange={handleInputChange}
                             required
                         />
@@ -372,7 +377,7 @@ export const EditProject = () => {
                         <input
                             type="date"
                             name="startDate"
-                            value={userData.startDate}
+                            value={projectData.startDate}
                             onChange={handleInputChange}
                             required
                         />
@@ -382,7 +387,7 @@ export const EditProject = () => {
                         <input
                             type="date"
                             name="endDate"
-                            value={userData.endDate}
+                            value={projectData.endDate}
                             onChange={handleInputChange}
                             required
                         />
@@ -406,7 +411,7 @@ export const EditProject = () => {
                         <label>{t.description}:</label>
                         <textarea
                             name="description"
-                            value={userData.description}
+                            value={projectData.description}
                             onChange={handleInputChange}
                             required
                         ></textarea>
@@ -453,7 +458,7 @@ export const EditProject = () => {
                     <div>
                         <label>{t.participantList}:</label>
                         <ul className="participant-list">
-                            {userData.participantList.map(id => (
+                            {projectData.participantList.map(id => (
                                 <li key={id}>
                                     {id}
                                     <button onClick={() => handleRemoveParticipantToList(id)}>{t.remove}</button></li>
