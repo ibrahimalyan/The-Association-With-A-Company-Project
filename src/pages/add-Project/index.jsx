@@ -234,7 +234,7 @@ export const AddProject = () => {
             const uploadedImageUrl = await uploadImage(imageFile, projectTitle);
 
             setImageUrl(uploadedImageUrl);
-            
+
             const docRef = await addDoc(collection(db, "projects"), {
                 projectTitle,
                 startDate,
@@ -243,7 +243,7 @@ export const AddProject = () => {
                 description,
                 imageUrl: uploadedImageUrl,
                 imageName: imageFile.name,
-                participants: participantList
+                participants: participantList,
             });
             await updateParticipants();
     
@@ -329,6 +329,7 @@ export const AddProject = () => {
     return (
         
             <div className="container-wrapper">
+                
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />

@@ -1,28 +1,42 @@
 import { useState, useEffect } from 'react';
-import { db } from '../config/firebase-config';
+import { auth, db } from '../config/firebase-config';
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { useNavigate } from'react-router-dom';
 
 export const useRegister = () => {
+    const navigate = useNavigate();
     const [registerList, setRegisterList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [authenticated, setAuthenticated] = useState(false);
+    const toGetAuth = getAuth();
 
     useEffect(() => {
         const fetchRegisterList = async () => {
+            const user = toGetAuth.currentUser;
             setLoading(true);
-            try {
-                const querySnapshot = await getDocs(collection(db, "register"));
-                const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setRegisterList(list);
-            } catch (err) {
-                setError(err);
-                console.error("Error fetching register list:", err);
+            if(user){
+                setAuthenticated(true);
+                try {
+                    const querySnapshot = await getDocs(collection(db, "register"));
+                    const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setRegisterList(list);
+                } catch (err) {
+                    setError(err);
+                    console.error("Error fetching register list:", err);
+                }
+            }
+            else{
+                navigate('/homePage'); 
             }
             setLoading(false);
         };
-
-        fetchRegisterList();
-    }, []);
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchRegisterList();
+        });
+        return () => unsubscribe();
+    }, [navigate, toGetAuth]);
 
     const registerUser = async (userId, firstName, lastName, role, phoneNumber, registTo, uid) => {
         try {

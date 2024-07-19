@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, addDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
 import Modal from 'react-modal';
@@ -117,6 +117,7 @@ export const HomePage = () => {
     const toGetAuth = getAuth();
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
+    const [notifies, setNotifies] = useState([]);
     const [loading, setLoading] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
     const { registerUser } = useRegister();
@@ -126,7 +127,8 @@ export const HomePage = () => {
         lastName: '',
         phoneNumber: '',
         role: '', // Add role to state
-        uid: ''
+        uid: '',
+        username: ''
         }
     );
     const [workersInfo, setWorkersInfo] = useState({});
@@ -152,10 +154,11 @@ export const HomePage = () => {
             if (user) {
                 setAuthenticated(true);
                 try {
-                    const [userDoc, projectDocs, usersDocs] = await Promise.all([
+                    const [userDoc, projectDocs, usersDocs, registProject] = await Promise.all([
                         getDoc(doc(db, 'users', user.uid)),
                         getDocs(collection(db, 'projects')),
-                        getDocs(collection(db, 'users'))
+                        getDocs(collection(db, 'users')),
+                        getDocs(collection(db,'projectsRegisters'))
                     ]);
 
                     if (userDoc.exists()) {
@@ -166,7 +169,8 @@ export const HomePage = () => {
                             lastName: userData.lastName || '',
                             phoneNumber: userData.phoneNumber || '',
                             role: userData.role || '', // Set role
-                            uid: user.uid // Set uid
+                            uid: user.uid, // Set uid
+                            username: userData.username || ''
                         });
                     } else {
                         console.error('User document not found');
@@ -183,11 +187,14 @@ export const HomePage = () => {
                        usersList.push({ id: userDoc.id, ...userDoc.data() });
                     });
 
+                    const registProjects = [];
+                    registProject.forEach((registDoc) => {
+                        registProjects.push({ id: registDoc.id, ...registDoc.data() });
+                    });
+
                     const workersInfo = {};
                     const nameParticipants = {};
 
-                    // console.log("projectsList", projectsList);
-                    // console.log("usersList", usersList);
                     projectsList.forEach((project) => {
                         const workerParticipants = [];
                         const participantNames = [];
@@ -207,7 +214,7 @@ export const HomePage = () => {
 
                         workersInfo[project.id] = { bool: workerParticipants.length > 0, participantIds: workerParticipants };
                         nameParticipants[project.id] = participantNames;
-                        console.log("workerInfo: ", workersInfo[project.id])   
+                           
                     }
                     });
 
@@ -215,16 +222,17 @@ export const HomePage = () => {
                     setUsers(usersList);
                     setWorkersInfo(workersInfo);
                     setNameParticipants(nameParticipants);
+                    setNotifies(registProjects)
                 } catch (error) {
                     console.error('Error fetching data:', error);
                 }
             } else {
-                navigate('/homePage'); // Redirect to sign-in page if not authenticated
+                navigate('/homePage'); 
             }
             setLoading(false);
         };
 
-        // Fetch data on mount and when auth state changes
+        
         const unsubscribe = auth.onAuthStateChanged(() => {
             fetchData();
         });
@@ -284,13 +292,13 @@ export const HomePage = () => {
                 await deleteDoc(projectDocRef);
 
                 // Retrieve all users
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                usersSnapshot.forEach(async (userDoc) => {
-                    const userData = userDoc.data();
-                    if (userData.projects && userData.projects.includes(projectTitle)) {
+                // const usersSnapshot = await getDocs(collection(db, "users"));
+                users.forEach(async (user) => {
+                    
+                    if (user.projects && user.projects.includes(projectTitle)) {
                         // Remove the project title from the user's projects array
                         console.log("deleted");
-                        const userDocRef = doc(db, "users", userDoc.id);
+                        const userDocRef = doc(db, "users", user.id);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
@@ -391,12 +399,12 @@ export const HomePage = () => {
 
     const userInfo = async (name) => {
         try {
-            const usersSnapshot = await getDocs(collection(db, "users"));
-            for (const userDoc of usersSnapshot.docs) {
-                const userData = userDoc.data();
-                const dataName = `${userData.firstName} ${userData.lastName}`;
+            
+            for (const user of users) {
+                
+                const dataName = `${user.firstName} ${user.lastName}`;
                 if (dataName === name) {
-                    openModal(userData);
+                    openModal(user);
                 }
             }
         } catch (error) {
@@ -446,6 +454,100 @@ export const HomePage = () => {
         navigate('/notifications');
     };
 
+    const handleAddNotification = async(project, isAdmin) => {
+        
+        const adminsList = [];
+        const workerList = [];
+        if (isAdmin){   
+            project.participants.forEach((participantName) => {
+                users.forEach((user) => {
+                    const userFullName = `${user.firstName} ${user.lastName}`;
+                    if (userFullName === participantName)
+                        if (user.role === "Admin")
+                            adminsList.push(user.uid);
+                })
+            })
+            console.log("adminsList: ", adminsList);
+        }else{
+            workersInfo[project.id].participantIds.forEach((participantName) => {
+                users.forEach((user) => {
+                    const userFullName = `${user.firstName} ${user.lastName}`;
+                    if (userFullName === participantName)
+                        workerList.push(user.uid);
+                })
+            })
+        }
+        console.log("workerList: ", workerList);
+
+        await addDoc(collection(db, "projectsRegisters"), {
+            workerID:(!isAdmin) ? (workerList):(adminsList),
+            projectId: project.id,
+            userId: userDetails.uid,
+        });
+
+        setNotifies(prevNotify => ({
+            ...prevNotify,
+            [project.id]: [
+                ...(prevNotify[project.id] || []),
+                {
+                    workerID: (!isAdmin) ? (workerList):(adminsList),
+                    projectId: project.id,
+                    userId: userDetails.uid,
+                }
+            ]
+        })); 
+        
+        
+    };
+
+    const rendersWorkersSpecificProject = (projectId) => {
+        if (workersInfo[projectId].bool){
+            return (
+                <div>
+                    {workersInfo[projectId].participantIds.map((name, index) => (
+                        <button key={index} onClick={() => userInfo(name)} > {name}</button>
+                    ))}
+                </div>
+            )
+        }
+        return (
+            <p>No Workers</p>
+        )
+    }
+
+    const handleSendRegistProject = async (project) =>{
+        console.log("notifies: ", notifies);
+        let notification = {};
+        
+        
+        const confirmRegist = window.confirm("Are you sure you want to regist to this project?");    
+        if (confirmRegist){
+            console.log("notifies: ", notifies);
+            if (workersInfo[project.id].bool){
+                console.log("workerParticipant: ", workersInfo[project.id].participantIds)
+                try{
+                    if (notifies){
+                        for (notification of notifies){
+                            console.log("notification: ", notification);
+                            if (notification.projectId === project.id && notification.userId === userDetails.uid){
+                                alert ("Notification already sent to this worker.");
+                                return;
+                            }
+                        }
+                    }
+                    await handleAddNotification(project, false);
+                    // console.log("afterNotifies: ", notifies); 
+                    window.location.reload();
+                }catch(error){
+                    console.log("Error adding project register: ", error);
+                }
+            }else{
+                console.log("admin");
+                await handleAddNotification(project, true);
+            }
+        }
+    }
+
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
     };
@@ -462,8 +564,9 @@ export const HomePage = () => {
                     </div>
                     <div className="header-center">
                         <img src={logo} alt="Logo" className="logo" />
+                        <p><strong>{userDetails.username}</strong></p>
                         <button onClick={handleSignOut}>{t.signOut}</button>
-                        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                        {userDetails.role === 'Worker' && (<button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>)}
                         {userDetails.role === 'Guest' && (
                             <>
                                 <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
@@ -479,7 +582,9 @@ export const HomePage = () => {
                                 <button onClick={handleParticipant}>{t.users}</button>
                             </>
                         )}
-                        <button onClick={handleViewNotifications}>{t.notify}</button>
+                        {(userDetails.role === "Worker" || userDetails.role === "Admin") && (
+                            <button onClick={handleViewNotifications}>{t.notify}</button>
+                        )}
                     </div>
                 </header>
                 <main className="main-content">
@@ -600,6 +705,7 @@ export const HomePage = () => {
                                                             </p>
                                                         </>
                                                     )}
+                                                    {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
                                                     <Modal
                                                         isOpen={modalIsOpen}
                                                         onRequestClose={closeModal}
@@ -610,7 +716,7 @@ export const HomePage = () => {
                                                     </Modal>
                                                     <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
                                                     {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest')) && (
-                                                        <button>{t.expandedContent.register}</button>
+                                                        <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
                                                     )}
                                                 </div>
                                             </td>
