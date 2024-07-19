@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth,signOut, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { doc, getDocs, collection, getDoc, addDoc } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
 import bird1 from '../../images/bird1.svg';
 import bird2 from '../../images/bird2.svg';
@@ -94,6 +94,8 @@ export const AddProject = () => {
     const auth = getAuth();
     const [authenticated, setAuthenticated] = useState(false);
     const toGetAuth = getAuth();
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [userDetails, setUserDetails] = useState({
         userId: '',
         firstName: '',
@@ -131,18 +133,55 @@ export const AddProject = () => {
         setImageUrl,
     } = useProjectInfo();
 
-    
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = auth.currentUser;
             if (user) {
                 setAuthenticated(true);
+                try {
+                    const [userDoc, usersDocs] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDocs(collection(db, 'users'))
+                    ]);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserDetails({
+                            userId: userData.id || '',
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            phoneNumber: userData.phoneNumber || '',
+                            role: userData.role || '', // Set role
+                            uid: user.uid // Set uid
+                        });
+                    } else {
+                        console.error('User document not found');
+                    }
+
+                    const usersList = [];
+                    
+                    usersDocs.forEach((userDoc) => {
+                       usersList.push({ id: userDoc.id, ...userDoc.data() });
+                    });
+
+                    setUsers(usersList);
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
             } else {
                 navigate('/homePage'); // Redirect to sign-in page if not authenticated
             }
+            setLoading(false);
+        };
+
+        // Fetch data on mount and when auth state changes
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
 
         return () => unsubscribe();
-    }, [auth, navigate]);
+    }, [navigate, auth]);
 
 
     const handleCheckboxChange = (event) => {
@@ -168,14 +207,36 @@ export const AddProject = () => {
             alert("Please select at least one location.");
             return;
         }
-        
+        let adminFound = false;
+        if (participantList) {
+            participantList.forEach(participant => {
+                users.forEach(user => {
+                    const userFullName = user.firstName + " " + user.lastName;
+                    if ( userFullName === participant) {
+                        if (user.role === 'Admin') {
+                            adminFound = true;
+                        }
+                    }
+                });
+            })
+        }
+        else {
+            alert("Please add participants.");
+            return;
+        }
+    
+        if (!adminFound) {
+            alert("Please add at least one admin.");
+            return;
+        }
+
         try {
             
 
             const uploadedImageUrl = await uploadImage(imageFile, projectTitle);
 
             setImageUrl(uploadedImageUrl);
-            
+
             const docRef = await addDoc(collection(db, "projects"), {
                 projectTitle,
                 startDate,
@@ -183,7 +244,8 @@ export const AddProject = () => {
                 location: selectedLocations,
                 description,
                 imageUrl: uploadedImageUrl,
-                participants: participantList
+                imageName: imageFile.name,
+                participants: participantList,
             });
             await updateParticipants();
     
@@ -271,8 +333,10 @@ export const AddProject = () => {
             </div>
         );
     };
-
-
+    
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
