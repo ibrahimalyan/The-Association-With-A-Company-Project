@@ -1,3 +1,43 @@
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+.big-container .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #f694949a 0%, hsl(243, 100%, 63%) 100%);
+    height: 75px;
+    margin-bottom: 10px;
+}
+
+
+.big-container .logo {
+    width: 100px;
+    height: 90px;
+    border-radius: 20px;
+}
+
+.header button {
+    margin: 0 15px;
+    padding: 10px 20px;
+    font-weight: bold;
+    background-color: #6b8aaa;
+    color: black;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
 .container-wrapper {
     display: flex;
     justify-content: space-around; /* Adjust spacing between containers */
@@ -10,18 +50,15 @@
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px 0 rgb(31, 38, 135);
     color: white;
-    padding: 20px;
-    width: 350px;
+    padding: 18px;
+    width: 450px;
     max-width: 100%;
+    overflow: auto;
+    margin-bottom: 150px;
+    height: 500px;
     text-align: center;
 }
 
-.container-wrapper .logo2 {
-    width: 350px;
-    display: block;
-    margin: 0 auto 20px;
-    background: #525440b9;
-}
 
 .container-wrapper form {
     display: grid;
@@ -65,7 +102,16 @@ input[type="file"] {
 .container-wrapper .search-button,
 .add-participant-button,
 .save-button,
-.close-button {
+.close-button1 {
+    background-color: #26b432;
+    padding: 8px 12px; /* Adjust button padding for consistency */
+    font-size: 16px; /* Consider a consistent font size for buttons */
+    border-radius: 4px;
+    cursor: pointer;
+}
+.participantcheck-button{
+
+    background-color: #9fb426;
     padding: 8px 12px; /* Adjust button padding for consistency */
     font-size: 16px; /* Consider a consistent font size for buttons */
     border-radius: 4px;
@@ -74,7 +120,7 @@ input[type="file"] {
 
 .container-wrapper .search-button {
     background: rgba(255, 255, 255, 0.15);
-    color: white;
+    color: rgb(0, 0, 0);
     border: none;
 }
 
@@ -89,17 +135,21 @@ input[type="file"] {
     border: none;
 }
 
-.container-wrapper .close-button {
+.container-wrapper .close-button1{
     background: #d9534f;
-    color: white;
+    color: rgb(0, 0, 0);
     border: none;
 }
-
+.container3 .removeal {
+    background: #d9534f;
+    color: rgb(0, 0, 0);
+    border: none;
+}
 /* Hover states */
 .container-wrapper .save-button:hover,
 .search-button:hover,
 .add-participant-button:hover,
-.close-button:hover {
+.close-button1:hover {
     opacity: 0.8;
 }
 
@@ -118,12 +168,16 @@ input[type="file"] {
     animation-delay: 10s;
     animation-fill-mode: forwards;
     animation-fill-mode: both;
+    opacity: 0; 
+    z-index: -1;
 }
 .container-wrapper .bird2{
     top: 350px;
     animation: fly 51s linear infinite;
     animation-delay: 0s; /* Start after 18 seconds */
     animation-fill-mode: both;
+    opacity: 0; 
+    z-index: -1;
 
 }
 .container-wrapper .bird3{
@@ -131,11 +185,13 @@ input[type="file"] {
     animation: fly 23.5s linear infinite;
     animation-delay: 7s; /* Start after 18 seconds */
     animation-fill-mode: both;
+    opacity: 0; 
+    z-index: -1;
+
 }
 
 @keyframes fly {
     0% {
-        opacity: 0; 
         transform: translateX(-100px) scaleX(1);
     }
     15% {
@@ -143,12 +199,42 @@ input[type="file"] {
         transform: translateX(calc(14vw - 50px)) scaleX(1);
     }
     50% {
+        opacity: 1; 
         transform: translateX(calc(70vw - 50px)) scaleX(1);
     }
     51% {
+        opacity: 1; 
         transform: translateX(calc(70vw - 50px)) scaleX(-1);
     }
-    100% {
+    99% {
+        opacity: 1; 
         transform: translateX(-100px) scaleX(-1);
     }
+    100% {
+        opacity: 1; 
+        transform: translateX(-100px) scaleX(1);
+    }
+}
+
+/* Scrollbar Styles for Firefox */
+.container-wrapper .container2::-webkit-scrollbar,
+.container-wrapper .container3::-webkit-scrollbar {
+    width: 8px; /* Width of the scrollbar */
+    background: transparent; /* Background of the scrollbar */
+}
+
+.container-wrapper .container2::-webkit-scrollbar-thumb,
+.container-wrapper .container3::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 99, 155, 0.8); /* Color of the scrollbar */
+    border-radius: 10px; /* Rounded corners */
+}
+
+.container-wrapper .container2::-webkit-scrollbar-thumb:hover,
+.container-wrapper .container3::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(71, 99, 155, 1); /* Color on hover */
+}
+
+.container-wrapper .container2::-webkit-scrollbar-track,
+.container-wrapper .container3::-webkit-scrollbar-track {
+    background: transparent; /* Background of the scrollbar track */
 }
