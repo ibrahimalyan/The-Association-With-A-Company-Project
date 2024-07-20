@@ -112,12 +112,14 @@ export const useProjectInfo = () => {
 
     const updateParticipants = async () => {
         const batch = writeBatch(db);
+
         for (const participant of participantList) {
             const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
             userQuerySnapshot.forEach((doc) => {
                 const participantRef = doc.ref;
                 const userProjects = doc.data().projects || [];
-                if (doc.data().id === participant) {
+                const docFullName = doc.data().firstName + " " + doc.data().lastName;
+                if (docFullName === participant) {
                     userProjects.push(projectTitle);
                     batch.update(participantRef, { projects: userProjects });
                 }
