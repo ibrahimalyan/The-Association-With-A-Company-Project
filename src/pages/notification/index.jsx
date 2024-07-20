@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../config/firebase-config';
 import { useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useRegister';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, writeBatch, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export const Notifications = () => {
@@ -107,6 +107,62 @@ export const Notifications = () => {
         return <div>Loading...</div>;
     }
   
+    const updateUser = async (projectTitle, participant) => {
+        const batch = writeBatch(db);  
+        const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
+            userQuerySnapshot.forEach((doc) => {
+                const participantRef = doc.ref;
+                const userProjects = doc.data().projects || [];
+                const docFullName = doc.data().firstName + " " + doc.data().lastName;
+                if (docFullName === participant) {
+                    userProjects.push(projectTitle);
+                    batch.update(participantRef, { projects: userProjects });
+                }
+            });
+        
+        await batch.commit();
+    }
+
+    const updateProject = async (projectTitle, projectId, userFullName) =>{
+        const batch = writeBatch(db);  
+        const userQuerySnapshot = await getDocs(collection(db, "projects"));
+            userQuerySnapshot.forEach((doc) => {
+                const projectRef = doc.ref;
+                const projectUsers = doc.data().participants || [];
+                const docProjecID = doc.id;
+                if ( docProjecID === projectId) {
+                    projectUsers.push(userFullName);
+                    console.log( "projectUsers", projectUsers);
+                    batch.update(projectRef, { participants : projectUsers });
+                }
+            });
+        
+        await batch.commit();
+    }
+
+    const acceptUserProject = async (userID, projectID, notify) => {
+        console.log("userID: ",userID, "projectID: " ,projectID, "notify: " ,notify);
+        console.log("projects: ", projects);
+        console.log("users: ", users);
+        const project = projects.filter((project) => {
+            if(project.id === projectID){
+                return project;
+            }
+        });
+        const user = users.filter((user) => {
+            if(user.uid === userID){
+                return user;
+            }
+        });
+        console.log("project: ", project);
+        console.log("user: ", user);
+        const userFullName = user[0].firstName + " " + user[0].lastName;
+        const projectName = project[0].projectTitle;
+        await updateUser(projectName, userFullName);
+        await updateProject(projectName, projectID, userFullName);
+        await deleteNotification(notify, false, false);
+    }
+
     const renderRegisterListAdmin = () => { 
         const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
         let registerTo = "";
@@ -120,11 +176,13 @@ export const Notifications = () => {
             }
             
         }     
-        
+        const render = renderRegistProjects();
         return (
             <>
             {acceptanceList.length === 0 ? (
-                <p>There is no any Notifications</p>
+                <>
+                    {render}    
+                </>
             ):(
                 <>  
                     {registerTo !== "" && (
@@ -132,7 +190,7 @@ export const Notifications = () => {
                             {(notificationAdminDeleted === false) && notificationUidAdmin && (
                                     <>
                                         <h3>the request is accepted to change the role to: {registerTo}</h3>
-                                        <button onClick={() => deleteNotification(notificationUidAdmin, true)}>close</button>                                        
+                                        <button onClick={() => deleteNotification(notificationUidAdmin, true, true)}>close</button>                                        
                                     </>
                             )} 
                         </div>
@@ -162,17 +220,29 @@ export const Notifications = () => {
         )
     }
 
-    const deleteNotification = (notificationId, isAdmin) => {
-        if(isAdmin){
+    const deleteNotification = async (notificationId, isAdmin, isAcceptance) => {
+        if(isAdmin && isAcceptance){
             setNotificationAdminDeleted(true);
         }
-        else{
+        else if(!isAdmin && isAcceptance){
             setNotificationWorkerDeleted(true);
         }
         setLoading(true);
-        const notificationRef = doc(db, "acceptance", notificationId);
-        deleteDoc(notificationRef);
-        setLoading(false)
+        try{
+            if (isAcceptance){
+                const notificationRef = doc(db, "acceptance", notificationId);
+                await deleteDoc(notificationRef);        
+            }
+            else{
+                const notificationRef = doc(db, "projectsRegisters", notificationId);
+                await deleteDoc(notificationRef);
+            }
+            window.location.reload();
+        }catch(error){
+            console.error('Error deleting notification', error);
+        }
+        setLoading(false);
+        
     }
 
 
@@ -190,13 +260,13 @@ export const Notifications = () => {
             
         }
         const render = renderRegistProjects();
-        console.log("render",render)
         return (
-            
+           <> 
             acceptanceList.length === 0 ? (
                 <>
                     <p>There is no any Notifications</p>
                     {render}
+                    
                 </>
             ):(
                 <>  
@@ -205,28 +275,29 @@ export const Notifications = () => {
                             {(notificationWorkerDeleted === false) && notificationUidWorker && (
                                     <>                                
                                         <h3>the request is accepted to change the role to: {registerTo}</h3>
-                                        <button onClick={() => deleteNotification(notificationUidWorker, false)}>close</button>
+                                        <button onClick={() => deleteNotification(notificationUidWorker, false, true)}>close</button>
                                     </>
                             )}
                         </div>
                     )} 
+                    
                 </>
             )
+            
+            </>
         )
         
     }
 
-    const renderProjectUsersDetails = (projectId, userID) => {
+    const renderProjectUsersDetails = (projectId, userID, notify) => {
         const projectDetails = projects.filter(project => project.id === projectId);
         const project = projectDetails[0];
-        console.log("userID inside:",userID)
         const userDetails = users.filter(user => user.uid === userID);
-        console.log("user inside: ",userDetails)
         const user = userDetails[0];
         if (!project || !user) {
           return null; // Return null if project or user not found
         }
-      
+        
         return (
           <div key={`${project.id}-${user.uid}`} className="register-item-project">
             <h3>Project Details</h3>
@@ -240,8 +311,8 @@ export const Notifications = () => {
             <p><strong>Location: </strong> {user.location}</p>
             <p><strong>Email: </strong> {user.email} </p>
             <p><strong>PhoneNumber: </strong> {user.phoneNumber}</p>
-            <button>Accept</button>
-            <button>Reject</button>
+            <button onClick={() => acceptUserProject(user.uid,project.id,notify.id)}>Accept</button>
+            <button onClick={() => deleteNotification(notify.id, true, false)}>Reject</button>
           </div>
         );
       };
@@ -250,9 +321,8 @@ export const Notifications = () => {
       const renderRegistProjects = () => {
         const projectElements = notifies
           .filter(notify => notify.workerID.includes(userDetails.uid))
-          .map(notify => renderProjectUsersDetails(notify.projectId, notify.userId))
+          .map(notify => renderProjectUsersDetails(notify.projectId, notify.userId, notify))
           .filter(projectElement => projectElement !== null); // Filter out null elements
-      
         return (
           <div>
             {projectElements.length > 0 ? projectElements : <p>No projects found.</p>}

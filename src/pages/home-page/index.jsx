@@ -273,49 +273,46 @@ export const HomePage = () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
-
-                console.log("projects", projects);
+                setLoading(true);
                 const storage = getStorage();
-                projects.forEach(async (project) => {
+
+                const deleteImagePromises = projects.map(async (project) => {
                     if (project.id === projectId) {
                         const imageFileName = project.imageName;
-                        console.log("imageFileName", imageFileName , "\nprojectTitle", projectTitle);
                         if (imageFileName) {
                             const imageRef = ref(storage, `images/${projectTitle}/${imageFileName}`);
                             await deleteObject(imageRef);
                         }
                     }
                 });
-                
-                // Delete the project document
+    
+                await Promise.all(deleteImagePromises);
+    
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
-
-                // Retrieve all users
-                // const usersSnapshot = await getDocs(collection(db, "users"));
-                users.forEach(async (user) => {
-                    
+    
+                const updateUserProjectsPromises = users.map(async (user) => {
                     if (user.projects && user.projects.includes(projectTitle)) {
-                        // Remove the project title from the user's projects array
-                        console.log("deleted");
-                        const userDocRef = doc(db, "users", user.id);
+                        const userDocRef = doc(db, "users", user.uid);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
-                    } else {
-                        console.log("not deleted");
                     }
                 });
-
+    
+                await Promise.all(updateUserProjectsPromises);
+    
                 alert("Project deleted successfully.");
-                // Refresh the page or remove the project from the state
-                window.location.reload();
             } catch (error) {
                 console.error("Error deleting document: ", error);
                 alert("Error deleting project. Please try again.");
+            } finally {
+                setLoading(false);
+                window.location.reload(); // Refresh the page after all operations are complete
             }
         }
     };
+    
 
     const handleSignOut = async () => {
         try {
@@ -356,6 +353,15 @@ export const HomePage = () => {
         }
 
         setFilteredProjects(filtered);
+    };
+
+    const clearFilter = () => {
+        setFilter({
+            name: "",
+            location: "",
+            startDate: "",
+            endDate: ""
+        });
     };
 
     const renderLocations = (locations) => {
@@ -478,7 +484,6 @@ export const HomePage = () => {
             })
         }
         console.log("workerList: ", workerList);
-
         await addDoc(collection(db, "projectsRegisters"), {
             workerID:(!isAdmin) ? (workerList):(adminsList),
             projectId: project.id,
@@ -614,7 +619,7 @@ export const HomePage = () => {
                             value={filter.endDate}
                             onChange={handleFilterChange}
                         />
-                        <button onClick={applyFilter}>{t.filter.applyFilter}</button>
+                        <button onClick={clearFilter}>Clear Filter</button>
                     </div>
                     <table className="projects-table">
                         <thead>
@@ -674,6 +679,7 @@ export const HomePage = () => {
                                                 </td>
                                                 <td>
                                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
+
                                                 </td>
                                             </>
                                         )}
@@ -715,7 +721,7 @@ export const HomePage = () => {
                                                         <button onClick={closeModal}>Close</button>
                                                     </Modal>
                                                     <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                    {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest')) && (
+                                                    {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest' && !isParticipant(project))) && (
                                                         <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
                                                     )}
                                                 </div>
