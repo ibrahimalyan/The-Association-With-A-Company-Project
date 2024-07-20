@@ -7,6 +7,17 @@
     margin-bottom: 140px;
 }
 
+
+.user-profile-container .user-profile-form .form-input select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #000;
+    text-align: right;
+}
+
 .user-profile-container .user-profile-form {
     position: relative; /* Ensure the form is also positioned relative */
     background: rgba(41, 31, 31, 0.1);
