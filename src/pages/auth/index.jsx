@@ -179,7 +179,9 @@ export const Auth = () => {
             signIn(e);
         }
     };
-
+    const homebut = () => {
+        navigate('/home');
+    };
     const resetPassword = async () => {
         if (!email) {
             setError(t.passwordResetEmailSent);
@@ -207,6 +209,12 @@ export const Auth = () => {
             <img src={bubbles} alt="bubbles" className="bubbles bubbles4" />
             <img src={bubbles} alt="bubbles" className="bubbles bubbles5" />
             <div className="container">
+                <div>
+                <button type="button" onClick={homebut} className='back-button'>
+  ❌
+</button>
+   
+                </div>
                 <img src={logo} alt="Logo" />
                 <form onSubmit={handleSubmit}>
                     <input placeholder={t.emailPlaceholder} required onChange={(e) => setEmail(e.target.value)} />
