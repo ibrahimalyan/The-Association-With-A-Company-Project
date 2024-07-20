@@ -35,7 +35,14 @@ const translations = {
         signUp: "إنشاء حساب",
         resetPasswordButton: "إعادة تعيين كلمة المرور",
         changeLanguage: "עברית",
-        errorIncorrectEmailOrPassword: "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى."
+        errorIncorrectEmailOrPassword: "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
+        passwordResetEmailSent: "تم إرسال بريد إعادة تعيين كلمة المرور! يرجى التحقق من صندوق الوارد الخاص بك",
+        errorEmailExists: "البريد الإلكتروني موجود بالفعل.",
+        errorPasswordsDoNotMatch: "كلمات المرور غير متطابقة.",
+        errorAccountDeleted: "تم حذف حساب المستخدم هذا ولا يمكن تسجيل الدخول.",
+        errorEnterEmail: "يرجى إدخال عنوان بريدك الإلكتروني لإعادة تعيين كلمة المرور.",
+        errorSendingPasswordReset: "حدث خطأ أثناء إرسال بريد إعادة تعيين كلمة المرور. حاول مرة أخرى.",
+        close: "إغلاق"
     },
     heb: {
         emailPlaceholder: "אימייל...",
@@ -55,7 +62,14 @@ const translations = {
         signUp: "הרשמה",
         resetPasswordButton: "אפס סיסמה",
         changeLanguage: "العربية",
-        errorIncorrectEmailOrPassword: "אימייל או סיסמה שגויים. אנא נסה שוב."
+        errorIncorrectEmailOrPassword: "אימייל או סיסמה שגויים. אנא נסה שוב.",
+        passwordResetEmailSent: "אימייל לאיפוס סיסמה נשלח! אנא בדוק את תיבת הדואר הנכנס שלך",
+        errorEmailExists: "האימייל כבר קיים.",
+        errorPasswordsDoNotMatch: "הסיסמאות אינן תואמות.",
+        errorAccountDeleted: "חשבונו של משתמש זה נמחק ואינו יכול להתחבר.",
+        errorEnterEmail: "אנא הזן את כתובת האימייל שלך לאיפוס סיסמה.",
+        errorSendingPasswordReset: "אירעה שגיאה בשליחת אימייל לאיפוס סיסמה. אנא נסה שוב.",
+        close: "סגור"
     }
 };
 
@@ -112,7 +126,7 @@ export const Auth = () => {
 
             // Check if the user's role is "deleted"
             if (userData.role === "deleted") {
-                alert("This user account is deleted and cannot sign in.");
+                alert(t.errorAccountDeleted);
                 return;
             }
 
@@ -135,7 +149,7 @@ export const Auth = () => {
     const handleSave = async (e) => {
         e.preventDefault();  // Prevent default form submission 
         if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+            setError(t.errorPasswordsDoNotMatch);
             return;
         }
         try {
@@ -153,7 +167,7 @@ export const Auth = () => {
             console.log("User signed up: ", user);
             navigate('/home'); // Ensure this is executed after the Firestore operation
         } catch (error) {
-            setError("Error signing up. Please try again.");
+            setError(t.errorEmailExists);
             console.error("Error during sign up process: ", error);
         }
     };
@@ -165,10 +179,12 @@ export const Auth = () => {
             signIn(e);
         }
     };
-
+    const homebut = () => {
+        navigate('/home');
+    };
     const resetPassword = async () => {
         if (!email) {
-            setError("Please enter your email address to reset password.");
+            setError(t.passwordResetEmailSent);
             return;
         }
         try {
@@ -176,7 +192,7 @@ export const Auth = () => {
             setModalMessage("Password reset email sent! Please check your inbox.");
             setShowModal(true);
         } catch (error) {
-            setError("Error sending password reset email. Please try again.");
+            setError(t.errorSendingPasswordReset);
             console.error("Error during password reset process: ", error);
         }
     };
@@ -193,6 +209,12 @@ export const Auth = () => {
             <img src={bubbles} alt="bubbles" className="bubbles bubbles4" />
             <img src={bubbles} alt="bubbles" className="bubbles bubbles5" />
             <div className="container">
+                <div>
+                <button type="button" onClick={homebut} className='back-button'>
+  ❌
+</button>
+   
+                </div>
                 <img src={logo} alt="Logo" />
                 <form onSubmit={handleSubmit}>
                     <input placeholder={t.emailPlaceholder} required onChange={(e) => setEmail(e.target.value)} />
@@ -240,6 +262,3 @@ export const Auth = () => {
 };
 
 export default Auth;
-
-
-
