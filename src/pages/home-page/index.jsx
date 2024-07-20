@@ -128,7 +128,8 @@ export const HomePage = () => {
         phoneNumber: '',
         role: '', // Add role to state
         uid: '',
-        username: ''
+        username: '',
+        projects: []
         }
     );
     const [workersInfo, setWorkersInfo] = useState({});
@@ -137,6 +138,7 @@ export const HomePage = () => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [filteredProjects, setFilteredProjects] = useState([]);
+    const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [filter, setFilter] = useState({
         name: '',
         location: '',
@@ -170,7 +172,8 @@ export const HomePage = () => {
                             phoneNumber: userData.phoneNumber || '',
                             role: userData.role || '', // Set role
                             uid: user.uid, // Set uid
-                            username: userData.username || ''
+                            username: userData.username || '',
+                            projects: userData.projects || []
                         });
                     } else {
                         console.error('User document not found');
@@ -242,7 +245,7 @@ export const HomePage = () => {
 
     useEffect(() => {
         applyFilter();
-    }, [projects, filter]);
+    }, [projects, filter, isFilterApplied]);
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -324,13 +327,10 @@ export const HomePage = () => {
         }
     };
 
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilter({
-            ...filter,
-            [name]: value
-        });
+    const projectFilterUser = () => {
+        setIsFilterApplied(!isFilterApplied);
     };
+
 
     const handlePrint = () => {
         window.print();
@@ -352,6 +352,15 @@ export const HomePage = () => {
             filtered = filtered.filter(project => new Date(project.endDate) <= new Date(filter.endDate));
         }
 
+        if (isFilterApplied) {
+            const userFullName = `${userDetails.firstName} ${userDetails.lastName}`;
+    
+            filtered = filtered.filter(project => {
+                const projectIncluded = userDetails.projects.includes(project.projectTitle);
+                const userIncluded = project.participants.includes(userFullName);
+                return projectIncluded && userIncluded;
+            });
+        }
         setFilteredProjects(filtered);
     };
 
@@ -376,14 +385,6 @@ export const HomePage = () => {
         }
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
-
-    if (!authenticated) {
-        return null; 
-    }
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     const isParticipant = (project) => {
         const currentUser = `${userDetails.firstName} ${userDetails.lastName}`;
@@ -556,6 +557,14 @@ export const HomePage = () => {
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
     };
+  
+    if (!authenticated) {
+        return null; 
+    }
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     const t = translations[language];
 
@@ -599,9 +608,9 @@ export const HomePage = () => {
                             name="name"
                             placeholder={t.filter.projectName}
                             value={filter.name}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, name: e.target.value })}
                         />
-                        <select name="location" value={filter.location} onChange={handleFilterChange}>
+                        <select name="location" value={filter.location} onChange={(e) => setFilter({ ...filter, location: e.target.value })}>
                             <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
                                 <option key={location} value={location}>{location}</option>
@@ -611,15 +620,19 @@ export const HomePage = () => {
                             type="date"
                             name="startDate"
                             value={filter.startDate}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, startDate: e.target.value })}
                         />
                         <input
                             type="date"
                             name="endDate"
                             value={filter.endDate}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, endDate: e.target.value })}
                         />
                         <button onClick={clearFilter}>Clear Filter</button>
+                        <button type="button" onClick={projectFilterUser}>
+                            {isFilterApplied ? "Clear Filter Projects" : "My Projects"}
+                        </button>
+                        
                     </div>
                     <table className="projects-table">
                         <thead>

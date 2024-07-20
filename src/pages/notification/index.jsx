@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../config/firebase-config';
 import { useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useRegister';
-import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, writeBatch, where } from 'firebase/firestore';
+import { doc, deleteDoc, getDocs, collection, getDoc, writeBatch, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 export const Notifications = () => {
@@ -148,11 +148,13 @@ export const Notifications = () => {
             if(project.id === projectID){
                 return project;
             }
+            return null;
         });
         const user = users.filter((user) => {
             if(user.uid === userID){
                 return user;
             }
+            return null;
         });
         console.log("project: ", project);
         console.log("user: ", user);
