@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import validator from 'validator';
 import { auth } from '../../config/firebase-config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDocs, collection, where, query } from 'firebase/firestore';
@@ -42,7 +43,17 @@ const translations = {
         errorAccountDeleted: "تم حذف حساب المستخدم هذا ولا يمكن تسجيل الدخول.",
         errorEnterEmail: "يرجى إدخال عنوان بريدك الإلكتروني لإعادة تعيين كلمة المرور.",
         errorSendingPasswordReset: "حدث خطأ أثناء إرسال بريد إعادة تعيين كلمة المرور. حاول مرة أخرى.",
-        close: "إغلاق"
+        close: "إغلاق",
+        errorIdMustBe9Digits: "رقم الهوية يجب أن يكون مكوناً من 9 أرقام.",
+        errorIdExists: "رقم الهوية موجود بالفعل.",
+        invalidEmail: "البريد الإلكتروني غير صالح.",
+        close: "إغلاق",
+        invalidName: "يجب أن يتكون الاسم الأول واسم العائلة من أحرف فقط.",
+        invalidDate: "تاريخ الميلاد يجب أن يكون بعد عام 1920.",
+        invalidPassword: "كلمة المرور يجب أن تتكون من 8 أحرف على الأقل وتحتوي على حرف كبير، حرف صغير، رقم، ورمز خاص.",
+        invalidPhoneNumber: "رقم الهاتف يجب أن يتكون من 10 أرقام.",
+        male: "ذكر",
+        female: "أنثى"
     },
     heb: {
         emailPlaceholder: "אימייל...",
@@ -69,7 +80,16 @@ const translations = {
         errorAccountDeleted: "חשבונו של משתמש זה נמחק ואינו יכול להתחבר.",
         errorEnterEmail: "אנא הזן את כתובת האימייל שלך לאיפוס סיסמה.",
         errorSendingPasswordReset: "אירעה שגיאה בשליחת אימייל לאיפוס סיסמה. אנא נסה שוב.",
-        close: "סגור"
+        errorIdMustBe9Digits: "מספר תעודת הזהות חייב להיות בן 9 ספרות.",
+        errorIdExists: "מספר תעודת הזהות כבר קיים.",
+        invalidEmail: "האימייל אינו חוקי.",
+        invalidName: "השם הפרטי ושם המשפחה חייבים להיות מורכבים מאותיות בלבד.",
+        invalidDate: "תאריך הלידה חייב להיות לאחר 1920.",
+        invalidPassword: "הסיסמה חייבת להכיל לפחות 8 תווים, כולל אות גדולה, אות קטנה, מספר ותו מיוחד.",
+        invalidPhoneNumber: "מספר הטלפון חייב להיות בן 10 ספרות.",
+        close: "סגור",
+        male: "זכר",
+        female: "נקבה"
     }
 };
 
@@ -80,7 +100,7 @@ const Modal = ({ message, onClose }) => (
     <div className="modal">
         <div className="modal-content">
             <p>{message}</p>
-            <button onClick={onClose}>Close</button>
+            <button onClick={onClose}>{translations.heb.close}</button>
         </div>
     </div>
 );
@@ -109,6 +129,10 @@ export const Auth = () => {
     
     const signIn = async (e) => {
         e.preventDefault(); // Prevent default form submission
+        if (!validator.isEmail(email)) {
+            setError(t.invalidEmail);
+            return;
+        }
         try {
             const firestore = getFirestore();
             const usersCollection = collection(firestore, 'users');
@@ -152,8 +176,51 @@ export const Auth = () => {
             setError(t.errorPasswordsDoNotMatch);
             return;
         }
+        if (!/^\d{9}$/.test(additionalInfo.id)) {
+            setError(t.errorIdMustBe9Digits);
+            return;
+        }
+
+        if (!validator.isEmail(email)) {
+            setError(t.invalidEmail);
+            return;
+        }
+
+        if (!/^[a-zA-Z\u0590-\u05FF\u0600-\u06FF]+$/.test(additionalInfo.firstName) || !/^[a-zA-Z\u0590-\u05FF\u0600-\u06FF]+$/.test(additionalInfo.lastName)) {
+            setError(t.invalidName);
+            return;
+        }
+
+        if (!validator.isStrongPassword(password, { minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })) {
+            setError(t.invalidPassword);
+            return;
+        }
+
+        const birthDate = new Date(additionalInfo.birthDate);
+        const minDate = new Date('1920-01-01');
+        if (birthDate < minDate) {
+            setError(t.invalidDate);
+            return;
+        }
+
+        if (!/^\d{10}$/.test(additionalInfo.phoneNumber)) {
+            setError(t.invalidPhoneNumber);
+            return;
+        }
         try {
             console.log("Starting user creation process...");
+            
+            const firestore = getFirestore();
+            const usersCollection = collection(firestore, 'users');
+            const idQuery = query(usersCollection, where('id', '==', additionalInfo.id));
+            const idSnapshot = await getDocs(idQuery);
+
+            if (!idSnapshot.empty) {
+                setError(t.errorIdExists);
+                return;
+            }
+            
+            
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log("User created, UID: ", user.uid);
@@ -187,13 +254,16 @@ export const Auth = () => {
             setError(t.passwordResetEmailSent);
             return;
         }
+        if (!validator.isEmail(email)) {
+            setError(t.invalidEmail);
+            return;
+        }
         try {
             await sendPasswordResetEmail(auth, email);
-            setModalMessage("Password reset email sent! Please check your inbox.");
+            setModalMessage(t.passwordResetEmailSent);
             setShowModal(true);
         } catch (error) {
             setError(t.errorSendingPasswordReset);
-            console.error("Error during password reset process: ", error);
         }
     };
 
@@ -232,11 +302,15 @@ export const Auth = () => {
                             </div>
                             <div className="input-group">
                                 <input placeholder={t.birthDatePlaceholder} type="date" name="birthDate" required onChange={handleInputChange} />
-                                <input placeholder={t.genderPlaceholder} name="gender" required onChange={handleInputChange} />
+                                <select name="gender" required onChange={handleInputChange}>
+                                    <option value="" disabled selected>{t.genderPlaceholder}</option>
+                                    <option value="male">{t.male}</option>
+                                    <option value="female">{t.female}</option>
+                                </select>
                             </div>
                             <div className="input-group">
-                                <input placeholder={t.idPlaceholder} type="number" name="id" required onChange={handleInputChange} />
-                                <input placeholder={t.phoneNumberPlaceholder} type="number" name="phoneNumber" required onChange={handleInputChange} />
+                                <input placeholder={t.idPlaceholder} type="number" name="id" required pattern="\d{9}" title={t.errorIdMustBe9Digits} onChange={handleInputChange} />
+                                <input placeholder={t.phoneNumberPlaceholder} type="text" name="phoneNumber" required onChange={handleInputChange} />
                             </div>
                         </>
                     )}
