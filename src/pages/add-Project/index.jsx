@@ -85,7 +85,8 @@ export const AddProject = () => {
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [language, setLanguage] = useState('ar');
-
+    const [searchInputFilter, setSearchInputFilter] = useState("");
+    const [filteredUsers, setFilteredUsers] = useState(users);
     const [selectedLocations, setSelectedLocations] = useState([]);
     const [userDetails, setUserDetails] = useState({
         userId: '',
@@ -111,7 +112,6 @@ export const AddProject = () => {
         imageUrl,
         error,
         handleInputChange,
-        handleParticipantSearch,
         handleAddParticipant,
         handleRemoveParticipant,
         uploadImage,
@@ -199,10 +199,12 @@ export const AddProject = () => {
     };
 
     const handleAddProject = async (e) => {
+        setLoading(true)
         e.preventDefault();
         
         if (selectedLocations.length === 0) {
             alert("Please select at least one location.");
+            setLoading(false);
             return;
         }
         let adminFound = false;
@@ -220,11 +222,13 @@ export const AddProject = () => {
         }
         else {
             alert("Please add participants.");
+            setLoading(false)
             return;
         }
     
         if (!adminFound) {
             alert("Please add at least one admin.");
+            setLoading(false)
             return;
         }
 
@@ -246,13 +250,21 @@ export const AddProject = () => {
                 participants: participantList,
             });
             await updateParticipants();
-    
+            setLoading(false);
             navigate('/home');
+        
         } catch (error) {
             console.error("Error adding document: ", error);
         }
     };
-    
+    const handleParticipantSearch = () => {
+        console.log("filter")
+        const filtered = users.filter(user =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
+        );
+        console.log(filtered)
+        setFilteredUsers(filtered);
+    };
 
     const handleUploadImage = (e) => {
         const { files } = e.target;
@@ -372,13 +384,13 @@ export const AddProject = () => {
                         </div>
                         <div className="participant-search">
                             <label>{t.addParticipant}:</label>
-                            <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
+                            <input type="text" name="Search by first and last name" value={searchInputFilter} onChange={(e) => setSearchInputFilter(e.target.value)} />
                             <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
                         </div>
-                        {participants.length > 0 && (
+                        {filteredUsers.length > 0 && (
                             <>
                             <ul className="participant-search-results">
-                                {participants.map(participant => (
+                                {filteredUsers.map(participant => (
                                     <li key={participant.id}>
                                         <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipant(participant)}>Add</button>
