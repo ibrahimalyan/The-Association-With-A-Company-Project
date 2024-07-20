@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import validator from 'validator';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -23,7 +24,14 @@ const translations = {
         close: "إغلاق",
         save: "حفظ",
         changeLanguage: "עברית",
-        dir:"rtl"
+        dir: "rtl",
+        invalidEmail: "البريد الإلكتروني غير صالح.",
+        invalidPhoneNumber: "رقم الهاتف يجب أن يتكون من 10 أرقام.",
+        invalidName: "يجب أن يتكون الاسم الأول واسم العائلة من أحرف فقط.",
+        invalidDate: "تاريخ الميلاد يجب أن يكون بعد عام 1920.",
+        errorIdMustBe9Digits: "رقم الهوية يجب أن يكون مكوناً من 9 أرقام.",
+        male: "ذكر",
+        female: "أنثى"
     },
     heb: {
         firstName: "שם פרטי",
@@ -39,7 +47,14 @@ const translations = {
         close: "סגור",
         save: "שמור",
         changeLanguage: "العربية",
-        dir:"rtl"
+        dir: "rtl",
+        invalidEmail: "האימייל אינו חוקי.",
+        invalidPhoneNumber: "מספר הטלפון חייב להיות בן 10 ספרות.",
+        invalidName: "השם הפרטי ושם המשפחה חייבים להיות מורכבים מאותיות בלבד.",
+        invalidDate: "תאריך הלידה חייב להיות לאחר 1920.",
+        errorIdMustBe9Digits: "מספר תעודת הזהות חייב להיות בן 9 ספרות.",
+        male: "זכר",
+        female: "נקבה"
     }
 };
 
@@ -93,6 +108,38 @@ export const UserProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!validator.isEmail(userData.email)) {
+            setError(translations[language].invalidEmail);
+            return;
+        }
+
+        if (!/^\d{9}$/.test(userData.id)) {
+            setError(translations[language].errorIdMustBe9Digits);
+            return;
+        }
+
+        if (!/^[a-zA-Z\u0590-\u05FF\u0600-\u06FF]+$/.test(userData.firstName) || !/^[a-zA-Z\u0590-\u05FF\u0600-\u06FF]+$/.test(userData.lastName)) {
+            setError(translations[language].invalidName);
+            return;
+        }
+
+        const birthDate = new Date(userData.birthDate);
+        const minDate = new Date('1920-01-01');
+        if (birthDate < minDate) {
+            setError(translations[language].invalidDate);
+            return;
+        }
+
+        if (!/^\d{10}$/.test(userData.phoneNumber)) {
+            setError(translations[language].invalidPhoneNumber);
+            return;
+        }
+        
+        
+        
+        
+        
         try {
             await updateDoc(doc(db, "users", user.uid), userData);
             await updateProfile(user, { displayName: userData.username });
@@ -143,7 +190,11 @@ export const UserProfile = () => {
                     <label className="form-label">{t.email}:</label>
                     <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
                     <label className="form-label">{t.gender}:</label>
-                    <input className="form-input" type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
+                    <select className="form-input" name="gender" value={userData.gender} onChange={handleInputChange} required>
+                        <option value="" disabled>{t.gender}</option>
+                        <option value="male">{t.male}</option>
+                        <option value="female">{t.female}</option>
+                    </select>
                     <label className="form-label">{t.birthDate}:</label>
                     <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
                     <label className="form-label">{t.location}:</label>
