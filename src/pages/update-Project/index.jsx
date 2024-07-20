@@ -251,6 +251,12 @@ export const EditProject = () => {
 
     const handleUpdateProject = async (e) => {
         e.preventDefault();
+        
+        if (new Date(projectData.endDate) <= new Date(projectData.startDate)) {
+            alert("תאריך הסיום חייב להיות לאחר תאריך ההתחלה");
+            return;
+        }
+        
         try {
             console.log("projectData: ", projectData);
             console.log("lastProjectTitle: ", lastProjectTitle);
@@ -288,6 +294,17 @@ export const EditProject = () => {
             setError("Error updating document");
         }
     };
+
+
+    const handleAddParticipantWithCheck = (participant) => {
+        const participantName = participant.firstName + " " + participant.lastName;
+        if (projectData.participantList.includes(participantName)) {
+            alert("This participant is already added.");
+        } else {
+            handleAddParticipantToList(participant);
+        }
+    };
+
 
     const handleAddParticipantToList = (participant) => {
         if (!projectData.participantList.includes(participant.id)) {
@@ -484,7 +501,7 @@ export const EditProject = () => {
                                 {participants.map(participant => (
                                     <li key={participant.id}>
                                         <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
-                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipantToList(participant)}>Add</button>
+                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
                                     </li>
                                 ))}
                             </ul>
