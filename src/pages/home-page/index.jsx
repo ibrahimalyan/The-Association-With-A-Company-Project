@@ -537,7 +537,7 @@ export const HomePage = () => {
                             console.log("notification: ", notification);
                             if (notification.projectId === project.id && notification.userId === userDetails.uid){
                                 alert ("Notification already sent to this worker.");
-                                return;
+                                return null;
                             }
                         }
                     }
@@ -548,9 +548,29 @@ export const HomePage = () => {
                     console.log("Error adding project register: ", error);
                 }
             }else{
+                try{
                 console.log("admin");
+                if (notifies){
+                    for (notification of notifies){
+                        console.log("notification: ", notification);
+                        const boolProject = notification.projectId === project.id;
+                        const boolUser = notification.userId === userDetails.uid;
+                        console.log("bool Projects: ",  boolProject);
+                        console.log("boolUser: ", boolUser);
+                        if (notification.projectId === project.id && notification.userId === userDetails.uid){
+                            console.log("fuck")
+                            alert ("Notification already sent to this worker.");
+                            return null;
+                        }
+                    }
+                }
                 await handleAddNotification(project, true);
+                
+                }catch(error){
+                    console.log("Error adding project register: ", error);
+                }
             }
+            window.location.reload()
         }
     }
 
