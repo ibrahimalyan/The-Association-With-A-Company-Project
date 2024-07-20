@@ -61,7 +61,7 @@
 }
 
 .user-profile-container .save-button,.language-button ,
-.close-button {
+.close-button2 {
     padding: 8px 12px;
     font-size: 16px;
     border-radius: 4px;
@@ -75,7 +75,7 @@
     color: #000;
 }
 
-.user-profile-container .close-button {
+.user-profile-container .close-button2 {
     background: #d9534f;
     color: #fff;
 }
@@ -86,7 +86,7 @@
 }
 
 .user-profile-container .save-button:hover,.language-button:hover,
-.close-button:hover {
+.close-button2:hover {
     opacity: 0.8;
 }
 
@@ -96,40 +96,40 @@
 }
 
 .user-profile-container .duck1 {
-    animation: swimaround 25s linear infinite;
+    animation: swimaround 45s linear infinite;
     width: 50px;
     height: auto;
     position: absolute;
     animation-delay: 0.1s;
 }
 .user-profile-container .duck2 {
-    animation: swimaround 25s linear infinite;
+    animation: swimaround 45s linear infinite;
     width: 25px;
     height: auto;
     position: absolute;
-    animation-delay: 0.5s;
+    animation-delay: 0.8s;
 }
 .user-profile-container .duck3 {
-    animation: swimaround 25s linear infinite;
+    animation: swimaround 45s linear infinite;
     width: 25px;
     height: auto;
     position: absolute;
-    animation-delay: 1s;
+    animation-delay: 1.3s;
 }
 .user-profile-container .duck4 {
-    animation: swimaround 25s linear infinite;
+    animation: swimaround 45s linear infinite;
     width: 25px;
     height: auto;
     position: absolute;
-    animation-delay: 1.5s;
+    animation-delay: 1.8s;
 
 }
 .user-profile-container .duck5 {
-    animation: swimaround 25s linear infinite;
+    animation: swimaround 45s linear infinite;
     width: 25px;
     height: auto;
     position: absolute;
-    animation-delay: 2s;
+    animation-delay: 2.3s;
 
 }
 
