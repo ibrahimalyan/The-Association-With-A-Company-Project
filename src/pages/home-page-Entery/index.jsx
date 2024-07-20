@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
+import intro from '../../images/welcome.jfif';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
 
 
@@ -83,8 +84,8 @@ const translations = {
 export const HomePageEntery = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
-    const [expandedRows, setExpandedRows] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
+    const [selectedProject, setSelectedProject] = useState(null);
     const [filter, setFilter] = useState({
         name: '',
         location: '',
@@ -101,18 +102,6 @@ export const HomePageEntery = () => {
     useEffect(() => {
         applyFilter();
     }, [projects, filter]);
-
-
-
-
-    const handleRowClick = (projectId) => {
-        const isExpanded = expandedRows.includes(projectId);
-        if (isExpanded) {
-            setExpandedRows(expandedRows.filter(id => id !== projectId));
-        } else {
-            setExpandedRows([...expandedRows, projectId]);
-        }
-    };
 
 
     const handleSignIn = async () => {
@@ -147,6 +136,29 @@ export const HomePageEntery = () => {
         setFilteredProjects(filtered);
     };
 
+    const renderProjectInfo = (project) => {
+        if (!project) return null;
+        return (
+                            <div className="expanded-content">
+                                <p>
+                                            {project.imageUrl ? (
+                                                <img src={project.imageUrl} alt="Project" className="project-image2" />
+                                            ) : (
+                                                'No Image'
+                                            )}
+                                        </p>
+                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
+                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}
+                                        <strong> {translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                        <p><strong>{translations[language].tableHeaders.description}:</strong></p> <p> {project.description}</p> 
+                                        <button onClick={closeModal} className="close-button5">Close</button>
+                                        <button onClick={handleSignIn}className="register-button">{translations[language].toRegister}</button>
+              </div>
+        );
+    };
+
+
     const renderLocations = (locations) => {
         if (locations && Array.isArray(locations)) {
             return (
@@ -159,7 +171,12 @@ export const HomePageEntery = () => {
         }
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
-
+    const handleProjectClick = (project) => {
+        setSelectedProject(project);
+    };
+    const closeModal = () => {
+        setSelectedProject(null);
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -168,22 +185,22 @@ export const HomePageEntery = () => {
     if (error) {
         return <div>Error: {error}</div>;
     }
-
+    const t = translations[language];
     return (
-        <div className="dashboard">
+<div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
             <header className="header">
                 <div className="header-left">
-                   {/* <button>AR</button>
-                    <button>Heb</button>*/}
                     <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
                 </div>
                 <div className="header-center">
-                    <img src={logo} alt="Logo" className="logo" />
-                    <button onClick={handleSignIn}>signIn</button>
-                    
+                <button onClick={handleSignIn}>{translations[language].signIn}</button>
                 </div>
+                <img src={logo} alt="Logo" className="logo" />
             </header>
             <main className="main-content">
+            <div className="welcome">
+            <img src={intro} alt = "intro"  className = "intro"/>
+                </div>
                 <div className="filter-section">
                     <input
                         type="text"
@@ -218,58 +235,52 @@ export const HomePageEntery = () => {
                     <button onClick={applyFilter}>{translations[language].filter.applyFilter}</button>
                 </div>
                 <table className="projects-table">
-                    <thead>
-                        <tr>
-                            <th>index</th>
-                            <th>{translations[language].tableHeaders.projectName}</th>
-                            <th>{translations[language].tableHeaders.startDate}</th>
-                            <th>{translations[language].tableHeaders.endDate}</th>
-                            <th>{translations[language].tableHeaders.location}</th>
-                            <th>{translations[language].tableHeaders.description}</th>
-                            <th>{translations[language].tableHeaders.Logo}</th>
-                        </tr>
-                    </thead>
                     <tbody>
-                        {filteredProjects.map((project, index) => (
-                            <React.Fragment key={project.id}>
-                                <tr onClick={() => handleRowClick(project.id)}>
-                                    <td>{index + 1}</td>
-                                    <td>{project.projectTitle}</td>
-                                    <td>{project.startDate}</td>
-                                    <td>{project.endDate}</td>
-                                    <td>{renderLocations(project.location)}</td>
-                                    <td>{project.description}</td>
-                                    <td>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</td>
-
-                                </tr>
-                                {expandedRows.includes(project.id) && (
-                                    <tr className="expanded-row">
-                                        <td colSpan="7">
-                                            <div className="expanded-content">
-                                            <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
-                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
-                                                <p><strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                        <tr>
+                            <td colSpan="10">
+                                <div className="projects-grid">
+                                    {filteredProjects.map((project) => (
+                                        <div className="project-card" key={project.id}>
+                                            <div
+                                                className="project-image-wrapper"
+                                                onClick={() => handleProjectClick(project)}
+                                            >
+                                                {project.imageUrl ? (
+                                                    <img src={project.imageUrl} alt="Project" className="project-image" />
+                                                ) : (
+                                                    <span>No Image</span>
+                                                )}
+                                                <h1>
+                                                    <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
+                                                </h1>
+                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
                                                 <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
-                                                <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p>
-                                                <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                
-                                                <button onClick={handleSignIn}>{translations[language].toRegister}</button>
-                                                {/* Add more project details here */}
                                             </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </React.Fragment>
-                        ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
+
+                {selectedProject && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            {renderProjectInfo(selectedProject)}
+                        </div>
+                    </div>
+                )}
+
+                <footer className="footer">
+                    <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
+                    050-312-1883<br />
+                    רונית סבטי - ronit_se@jerusalem.muni.il<br />
+                    051-548-0763</p>
+                </footer>
             </main>
-            <footer className="footer">
-                <p>CONTACT US</p>
-            </footer>
         </div>
     );
-
 };
 
 export default HomePageEntery;
