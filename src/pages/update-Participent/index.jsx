@@ -22,7 +22,8 @@ const translations = {
         role: "الدور",
         close: "إغلاق",
         save: "حفظ",
-        changeLanguage: "עברית"
+        changeLanguage: "עברית",
+        dir:"rtl"
     },
     heb: {
         firstName: "שם פרטי",
@@ -37,7 +38,8 @@ const translations = {
         role: "תפקיד",
         close: "סגור",
         save: "שמור",
-        changeLanguage: "العربية"
+        changeLanguage: "العربية",
+        dir:"rtl"
     }
 };
 
@@ -119,12 +121,13 @@ export const UserProfile = () => {
     }
 
     return (
-        <div className="user-profile-container">
+        <div className="user-profile-container" dir ={t.dir}>
             <img src={duck1} alt="duck" className="duck duck1" />
             <img src={duck1} alt="duck" className="duck duck2" />
             <img src={duck1} alt="duck" className="duck duck3" />
             <img src={duck1} alt="duck" className="duck duck4" />
             <img src={duck1} alt="duck" className="duck duck5" />
+            <div>
             <form onSubmit={handleSubmit} className="user-profile-form">
                 <div className="form-group">
                     <label className="form-label">{t.firstName}:</label>
@@ -141,7 +144,7 @@ export const UserProfile = () => {
                     <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
                     <label className="form-label">{t.gender}:</label>
                     <input className="form-input" type="text" name="gender" value={userData.gender} onChange={handleInputChange} required />
-                    <label className="form-label">{t.gender}:</label>
+                    <label className="form-label">{t.birthDate}:</label>
                     <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
                     <label className="form-label">{t.location}:</label>
                     <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />
@@ -150,11 +153,12 @@ export const UserProfile = () => {
                 </div>
                 {error && <p className="error-message">{error}</p>}
                 <div className="save-close-buttons">
-                    <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                    <button type="button" className="close-button2" onClick={handleClose}>{t.close}</button>
+                    <button type="button" className="language-button" onClick={toggleLanguage}>{t.changeLanguage}</button>
                     <button type="submit" className="save-button">{t.save}</button>
                 </div>
             </form>
-            <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
-        </div>
+            </div>
+            </div>
     );
 };
