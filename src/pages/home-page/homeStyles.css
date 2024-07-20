@@ -10,11 +10,10 @@
     /* background-color: #333; */
     color: #000000;
     text-align: center;
-    margin-bottom: 9%;
-    border-radius: 0 0 20px 20px;
-    background-color: #ccc;
+    border-radius: 20px 20px 20px 20px;
+    background-color: #cccccc6f;
+    margin-top: 20px;
 }
-
 
 /* Header Styles */
 .dashboard .header {
@@ -48,9 +47,10 @@
 
 /* Main Content Styles */
 .dashboard .main-content {
-    flex-grow: 1;
+    flex-grow: 1;   
     padding: 20px;
-    border-radius: 20px 20px 0px 0px;
+    border-radius: 20px 20px 20px 20px;
+    margin-bottom: 125px;
     background-color: rgba(120, 130, 150, 0.463);
 }
 
@@ -89,17 +89,18 @@
     border: none; /* Remove row borders */
 }
 
-
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    row-gap: 4%;
+    row-gap: 50px;
     column-gap: 1%;
 }
 
 .project-card {
     background-color: #ffffff91;
     width: 250px;
+    align-items: flex-start; /* Align content to the left */
+    text-align: left; /* Align text to the left */
     margin-left: 8%;
     border: 8px solid #d4b897;
     border-radius: 8px;
@@ -107,22 +108,16 @@
     box-shadow: 5px 5px 5px rgba(152, 226, 34, 0.674);
     transition: transform 0.2s;
 }
-
-.project-card:hover {
-    transform: scale(1.05);
-}
-
+.expanded-content {
+    direction: rtl; /* Set text direction to right-to-left */
+    text-align: right; /* Align text to the right */
+  }
+  
 .project-image-wrapper {
-    margin-bottom: 10px;
-    text-align: right;
-    padding: 10px;
-}
-
-.dashboard .expanded-content {
-    padding: 10px;
-    /* background-color: #fff; */
-    border: 1px solid #ddd;
-    border-radius: 3px;
+    display: flex;
+    flex-direction: column; /* Stack image and text vertically */
+    align-items: flex-start; /* Align image and text to the left */
+    text-align: left; /* Align text to the left */  
 }
 
 /* Project Image Styles */
@@ -178,3 +173,64 @@
     background: transparent; /* Background of the scrollbar track */
 }
 
+/* homeStyles.css */
+
+/* Modal Styles */
+.modal1 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #7d6f6f;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.036);
+    z-index: 1050; /* Ensure it appears on top of other content */
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.modal button {
+    margin-top: 10px;
+}
+
+/* Close button style for the modal */
+.close-button6 ,.deletbut  {
+    background: #f44336; /* Red color */
+    color: rgb(0, 0, 0);
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.usersbutton , .editbut{
+    background: #36f449; /* Red color */
+    color: rgb(0, 0, 0);
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.close-button6:hover {
+    background: #d32f2f; /* Darker red color on hover */
+}
+
+/* homeStyles.css */
+
+/* Overlay Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0); /* Semi-transparent background */
+    z-index: 1040; /* Ensure it is below the modal */
+}
