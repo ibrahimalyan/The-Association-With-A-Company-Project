@@ -95,6 +95,8 @@ export const AddProject = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const toGetAuth = getAuth();
     const [users, setUsers] = useState([]);
+    const [searchInputFilter, setSearchInputFilter] = useState("");
+    const [filteredUsers, setFilteredUsers] = useState(users);
     const [loading, setLoading] = useState(false);
     const [userDetails, setUserDetails] = useState({
         userId: '',
@@ -116,16 +118,11 @@ export const AddProject = () => {
         projectTitle,
         startDate,
         endDate,
-        location,
         description,
-        participantQuery,
-        participants,
         participantList,
         imageFile,
-        imageUrl,
         error,
         handleInputChange,
-        handleParticipantSearch,
         handleAddParticipant,
         handleRemoveParticipant,
         uploadImage,
@@ -201,10 +198,12 @@ export const AddProject = () => {
 
 
     const handleAddProject = async (e) => {
+        setLoading(true)
         e.preventDefault();
         
         if (selectedLocations.length === 0) {
             alert("Please select at least one location.");
+            setLoading(false);
             return;
         }
         let adminFound = false;
@@ -222,11 +221,13 @@ export const AddProject = () => {
         }
         else {
             alert("Please add participants.");
+            setLoading(false)
             return;
         }
     
         if (!adminFound) {
             alert("Please add at least one admin.");
+            setLoading(false)
             return;
         }
 
@@ -237,7 +238,7 @@ export const AddProject = () => {
 
             setImageUrl(uploadedImageUrl);
 
-            const docRef = await addDoc(collection(db, "projects"), {
+            await addDoc(collection(db, "projects"), {
                 projectTitle,
                 startDate,
                 endDate,
@@ -248,7 +249,7 @@ export const AddProject = () => {
                 participants: participantList,
             });
             await updateParticipants();
-    
+            setLoading(false);
             navigate('/home');
         } catch (error) {
             console.error("Error adding document: ", error);
@@ -261,6 +262,15 @@ export const AddProject = () => {
 
     const handleParticipant = () => {
         navigate('/participant');
+    };
+
+    const handleParticipantSearch = () => {
+        console.log("filter")
+        const filtered = users.filter(user =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
+        );
+        console.log(filtered)
+        setFilteredUsers(filtered);
     };
 
     const handleUploadImage = (e) => {
@@ -406,34 +416,38 @@ export const AddProject = () => {
                         </div>
                         <div className="participant-search">
                             <label>{t.addParticipant}:</label>
-                            <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
+
+                            <input type="text" name="Search by first and last name" value={searchInputFilter} onChange={(e) => setSearchInputFilter(e.target.value)} />
                             <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
                         </div>
-                        {participants.length > 0 && (
+                        {filteredUsers.length > 0 && (
                             <>
                             <ul className="participant-search-results">
-                                {participants.map(participant => (
+                                {filteredUsers.map(participant => (
                                     <li key={participant.id}>
-                                        <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
+                                        <button type="button" className="participantcheck-button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipant(participant)}>Add</button>
                                     </li>
                                 ))}
                             </ul>
-                        
+                    
+
                             <Modal
                                 isOpen={modalIsOpen}
                                 onRequestClose={closeModal}
                                 contentLabel="User Information"
+                                className="modal1"
+                                overlayClassName="modal-overlay"
                             >
                                 {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button onClick={closeModal}>{t.close}</button>
+                                <button className="close-button6" onClick={closeModal}>{t.close} </button>
                             </Modal>
                         </>
                         )}
 
                         {error && <p className="error">{error}</p>}
                         <div className="save-close-buttons">
-                            <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                            <button type="button" className="close-button1" onClick={handleClose}>{t.close}</button>
                             <button type="submit" className="save-button">{t.save}</button>
                         </div>
                     </form>
@@ -445,7 +459,7 @@ export const AddProject = () => {
                             {participantList.map(id => (
                                 <li key={id}>
                                     {id}
-                                    <button onClick={() => handleRemoveParticipant(id)}>{t.remove}</button></li>
+                                    <button className='removeal' onClick={() => handleRemoveParticipant(id)}>{t.remove}</button></li>
                             ))}
                         </ul>
                     </div>
