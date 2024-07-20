@@ -5,8 +5,6 @@ import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import intro from '../../images/welcome.jfif';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
-import Modal from 'react-modal';
-
 
 
 
@@ -86,9 +84,8 @@ const translations = {
 export const HomePageEntery = () => {
     const { projects, loading, error } = useProjects();
     const navigate = useNavigate();
-    const [modalIsOpen, setModalIsOpen] = useState(false);
     const [filteredProjects, setFilteredProjects] = useState([]);
-    const [selectedUserData, setSelectedUserData] = useState(null);
+    const [selectedProject, setSelectedProject] = useState(null);
     const [filter, setFilter] = useState({
         name: '',
         location: '',
@@ -139,32 +136,24 @@ export const HomePageEntery = () => {
         setFilteredProjects(filtered);
     };
 
-    const closeModal = () => {
-        setModalIsOpen(false);
-        setSelectedUserData(null);
-    };
-
-    const openProjectModal = (project) => {
-        setSelectedUserData(project);
-        setModalIsOpen(true);
-    };
-
     const renderProjectInfo = (project) => {
         if (!project) return null;
         return (
                             <div className="expanded-content">
-                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
-                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
-                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
-                                        <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p> 
-                                        <p>
+                                <p>
                                             {project.imageUrl ? (
-                                                <img src={project.imageUrl} alt="Project" className="project-image" />
+                                                <img src={project.imageUrl} alt="Project" className="project-image2" />
                                             ) : (
                                                 'No Image'
                                             )}
                                         </p>
-                                            <button onClick={handleSignIn}>{translations[language].toRegister}</button>
+                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
+                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}
+                                        <strong> {translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                        <p><strong>{translations[language].tableHeaders.description}:</strong></p> <p> {project.description}</p> 
+                                        <button onClick={closeModal} className="close-button5">Close</button>
+                                        <button onClick={handleSignIn}className="register-button">{translations[language].toRegister}</button>
               </div>
         );
     };
@@ -182,7 +171,12 @@ export const HomePageEntery = () => {
         }
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
-
+    const handleProjectClick = (project) => {
+        setSelectedProject(project);
+    };
+    const closeModal = () => {
+        setSelectedProject(null);
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -240,55 +234,53 @@ export const HomePageEntery = () => {
                     />
                     <button onClick={applyFilter}>{translations[language].filter.applyFilter}</button>
                 </div>
-                
                 <table className="projects-table">
                     <tbody>
- <tr>
-            <td colSpan="10">
-            <div className="projects-grid">
-                    {filteredProjects.map((project, index) => (
-                         <div className="project-card" key={project.id}>
-                            <React.Fragment key={project.id}>
-                                <div className="project-image-wrapper" 
-                                onClick={() => openProjectModal(project)}
-                                >
-                                    {project.imageUrl ? (
-                                        <img src={project.imageUrl} alt="Project" className="project-image" />
-                                    ) : (
-                                        <span>No Image</span>
-                                    )}
-                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
-                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
-                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
-                                        {/* <p><strong>{translations[language].tableHeaders.description}:</strong> {project.description}</p> */}
+                        <tr>
+                            <td colSpan="10">
+                                <div className="projects-grid">
+                                    {filteredProjects.map((project) => (
+                                        <div className="project-card" key={project.id}>
+                                            <div
+                                                className="project-image-wrapper"
+                                                onClick={() => handleProjectClick(project)}
+                                            >
+                                                {project.imageUrl ? (
+                                                    <img src={project.imageUrl} alt="Project" className="project-image" />
+                                                ) : (
+                                                    <span>No Image</span>
+                                                )}
+                                                <h1>
+                                                    <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
+                                                </h1>
+                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                                <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                                            </div>
                                         </div>
-                                <Modal 
-                                isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Project Information"
-                                >
-                                            {
-                                             selectedUserData &&
-                                              renderProjectInfo(selectedUserData)}
-                                            <button onClick={closeModal}>Close</button>
-                                        </Modal>
-                            </React.Fragment>
-                        </div>
-                    ))}
-                </div>
-            </td>
-        </tr>
-    </tbody>
-</table>
-<footer className="footer">
-        <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
-        050-312-1883<br />
-        רונית סבטי - ronit_se@jerusalem.muni.il<br />
-        051-548-0763</p>
-      </footer>
-                </main>
-                
-    </div>
-    );
+                                    ))}
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
+                {selectedProject && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            {renderProjectInfo(selectedProject)}
+                        </div>
+                    </div>
+                )}
+
+                <footer className="footer">
+                    <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
+                    050-312-1883<br />
+                    רונית סבטי - ronit_se@jerusalem.muni.il<br />
+                    051-548-0763</p>
+                </footer>
+            </main>
+        </div>
+    );
 };
 
 export default HomePageEntery;
