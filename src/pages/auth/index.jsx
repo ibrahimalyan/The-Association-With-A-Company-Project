@@ -279,13 +279,11 @@ export const Auth = () => {
             <img src={bubbles} alt="bubbles" className="bubbles bubbles4" />
             <img src={bubbles} alt="bubbles" className="bubbles bubbles5" />
             <div className="container">
-                <div>
-                <button type="button" onClick={homebut} className='back-button'>
-  ❌
-</button>
-   
-                </div>
-                <img src={logo} alt="Logo" />
+            <div className="header-container">
+                <button type="button" onClick={toggleLanguage} className="language-button">{t.changeLanguage}</button>
+                <button type="button" onClick={homebut} className='back-button'>❌</button>
+            </div>
+                <img src={logo} alt="Logo" className="logo" />
                 <form onSubmit={handleSubmit}>
                     <input placeholder={t.emailPlaceholder} required onChange={(e) => setEmail(e.target.value)} />
                     <input placeholder={t.passwordPlaceholder} type='password' required onChange={(e) => setPassword(e.target.value)} />

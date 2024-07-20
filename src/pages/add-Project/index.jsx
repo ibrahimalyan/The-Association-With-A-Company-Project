@@ -30,7 +30,7 @@ const translations = {
         endDate: "تاريخ الانتهاء",
         description: "الوصف",
         projectImage: "صورة المشروع",
-        addParticipant: " (إضافة مشارك (الاسم الشخصي",
+        addParticipant: "إضافة مشارك",
         search: "بحث",
         close: "إغلاق",
         save: "حفظ",
@@ -64,7 +64,7 @@ const translations = {
         endDate: "תאריך סיום",
         description: "תיאור",
         projectImage: "תמונת הפרויקט",
-        addParticipant: "הוסף משתתף (שם פרטי)",
+        addParticipant: "הוסף משתתף",
         search: "חפש",
         close: "סגור",
         save: "שמור",
@@ -233,6 +233,7 @@ export const AddProject = () => {
 
         if (new Date(endDate) <= new Date(startDate)) {
             alert("תאריך הסיום חייב להיות לאחר תאריך ההתחלה");
+            setLoading(false)
             return;
         }
 
