@@ -103,13 +103,9 @@ export const AddProject = () => {
         projectTitle,
         startDate,
         endDate,
-        location,
         description,
-        participantQuery,
-        participants,
         participantList,
         imageFile,
-        imageUrl,
         error,
         handleInputChange,
         handleAddParticipant,
@@ -118,22 +114,6 @@ export const AddProject = () => {
         updateParticipants,
         setImageUrl,
     } = useProjectInfo();
-
-    
-    // useEffect(() => {
-    //     const unsubscribe = onAuthStateChanged(auth, (user) => {
-    //         if (user) {
-    //             setAuthenticated(true);
-              
-    //         } else {
-    //             navigate('/homePage'); // Redirect to sign-in page if not authenticated
-    //         }
-    //     });
-
-    //     return () => unsubscribe();
-    // }, [auth, navigate]);
-
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -239,7 +219,7 @@ export const AddProject = () => {
 
             setImageUrl(uploadedImageUrl);
 
-            const docRef = await addDoc(collection(db, "projects"), {
+            await addDoc(collection(db, "projects"), {
                 projectTitle,
                 startDate,
                 endDate,
