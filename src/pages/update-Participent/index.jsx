@@ -153,7 +153,7 @@ export const UserProfile = () => {
                 </div>
                 {error && <p className="error-message">{error}</p>}
                 <div className="save-close-buttons">
-                    <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                    <button type="button" className="close-button2" onClick={handleClose}>{t.close}</button>
                     <button type="button" className="language-button" onClick={toggleLanguage}>{t.changeLanguage}</button>
                     <button type="submit" className="save-button">{t.save}</button>
                 </div>
