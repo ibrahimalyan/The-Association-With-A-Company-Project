@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth,signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import { doc, getDocs, collection, getDoc, addDoc } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
@@ -110,7 +110,7 @@ export const AddProject = () => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
 
-    const [language, setLanguage] = useState('ar');
+    const [language, setLanguage] = useState('heb');
 
     const [selectedLocations, setSelectedLocations] = useState([]);
     
@@ -202,7 +202,7 @@ export const AddProject = () => {
         e.preventDefault();
         
         if (selectedLocations.length === 0) {
-            alert("Please select at least one location.");
+            alert("אנא בחר לפחות מיקום אחד");
             setLoading(false);
             return;
         }
@@ -218,18 +218,24 @@ export const AddProject = () => {
                     }
                 });
             })
-        }
-        else {
-            alert("Please add participants.");
+        } else {
+            alert("אנא הוסף משתתפים");
             setLoading(false)
             return;
         }
     
         if (!adminFound) {
-            alert("Please add at least one admin.");
+            alert("אנא הוסף לפחות מנהל אחד");
             setLoading(false)
             return;
         }
+
+
+        if (new Date(endDate) <= new Date(startDate)) {
+            alert("תאריך הסיום חייב להיות לאחר תאריך ההתחלה");
+            return;
+        }
+
 
         try {
             
@@ -312,6 +318,16 @@ export const AddProject = () => {
             console.error(`Error fetching user data for ${id}:`, error);
         }
     };
+
+    const handleAddParticipantWithCheck = (participant) => {
+        const participantName = participant.firstName + " " + participant.lastName;
+        if (participantList.includes(participantName)) {
+            alert("This participant is already added.");
+        } else {
+            handleAddParticipant(participant);
+        }
+    };
+
 
     const handleSignOut = async () => {
         try {
@@ -426,7 +442,7 @@ export const AddProject = () => {
                                 {filteredUsers.map(participant => (
                                     <li key={participant.id}>
                                         <button type="button" className="participantcheck-button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
-                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipant(participant)}>Add</button>
+                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
                                     </li>
                                 ))}
                             </ul>
