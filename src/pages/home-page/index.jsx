@@ -18,10 +18,11 @@ const translations = {
     ar: {
         signOut: "تسجيل الخروج",
         registerAdmin: "تسجيل مشرف",
-        registerWorker: "تسجيل عامل",
+        registerWorker: "تسجيل مرشد",
         addProject: "إضافة مشروع",
         users: "المستخدمين",
         notify: "إشعارات",
+        viewStatistics: "عرض الإحصائيات", // Added translation for "View Statistics"
         filter: {
             projectName: "اسم المشروع",
             location: "الموقع",
@@ -65,10 +66,11 @@ const translations = {
     heb: {
         signOut: "התנתק",
         registerAdmin: "רשום מנהל",
-        registerWorker: "רשום עובד",
+        registerWorker: "רשום מדריך",
         addProject: "הוסף פרויקט",
         users: "משתמשים",
         notify: "עדכונים",
+        viewStatistics: "הצג סטטיסטיקות", // Added translation for "View Statistics"
         filter: {
             projectName: "שם הפרויקט",
             location: "מקום",
@@ -390,6 +392,13 @@ export const HomePage = () => {
         return false;
     };
  
+
+
+    const handleViewStatistics = () => {
+        navigate('/statistics');
+    };
+
+
     const userInfo = async (name) => {
         try {
             
@@ -654,6 +663,7 @@ export const HomePage = () => {
                             <>
                                 <button onClick={handleAddProject}>{t.addProject}</button>
                                 <button onClick={handleParticipant}>{t.users}</button>
+                                <button onClick={handleViewStatistics}>{t.viewStatistics}</button> {/* Updated button */}
                             </>
                         )} 
                     </div>

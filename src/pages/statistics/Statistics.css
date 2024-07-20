@@ -1,0 +1,22 @@
+.statistics-container {
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgb(0, 0, 0);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 70hv; /* Center the container vertically */
+    margin-bottom: 80px;
+  }
+  .statistics-container h2 {
+    margin-bottom: 70px; /* Space between the heading and the pie chart */
+
+
+  }
+
+  .pie-chart {
+    margin-top: -50px;
+    width: 400px;
+    height: 400px;
+  }
