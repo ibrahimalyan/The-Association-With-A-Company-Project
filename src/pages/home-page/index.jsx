@@ -7,12 +7,12 @@ import logo from '../../images/logo.jpeg';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, addDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
-import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
 import { getStorage, ref, deleteObject } from 'firebase/storage';
-
+import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
+
 
 const translations = {
     ar: {
@@ -112,6 +112,8 @@ const translations = {
     }
 };
 
+
+
 export const HomePage = () => {
     const navigate = useNavigate();
     const toGetAuth = getAuth();
@@ -134,9 +136,9 @@ export const HomePage = () => {
     );
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
-    const [expandedRows, setExpandedRows] = useState([]);
-    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [selectedProject, setSelectedProject] = useState(null);
     const [selectedUserData, setSelectedUserData] = useState(null);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [filter, setFilter] = useState({
@@ -259,15 +261,6 @@ export const HomePage = () => {
         navigate('/participant');
     };
 
-    const handleRowClick = (projectId) => {
-        const isExpanded = expandedRows.includes(projectId);
-        if (isExpanded) {
-            setExpandedRows(expandedRows.filter(id => id !== projectId));
-        } else {
-            setExpandedRows([...expandedRows, projectId]);
-        }
-    };
-
     const handleEditProject = (projectId) => {
         navigate(`/editProject/${projectId}`);
     };
@@ -278,7 +271,6 @@ export const HomePage = () => {
             try {
                 setLoading(true);
                 const storage = getStorage();
-
                 const deleteImagePromises = projects.map(async (project) => {
                     if (project.id === projectId) {
                         const imageFileName = project.imageName;
@@ -288,34 +280,31 @@ export const HomePage = () => {
                         }
                     }
                 });
-    
                 await Promise.all(deleteImagePromises);
-    
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
-    
+
                 const updateUserProjectsPromises = users.map(async (user) => {
+                    
                     if (user.projects && user.projects.includes(projectTitle)) {
-                        const userDocRef = doc(db, "users", user.uid);
+                        const userDocRef = doc(db, "users", user.id);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
                     }
                 });
-    
+
                 await Promise.all(updateUserProjectsPromises);
-    
                 alert("Project deleted successfully.");
             } catch (error) {
                 console.error("Error deleting document: ", error);
                 alert("Error deleting project. Please try again.");
-            } finally {
+            }finally {
                 setLoading(false);
                 window.location.reload(); // Refresh the page after all operations are complete
             }
         }
     };
-    
 
     const handleSignOut = async () => {
         try {
@@ -329,8 +318,7 @@ export const HomePage = () => {
 
     const projectFilterUser = () => {
         setIsFilterApplied(!isFilterApplied);
-    };
-
+        };
 
     const handlePrint = () => {
         window.print();
@@ -351,7 +339,6 @@ export const HomePage = () => {
         if (filter.endDate) {
             filtered = filtered.filter(project => new Date(project.endDate) <= new Date(filter.endDate));
         }
-
         if (isFilterApplied) {
             const userFullName = `${userDetails.firstName} ${userDetails.lastName}`;
     
@@ -361,9 +348,9 @@ export const HomePage = () => {
                 return projectIncluded && userIncluded;
             });
         }
+
         setFilteredProjects(filtered);
     };
-
     const clearFilter = () => {
         setFilter({
             name: "",
@@ -386,6 +373,15 @@ export const HomePage = () => {
         return 'Locations are undefined or not an array'; // Or any default value you prefer when locations is undefined or not an array
     };
 
+
+    if (!authenticated) {
+        return null; // Or a loading spinner while checking authentication
+    }
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    
     const isParticipant = (project) => {
         const currentUser = `${userDetails.firstName} ${userDetails.lastName}`;
         if (currentUser && project.participants) {
@@ -393,17 +389,7 @@ export const HomePage = () => {
         }
         return false;
     };
-
-    const openModal = (userData) => {
-        setSelectedUserData(userData);
-        setModalIsOpen(true);
-    };
-
-    const closeModal = () => {
-        setModalIsOpen(false);
-        setSelectedUserData(null);
-    };
-
+ 
     const userInfo = async (name) => {
         try {
             
@@ -419,9 +405,30 @@ export const HomePage = () => {
         }
     };
 
+    const openModal = (userData) => {
+        setSelectedUserData(userData);
+        setModalIsOpen(true);
+    };
+
+    const handleProjectClick = (project) => {
+        setSelectedProject(project);
+    };
+    const closepop = () => {
+        setSelectedProject(null);
+    };
+
+    const closeModal = () => {
+        setModalIsOpen(false);
+        setSelectedUserData(null);
+    };
+    
+    
+
     const renderUserInfo = (userData) => {
+        if (!selectedUserData) return null;
+
         return (
-            <div>
+            <div className="modaluser-content">
                 <>
                     <p>UserName: {userData.username}</p>
                     <p>firstName: {userData.firstName}</p>
@@ -433,10 +440,69 @@ export const HomePage = () => {
                     <p>BirthDate: {userData.birthDate}</p>
                     <p>Gender: {userData.gender}</p>
                     <p>ID: {userData.id}</p>
-                </>
+                </>               
             </div>
         );
     };
+
+    const renderProjectInfo = (project) => {
+        if (!project) return null;
+        return (
+            <div className="expanded-content">
+                    <p>
+                    {project.imageUrl ? (
+                    <img src={project.imageUrl} alt="Project" className="project-image2" />
+                    ) : (
+                    'No Image'
+                    )}
+                    </p>
+                    <h1><p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p></h1>
+                    <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}
+                    <strong> {t.expandedContent.endDate}:</strong> {project.endDate}</p>
+                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}</p>
+                    <p><strong>{t.expandedContent.description}:</strong></p> <p> {project.description}</p> 
+                                        {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
+                                            <>
+                                                <p>
+                                                    <strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants.length}
+                                                </p>
+                                                <p>
+                                                    <strong>{t.expandedContent.participants}:</strong>
+                                                    {nameParticipants[project.id] ? (
+                                                        <div>
+                                                            {nameParticipants[project.id].map((name, index) => (
+                                                                <button key={index} onClick={() => userInfo(name)} className='usersbutton'>
+                                                                    {name}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span>Loading...</span>
+                                                    )}
+                                                </p>
+                                            </>
+                                        )}
+                                        <Modal
+    isOpen={modalIsOpen}
+    onRequestClose={closeModal}
+    contentLabel="User Information"
+    className="modal1"
+    overlayClassName="modal-overlay"
+>
+    {selectedUserData && renderUserInfo(selectedUserData)}
+    <button onClick={closeModal} className="close-button6">Close</button>
+</Modal>
+
+                                        {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
+                                        {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
+                                            <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
+                                        )}
+                                        <button onClick={closepop} className="close-button6">Close</button>
+              </div>
+        );
+    };
+
+
 
     const handleRegisterAdmin = async () => {
         try {
@@ -461,11 +527,12 @@ export const HomePage = () => {
         navigate('/notifications');
     };
 
+    
     const handleAddNotification = async(project, isAdmin) => {
         
         const adminsList = [];
         const workerList = [];
-        if (isAdmin){   
+        if (isAdmin){  
             project.participants.forEach((participantName) => {
                 users.forEach((user) => {
                     const userFullName = `${user.firstName} ${user.lastName}`;
@@ -490,7 +557,6 @@ export const HomePage = () => {
             projectId: project.id,
             userId: userDetails.uid,
         });
-
         setNotifies(prevNotify => ({
             ...prevNotify,
             [project.id]: [
@@ -501,11 +567,10 @@ export const HomePage = () => {
                     userId: userDetails.uid,
                 }
             ]
-        })); 
+        }));
         
         
     };
-
     const rendersWorkersSpecificProject = (projectId) => {
         if (workersInfo[projectId].bool){
             return (
@@ -520,7 +585,6 @@ export const HomePage = () => {
             <p>No Workers</p>
         )
     }
-
     const handleSendRegistProject = async (project) =>{
         console.log("notifies: ", notifies);
         let notification = {};
@@ -528,13 +592,10 @@ export const HomePage = () => {
         
         const confirmRegist = window.confirm("Are you sure you want to regist to this project?");    
         if (confirmRegist){
-            console.log("notifies: ", notifies);
             if (workersInfo[project.id].bool){
-                console.log("workerParticipant: ", workersInfo[project.id].participantIds)
                 try{
                     if (notifies){
                         for (notification of notifies){
-                            console.log("notification: ", notification);
                             if (notification.projectId === project.id && notification.userId === userDetails.uid){
                                 alert ("Notification already sent to this worker.");
                                 return null;
@@ -542,32 +603,24 @@ export const HomePage = () => {
                         }
                     }
                     await handleAddNotification(project, false);
-                    // console.log("afterNotifies: ", notifies); 
                     window.location.reload();
                 }catch(error){
                     console.log("Error adding project register: ", error);
                 }
             }else{
                 try{
-                console.log("admin");
-                if (notifies){
-                    for (notification of notifies){
-                        console.log("notification: ", notification);
-                        const boolProject = notification.projectId === project.id;
-                        const boolUser = notification.userId === userDetails.uid;
-                        console.log("bool Projects: ",  boolProject);
-                        console.log("boolUser: ", boolUser);
-                        if (notification.projectId === project.id && notification.userId === userDetails.uid){
-                            console.log("fuck")
-                            alert ("Notification already sent to this worker.");
-                            return null;
+                    if (notifies){
+                        for (notification of notifies){
+                            if (notification.projectId === project.id && notification.userId === userDetails.uid){
+                                console.log("fuck")
+                                alert ("Notification already sent to this worker.");
+                                return null;
+                            }
                         }
                     }
-                }
                 await handleAddNotification(project, true);
-                
-                }catch(error){
-                    console.log("Error adding project register: ", error);
+            }catch(error){
+                console.log("Error adding project register: ", error);
                 }
             }
             window.location.reload()
@@ -577,49 +630,39 @@ export const HomePage = () => {
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
     };
-  
-    if (!authenticated) {
-        return null; 
-    }
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     const t = translations[language];
 
     return (
         <>
             <div id="root"></div>
-            <div className="dashboard">
-                <header className="header">
-                    <div className="header-left">
-                        <button onClick={toggleLanguage}>{t.changeLanguage}</button>
-                    </div>
-                    <div className="header-center">
-                        <img src={logo} alt="Logo" className="logo" />
-                        <p><strong>{userDetails.username}</strong></p>
+            <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
+            <header className="header">
+            <img src={logo} alt="Logo" className="logo" />  
+                        <div className="header-center">
                         <button onClick={handleSignOut}>{t.signOut}</button>
                         {userDetails.role === 'Worker' && (<button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>)}
+                        <button onClick={handleViewNotifications}>{t.notify}</button> 
                         {userDetails.role === 'Guest' && (
                             <>
-                                <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
-                                <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
+                                 <button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>
+                                 
+                                 <button onClick={handleRegisterWorker}>{t.registerWorker}</button>
                             </>
                         )}
-                        <button onClick={handleUserProfile}>
-                            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-                        </button>
                         {userDetails.role === "Admin" && (
                             <>
                                 <button onClick={handleAddProject}>{t.addProject}</button>
                                 <button onClick={handleParticipant}>{t.users}</button>
                             </>
-                        )}
-                        {(userDetails.role === "Worker" || userDetails.role === "Admin") && (
-                            <button onClick={handleViewNotifications}>{t.notify}</button>
-                        )}
+                        )} 
                     </div>
+                        <button onClick={toggleLanguage}>{t.changeLanguage}</button>
+                        <button onClick={handlePrint}>{t.tableHeaders.print}</button>
+                        <button onClick={handleUserProfile} className='user-profile-button'>
+                                {userDetails.username}
+                                <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                        </button>
                 </header>
                 <main className="main-content">
                     <div className="filter-section">
@@ -631,10 +674,10 @@ export const HomePage = () => {
                             onChange={(e) => setFilter({ ...filter, name: e.target.value })}
                         />
                         <select name="location" value={filter.location} onChange={(e) => setFilter({ ...filter, location: e.target.value })}>
-                            <option value="">{t.filter.location}</option>
+                        <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
-                                <option key={location} value={location}>{location}</option>
-                            ))}
+                            <option key={location} value={location}>{location}</option>
+                        ))}
                         </select>
                         <input
                             type="date"
@@ -652,38 +695,27 @@ export const HomePage = () => {
                         <button type="button" onClick={projectFilterUser}>
                             {isFilterApplied ? "Clear Filter Projects" : "My Projects"}
                         </button>
-                        
-                    </div>
-                    <table className="projects-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>{t.filter.projectName}</th>
-                                <th>{t.filter.startDate}</th>
-                                <th>{t.filter.endDate}</th>
-                                <th>{t.filter.location}</th>
-                                <th>{t.filter.description}</th>
-                                <th>{t.filter.Workers}</th>
-                                <th>{t.filter.image}</th>
-                                {(userDetails.role === 'Admin' || userDetails.role === 'Worker') && (
-                                    <>
-                                        <th>{t.tableHeaders.edit}</th>
-                                        <th>{t.tableHeaders.delete}</th>
-                                    </>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProjects.map((project, index) => (
-                                <React.Fragment key={project.id}>
-                                    <tr onClick={() => handleRowClick(project.id)}>
-                                        <td>{index + 1}</td>
-                                        <td>{project.projectTitle}</td>
-                                        <td>{project.startDate}</td>
-                                        <td>{project.endDate}</td>
-                                        <td>{renderLocations(project.location)}</td> {/* Updated to show multiple locations */}
-                                        <td>{project.description}</td>
-                                        <td>
+                        </div>
+                        <table className="projects-table">
+    <tbody>
+        <tr>
+            <td colSpan="10">
+                <div className="projects-grid">
+                    {filteredProjects.map((project, index) => (
+                         <div className="project-card" key={project.id}>
+                            <React.Fragment key={project.id}>
+                                <div className="project-image-wrapper" 
+                                onClick={() =>     handleProjectClick(project)}
+                                >
+                                    {project.imageUrl ? (
+                                        <img src={project.imageUrl} alt="Project" className="project-image" />
+                                    ) : (
+                                        <span>No Image</span>
+                                    )}
+                                        <h1>{project.projectTitle}<br /></h1>
+                                        {project.startDate} - {project.endDate}<br />
+                                        {renderLocations(project.location)} {/* Updated to show multiple locations */}<br />
+                                        {/* {project.description}<br /> */}
                                             {workersInfo[project.id] ? (
                                                 workersInfo[project.id].bool ? (
                                                     <div>
@@ -696,85 +728,41 @@ export const HomePage = () => {
                                                 )
                                             ) : (
                                                 <span>Loading...</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            {project.imageUrl ? (
-                                                <img src={project.imageUrl} alt="Project" className="project-image" />
-                                            ) : (
-                                                'No Image'
-                                            )}
-                                        </td>
+                                            )}<br />
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                            <>
-                                                <td>
-                                                    <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
-                                                </td>
-                                                <td>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
-
-                                                </td>
-                                            </>
-                                        )}
-                                    </tr>
-                                    {expandedRows.includes(project.id) && (
-                                        <tr className="expanded-row">
-                                            <td colSpan="10">
-                                                <div className="expanded-content">
-                                                    <p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p>
-                                                    <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}</p>
-                                                    <p><strong>{t.expandedContent.endDate}:</strong> {project.endDate}</p>
-                                                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}</p>
-                                                    <p><strong>{t.expandedContent.description}:</strong> {project.description}</p>
-                                                    {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
-                                                        <>
-                                                            <p><strong>{t.expandedContent.numberOfParticipants}:</strong> {project.participants ? project.participants.length : 0}</p>
-                                                            <p>
-                                                                <strong>{t.expandedContent.participants}:</strong>
-
-                                                                {nameParticipants[project.id] ? (
-                                                                    <div>
-                                                                        {nameParticipants[project.id].map((name, index) => (
-                                                                            <button key={index} onClick={() => userInfo(name)} > {name}</button>
-                                                                        ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span>Loading...</span>
-                                                                )}
-                                                            </p>
-                                                        </>
-                                                    )}
-                                                    {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
-                                                    <Modal
-                                                        isOpen={modalIsOpen}
-                                                        onRequestClose={closeModal}
-                                                        contentLabel="User Information"
-                                                    >
-                                                        {selectedUserData && renderUserInfo(selectedUserData)}
-                                                        <button onClick={closeModal}>Close</button>
-                                                    </Modal>
-                                                    <p>{project.imageUrl ? <img src={project.imageUrl} alt="Project" className="project-image" /> : 'No Image'}</p>
-                                                    {((userDetails.role === 'Worker' && !isParticipant(project)) || (userDetails.role === 'Guest' && !isParticipant(project))) && (
-                                                        <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        <>
+                                                <button className='editbut' onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
+                                                <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
+                                        </>
                                     )}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="action-buttons">
-                        <button onClick={handlePrint}>{t.tableHeaders.print}</button>
+                                </div>
+
+                                {selectedProject && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            {renderProjectInfo(selectedProject)}
+                        </div>
                     </div>
+                )}
+                            </React.Fragment>
+                        </div>
+                    ))}
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<footer className="footer">
+        <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
+        050-312-1883<br />
+        רונית סבטי - ronit_se@jerusalem.muni.il<br />
+        051-548-0763</p>
+      </footer>
                 </main>
-                <footer className="footer">
-                    <p>CONTACT US</p>
-                </footer>
             </div>
         </>
     );
 };
+
 
 export default HomePage;
