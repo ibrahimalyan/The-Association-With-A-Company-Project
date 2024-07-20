@@ -4,6 +4,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
+    margin-bottom: 140px;
 }
 
 .user-profile-container .user-profile-form {
@@ -26,7 +27,7 @@
 
 .user-profile-container .user-profile-form .form-label {
     font-weight: bold;
-    text-align: left;
+    text-align: right;
     padding-right: 10px;
 }
 
@@ -37,6 +38,7 @@
     border-radius: 4px;
     background-color: #fff;
     color: #000;
+    text-align: right;
 }
 
 .user-profile-container .user-profile-form .form-input[type="date"] {
@@ -49,6 +51,7 @@
     margin-top: 10px;
 }
 
+
 .user-profile-container .save-close-buttons {
     display: flex;
     justify-content: space-between;
@@ -57,8 +60,8 @@
     width: 102%;
 }
 
-.user-profile-container .save-button,
-.close-button {
+.user-profile-container .save-button,.language-button ,
+.close-button2 {
     padding: 8px 12px;
     font-size: 16px;
     border-radius: 4px;
@@ -72,13 +75,18 @@
     color: #000;
 }
 
-.user-profile-container .close-button {
+.user-profile-container .close-button2 {
     background: #d9534f;
     color: #fff;
 }
 
-.user-profile-container .save-button:hover,
-.close-button:hover {
+.user-profile-container .language-button {
+    background: #4fd996;
+    color: black;
+}
+
+.user-profile-container .save-button:hover,.language-button:hover,
+.close-button2:hover {
     opacity: 0.8;
 }
 
