@@ -9,6 +9,7 @@ import { EditProject } from './pages/update-Project/index';
 import { Participent } from './pages/participent/index';
 import { HomePageEntery } from './pages/home-page-Entery/index';
 import { Notifications } from './pages/notification/index';
+import Statistics from './pages/statistics/index'; // Corrected import
 
 function App() {
     return (
@@ -22,6 +23,8 @@ function App() {
                 <Route path="/editProject/:id" element={<EditProject />} /> 
                 <Route path="/participant" element={<Participent />} /> 
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/statistics" element={<Statistics />} />
+
                 <Route path="/" element={<HomePageEntery />} />
             </Routes>
         </Router>
