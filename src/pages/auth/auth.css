@@ -88,6 +88,22 @@ body {
     cursor: pointer;
     transition: background 0.3s ease;
 }
+/* Add this to your existing CSS file */
+.auth-wrapper .back-button {
+    position: absolute;
+    top: 20px; /* Adjust as needed */
+    left: 20px; /* Adjust as needed */
+    background: #a4a772; /* Button background color */
+    color: black; /* Button text color */
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    cursor: pointer;
+    z-index: 1000; /* Ensure the button is above other elements */
+}
+
 
 .auth-wrapper button:hover {
     background: #fffb00;
