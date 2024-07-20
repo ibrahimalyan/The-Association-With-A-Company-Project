@@ -4,17 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
-import { useProjects } from '../../hooks/useGetProjectsInfo';
 import { doc, deleteDoc, getDocs, collection, updateDoc, arrayRemove, getDoc, addDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
 import profileIcon from '../../images/profileIcon.png';
-import Modal from 'react-modal';
 import { useRegister } from '../../hooks/useRegister';
 import { getStorage, ref, deleteObject } from 'firebase/storage';
-
+import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
-
 
 
 const translations = {
@@ -133,16 +130,17 @@ export const HomePage = () => {
         phoneNumber: '',
         role: '', // Add role to state
         uid: '',
-        username: ''
+        username: '',
+        projects: []
         }
     );
     const [workersInfo, setWorkersInfo] = useState({});
     const [nameParticipants, setNameParticipants] = useState({});
-    // const [expandedRows, setExpandedRows] = useState([]);
-    const [modalIsOpen, setModalIsOpen] = useState(false);
-    const [modalType, setModalType] = useState(null); // State to track modal type (user or project)
+    const [selectedProject, setSelectedProject] = useState(null);
     const [selectedUserData, setSelectedUserData] = useState(null);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
     const [filteredProjects, setFilteredProjects] = useState([]);
+    const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [filter, setFilter] = useState({
         name: '',
         location: '',
@@ -176,7 +174,8 @@ export const HomePage = () => {
                             phoneNumber: userData.phoneNumber || '',
                             role: userData.role || '', // Set role
                             uid: user.uid, // Set uid
-                            username: userData.username || ''
+                            username: userData.username || '',
+                            projects: userData.projects || []
                         });
                     } else {
                         console.error('User document not found');
@@ -248,7 +247,7 @@ export const HomePage = () => {
 
     useEffect(() => {
         applyFilter();
-    }, [projects, filter]);
+    }, [projects, filter, isFilterApplied]);
 
     const handleUserProfile = () => {
         navigate('/userProfile');
@@ -262,15 +261,6 @@ export const HomePage = () => {
         navigate('/participant');
     };
 
-    // const handleRowClick = (projectId) => {
-    //     const isExpanded = expandedRows.includes(projectId);
-    //     if (isExpanded) {
-    //         setExpandedRows(expandedRows.filter(id => id !== projectId));
-    //     } else {
-    //         setExpandedRows([...expandedRows, projectId]);
-    //     }
-    // };
-
     const handleEditProject = (projectId) => {
         navigate(`/editProject/${projectId}`);
     };
@@ -279,45 +269,39 @@ export const HomePage = () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this project?");
         if (confirmDelete) {
             try {
-                console.log("projects", projects);
+                setLoading(true);
                 const storage = getStorage();
-                projects.forEach(async (project) => {
+                const deleteImagePromises = projects.map(async (project) => {
                     if (project.id === projectId) {
                         const imageFileName = project.imageName;
-                        console.log("imageFileName", imageFileName , "\nprojectTitle", projectTitle);
                         if (imageFileName) {
                             const imageRef = ref(storage, `images/${projectTitle}/${imageFileName}`);
                             await deleteObject(imageRef);
                         }
                     }
                 });
-                // Delete the project document
+                await Promise.all(deleteImagePromises);
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
 
-                // Retrieve all users
-                // const usersSnapshot = await getDocs(collection(db, "users"));
-                users.forEach(async (user) => {
+                const updateUserProjectsPromises = users.map(async (user) => {
                     
                     if (user.projects && user.projects.includes(projectTitle)) {
-                        // Remove the project title from the user's projects array
-                        console.log("deleted");
                         const userDocRef = doc(db, "users", user.id);
                         await updateDoc(userDocRef, {
                             projects: arrayRemove(projectTitle)
                         });
-                    } else {
-                        console.log("not deleted");
                     }
                 });
 
-
+                await Promise.all(updateUserProjectsPromises);
                 alert("Project deleted successfully.");
-                // Refresh the page or remove the project from the state
-                window.location.reload();
             } catch (error) {
                 console.error("Error deleting document: ", error);
                 alert("Error deleting project. Please try again.");
+            }finally {
+                setLoading(false);
+                window.location.reload(); // Refresh the page after all operations are complete
             }
         }
     };
@@ -332,13 +316,9 @@ export const HomePage = () => {
         }
     };
 
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilter({
-            ...filter,
-            [name]: value
-        });
-    };
+    const projectFilterUser = () => {
+        setIsFilterApplied(!isFilterApplied);
+        };
 
     const handlePrint = () => {
         window.print();
@@ -359,8 +339,25 @@ export const HomePage = () => {
         if (filter.endDate) {
             filtered = filtered.filter(project => new Date(project.endDate) <= new Date(filter.endDate));
         }
+        if (isFilterApplied) {
+            const userFullName = `${userDetails.firstName} ${userDetails.lastName}`;
+    
+            filtered = filtered.filter(project => {
+                const projectIncluded = userDetails.projects.includes(project.projectTitle);
+                const userIncluded = project.participants.includes(userFullName);
+                return projectIncluded && userIncluded;
+            });
+        }
 
         setFilteredProjects(filtered);
+    };
+    const clearFilter = () => {
+        setFilter({
+            name: "",
+            location: "",
+            startDate: "",
+            endDate: ""
+        });
     };
 
     const renderLocations = (locations) => {
@@ -393,40 +390,40 @@ export const HomePage = () => {
         return false;
     };
  
-
-    const openUserModal = (userData) => {
-        setSelectedUserData(userData);
-        setModalType('user');
-        setModalIsOpen(true);
-    };
-
-    const closeModal = () => {
-        setModalIsOpen(false);
-        setModalType(null);
-    };
-
-    const openProjectModal = (project) => {
-        setSelectedUserData(project);
-        setModalType('project');
-        setModalIsOpen(true);
-    };
-
     const userInfo = async (name) => {
         try {
-            const usersSnapshot = await getDocs(collection(db, "users"));
-            for (const userDoc of usersSnapshot.docs) {
-                const userData = userDoc.data();
-                const dataName = `${userData.firstName} ${userData.lastName}`;
+            
+            for (const user of users) {
+                
+                const dataName = `${user.firstName} ${user.lastName}`;
                 if (dataName === name) {
-                    openUserModal(userData);
+                    openModal(user);
                 }
             }
         } catch (error) {
             console.error(`Error fetching user data for ${name}:`, error);
         }
     };
- 
+
+    const openModal = (userData) => {
+        setSelectedUserData(userData);
+        setModalIsOpen(true);
+    };
+
+    const handleProjectClick = (project) => {
+        setSelectedProject(project);
+    };
+    const closepop = () => {
+        setSelectedProject(null);
+    };
+
+    const closeModal = () => {
+        setModalIsOpen(false);
+        setSelectedUserData(null);
+    };
     
+    
+
     const renderUserInfo = (userData) => {
         if (!selectedUserData) return null;
 
@@ -451,22 +448,19 @@ export const HomePage = () => {
     const renderProjectInfo = (project) => {
         if (!project) return null;
         return (
-                            <div className="expanded-content">
-                                        <p>
-                                            <strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.startDate}:</strong> {project.startDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.endDate}:</strong> {project.endDate}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}
-                                        </p>
-                                        <p>
-                                            <strong>{t.expandedContent.description}:</strong> {project.description}
-                                        </p>
+            <div className="expanded-content">
+                    <p>
+                    {project.imageUrl ? (
+                    <img src={project.imageUrl} alt="Project" className="project-image2" />
+                    ) : (
+                    'No Image'
+                    )}
+                    </p>
+                    <h1><p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p></h1>
+                    <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}
+                    <strong> {t.expandedContent.endDate}:</strong> {project.endDate}</p>
+                    <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}</p>
+                    <p><strong>{t.expandedContent.description}:</strong></p> <p> {project.description}</p> 
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                             <>
                                                 <p>
@@ -477,7 +471,7 @@ export const HomePage = () => {
                                                     {nameParticipants[project.id] ? (
                                                         <div>
                                                             {nameParticipants[project.id].map((name, index) => (
-                                                                <button key={index} onClick={() => userInfo(name)}>
+                                                                <button key={index} onClick={() => userInfo(name)} className='usersbutton'>
                                                                     {name}
                                                                 </button>
                                                             ))}
@@ -488,26 +482,22 @@ export const HomePage = () => {
                                                 </p>
                                             </>
                                         )}
+                                        <Modal
+    isOpen={modalIsOpen}
+    onRequestClose={closeModal}
+    contentLabel="User Information"
+    className="modal1"
+    overlayClassName="modal-overlay"
+>
+    {selectedUserData && renderUserInfo(selectedUserData)}
+    <button onClick={closeModal} className="close-button6">Close</button>
+</Modal>
+
                                         {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
-                                         <Modal 
-                                        //  isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="User Information"
-                                         >
-                                         {
-                                         modalType === 'user' &&
-                                          selectedUserData &&
-                                          renderUserInfo(selectedUserData)}
-                                         <button onClick={closeModal}>Close</button>
-                                     </Modal>   
-                                        <p>
-                                            {project.imageUrl ? (
-                                                <img src={project.imageUrl} alt="Project" className="project-image" />
-                                            ) : (
-                                                'No Image'
-                                            )}
-                                        </p>
                                         {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
                                             <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
                                         )}
+                                        <button onClick={closepop} className="close-button6">Close</button>
               </div>
         );
     };
@@ -602,29 +592,38 @@ export const HomePage = () => {
         
         const confirmRegist = window.confirm("Are you sure you want to regist to this project?");    
         if (confirmRegist){
-            console.log("notifies: ", notifies);
             if (workersInfo[project.id].bool){
-                console.log("workerParticipant: ", workersInfo[project.id].participantIds)
                 try{
                     if (notifies){
                         for (notification of notifies){
-                            console.log("notification: ", notification);
                             if (notification.projectId === project.id && notification.userId === userDetails.uid){
                                 alert ("Notification already sent to this worker.");
-                                return;
+                                return null;
                             }
                         }
                     }
                     await handleAddNotification(project, false);
-                    // console.log("afterNotifies: ", notifies);
                     window.location.reload();
                 }catch(error){
                     console.log("Error adding project register: ", error);
                 }
             }else{
-                console.log("admin");
+                try{
+                    if (notifies){
+                        for (notification of notifies){
+                            if (notification.projectId === project.id && notification.userId === userDetails.uid){
+                                console.log("fuck")
+                                alert ("Notification already sent to this worker.");
+                                return null;
+                            }
+                        }
+                    }
                 await handleAddNotification(project, true);
+            }catch(error){
+                console.log("Error adding project register: ", error);
+                }
             }
+            window.location.reload()
         }
     }
 
@@ -672,9 +671,9 @@ export const HomePage = () => {
                             name="name"
                             placeholder={t.filter.projectName}
                             value={filter.name}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, name: e.target.value })}
                         />
-                        <select name="location" value={filter.location} onChange={handleFilterChange}>
+                        <select name="location" value={filter.location} onChange={(e) => setFilter({ ...filter, location: e.target.value })}>
                         <option value="">{t.filter.location}</option>
                             {locations.map((location) => (
                             <option key={location} value={location}>{location}</option>
@@ -684,15 +683,18 @@ export const HomePage = () => {
                             type="date"
                             name="startDate"
                             value={filter.startDate}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, startDate: e.target.value })}
                         />
                         <input
                             type="date"
                             name="endDate"
                             value={filter.endDate}
-                            onChange={handleFilterChange}
+                            onChange={(e) => setFilter({ ...filter, endDate: e.target.value })}
                         />
-                            <button onClick={applyFilter}>{t.filter.applyFilter}</button>
+                        <button onClick={clearFilter}>Clear Filter</button>
+                        <button type="button" onClick={projectFilterUser}>
+                            {isFilterApplied ? "Clear Filter Projects" : "My Projects"}
+                        </button>
                         </div>
                         <table className="projects-table">
     <tbody>
@@ -703,7 +705,7 @@ export const HomePage = () => {
                          <div className="project-card" key={project.id}>
                             <React.Fragment key={project.id}>
                                 <div className="project-image-wrapper" 
-                                onClick={() => openProjectModal(project)}
+                                onClick={() =>     handleProjectClick(project)}
                                 >
                                     {project.imageUrl ? (
                                         <img src={project.imageUrl} alt="Project" className="project-image" />
@@ -729,20 +731,19 @@ export const HomePage = () => {
                                             )}<br />
                                         {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                         <>
-                                                <button onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
+                                                <button className='editbut' onClick={() => handleEditProject(project.id)}>{t.tableHeaders.edit}</button>
+                                                <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>{t.tableHeaders.delete}</button>
                                         </>
                                     )}
                                 </div>
-                                <Modal 
-                                isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Project Information"
-                                >
-                                            {
-                                            modalType === 'project' &&
-                                             selectedUserData &&
-                                              renderProjectInfo(selectedUserData)}
-                                            <button onClick={closeModal}>Close</button>
-                                        </Modal>
+
+                                {selectedProject && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            {renderProjectInfo(selectedProject)}
+                        </div>
+                    </div>
+                )}
                             </React.Fragment>
                         </div>
                     ))}
