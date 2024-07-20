@@ -1,22 +1,36 @@
 .statistics-container {
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgb(0, 0, 0);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 70hv; /* Center the container vertically */
-    margin-bottom: 80px;
-  }
-  .statistics-container h2 {
-    margin-bottom: 70px; /* Space between the heading and the pie chart */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgb(0, 0, 0);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 70hv; /* Center the container vertically */
+  margin-bottom: 80px;
+}
+.statistics-container h2 {
+  margin-bottom: 20px; /* Space between the heading and the pie chart */
+  font-size: 1.5em;
+  color: #333; /* Darker text color for better contrast */
+}
 
+.pie-chart {
+  margin: 20px 0;
+  width: 400px;
+  height: 400px;
+}
 
-  }
-
+@media (max-width: 600px) {
   .pie-chart {
-    margin-top: -50px;
-    width: 400px;
-    height: 400px;
+      width: 300px;
+      height: 300px;
   }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+  .pie-chart {
+      width: 350px;
+      height: 350px;
+  }
+}
