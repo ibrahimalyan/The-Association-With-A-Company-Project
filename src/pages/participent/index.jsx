@@ -243,6 +243,7 @@ const t = translations[language];
                         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
                         <button onClick={handleViewNotifications}>{t.notify}</button> 
                                  <button onClick={handleUserProfile}>
+                                 {userDetails.username}
                             <img src={profileIcon} alt="profileIcon" className="profileIcon" />
                         </button>
                         {userDetails.role === "Admin" && (
