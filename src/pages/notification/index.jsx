@@ -4,20 +4,93 @@
     import { useNavigate } from 'react-router-dom';
     import { useRegister } from '../../hooks/useRegister';
     import { doc, deleteDoc, getDocs, collection, getDoc, writeBatch, where } from 'firebase/firestore';
-    import { getAuth } from 'firebase/auth';
+    import { getAuth, signOut } from 'firebase/auth';
+    import profileIcon from '../../images/profileIcon.png';
+    import logo from '../../images/logo.jpeg';
+
     import './styles.css';
     
+    const translations = {
+        ar: {
+            signOut: "تسجيل الخروج",
+            registerAdmin: "تسجيل مشرف",
+            registerWorker: "تسجيل عامل",
+            addProject: "إضافة مشروع",
+            users: "المستخدمين",
+            notify: "إشعارات",
+            projectTitle: "عنوان المشروع",
+            location: "الموقع",
+            startDate: "تاريخ البدء",
+            endDate: "تاريخ الانتهاء",
+            description: "الوصف",
+            projectImage: "صورة المشروع",
+            addParticipant: "إضافة مشارك",
+            search: "بحث",
+            close: "إغلاق",
+            save: "حفظ",
+            participantList: "قائمة المشاركين",
+            remove: "إزالة",
+            changeLanguage: "עברית",
+            locations: [
+                'منطقة الشمال',
+                'منطقة الجنوب',
+                'المنطقة المركزية',
+                'منطقة الغرب',
+                'منطقة الشرق',
+                'مجال الإدمان',
+                'مجال الشباب والمشردين',
+                'مجال العمل الجماعي',
+                'المجال الأرثوذكسي المتشدد',
+                'المجال الديني الوطني',
+                'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
+            ]
+        },
+        heb: {
+            signOut: "התנתק",
+            registerAdmin: "רשום מנהל",
+            registerWorker: "רשום עובד",
+            addProject: "הוסף פרויקט",
+            users: "משתמשים",
+            notify: "עדכונים",
+            projectTitle: "כותרת הפרויקט",
+            location: "מקום",
+            startDate: "תאריך התחלה",
+            endDate: "תאריך סיום",
+            description: "תיאור",
+            projectImage: "תמונת הפרויקט",
+            addParticipant: "הוסף משתתף",
+            search: "חפש",
+            close: "סגור",
+            save: "שמור",
+            participantList: "רשימת משתתפים",
+            remove: "הסר",
+            changeLanguage: "العربية",
+            locations: [
+                'אזור הצפון',
+                'אזור הדרום',
+                'אזור המרכז',
+                'אזור המערב',
+                'אזור המזרח',
+                'תחום ההתמכרויות',
+                'תחום הצעירים והחסרי בית',
+                'תחום העבודה הקבוצתית',
+                'תחום האורתודוקסי',
+                'תחום הדתי הלאומי',
+                'חינוך, הכשרה ותעסוקה, מדיה, מענה'
+            ]
+        }
+    };
+
     export const Notifications = () => {
         const toGetAuth = getAuth();
         const { registerList, loading, acceptUser, rejectUser, setLoading } = useRegister();
         const navigate = useNavigate();
         const [authenticated, setAuthenticated] = useState(false);
-        const [notificationWorkerDeleted, setNotificationWorkerDeleted] = useState(false);
-        const [notificationAdminDeleted, setNotificationAdminDeleted] = useState(false);
         const [projects, setProjects] = useState([]);
+        const [language, setLanguage] = useState('heb');
         const [users, setUsers] = useState([]);
         const [notifies, setNotifies] = useState([]);
-        const [acceptanceList, setAcceptanceList] = useState([]);
+        const [sortOrder, setSortOrder] = useState('asc'); // 'asc' for ascending, 'desc' for descending
         const [userDetails, setUserDetails] = useState({
             userId: '',
             firstName: '',
@@ -38,13 +111,11 @@
                     setAuthenticated(true);
                     
                     try{
-                        const [userDoc, projectDocs, usersDocs, registProject, acceptanceList] = await Promise.all([
+                        const [userDoc, projectDocs, usersDocs, registProject] = await Promise.all([
                             getDoc(doc(db, 'users', user.uid)),
                             getDocs(collection(db, 'projects')),
                             getDocs(collection(db, 'users')),
-                            getDocs(collection(db,'projectsRegisters')),
-                            getDocs(collection(db,'acceptance'))
-                            
+                            getDocs(collection(db,'projectsRegisters')),                            
                         ]);
                         if (userDoc.exists()) {
                             const userData = userDoc.data();
@@ -78,13 +149,8 @@
                             registProjects.push({ id: registDoc.id, ...registDoc.data() });
                         });
     
-                        const acceptanceListArray = [];
-                        acceptanceList.forEach((acceptanceDoc) => {
-                            acceptanceListArray.push({ id: acceptanceDoc.id, ...acceptanceDoc.data() });
-                        });
                         setProjects(projectsList);
                         setUsers(usersList);
-                        setAcceptanceList(acceptanceListArray);
                         setNotifies(registProjects);
     
                     }catch(error){
@@ -169,42 +235,47 @@
             await updateProject(projectName, projectID, userFullName);
             await deleteNotification(notify, false, false);
         }
+        const handleSort = () => {
+            setSortOrder(prevSortOrder => prevSortOrder === 'asc' ? 'desc' : 'asc');
+        };
+    
+        // Sorting function
+        const sortedRegisterList = [...registerList].sort((a, b) => {
+            if (a.registTo === b.registTo) return 0;
+    
+            if (sortOrder === 'asc') {
+                return a.registTo === 'Admin' ? -1 : 1;
+            } else {
+                return a.registTo === 'Admin' ? 1 : -1;
+            }
+        });
+
     
         const renderRegisterListAdmin = () => {
-            const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
-            let registerTo = "";
-            let notificationUidAdmin = "";
-        
-            for (const notification of userNotifications) {
-                registerTo = notification.registTo;
-                if (notification.registTo === 'Admin') {
-                    notificationUidAdmin = notification.id;
-                }
-            }
             const render = renderRegistProjects();
         
             const hasRegisterListData = registerList.length > 0;
             const hasProjectListData = notifies.filter(notify => notify.workerID.includes(userDetails.uid)).length > 0;
-        
-            if (acceptanceList.length === 0 && !hasRegisterListData && !hasProjectListData) {
-                return <p className="notification-message">No notifications</p>;
-            }
-        
+    
             return (
                 <>
                     
                     <div className={`tables-container ${!hasRegisterListData || !hasProjectListData ? 'single-table-container' : ''}`}>
                         {hasRegisterListData && (
-                            <table className="register-list-table">
+                            <table2 className="register-list-table">
                                 <thead className="register-list-thead">
                                     <tr className="register-list-thead-tr">
                                         <th className="register-list-th">First Name</th>
                                         <th className="register-list-th">Last Name</th>
-                                        <th className="register-list-th">Register to</th>
+                                        <th className="register-list-th">Register to
+                                        <button onClick={handleSort} className="notification-sort-button">
+                                            Register to
+                                        </button>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="register-list-tbody">
-                                    {registerList.map((register) => (
+                                {sortedRegisterList.map((register) => (
                                         <tr className="register-list-tbody-tr" key={register.id} onClick={() => setSelectedRequest(register)}>
                                             <td className="register-list-td">{register.firstName}</td>
                                             <td className="register-list-td">{register.lastName}</td>
@@ -212,68 +283,53 @@
                                         </tr>
                                     ))}
                                 </tbody>
-                            </table>
+                            </table2>
                         )}
                         {hasProjectListData && render}
                     </div>
                 </>
             );
         };
-        const deleteNotification = async (notificationId, isAdmin, isAcceptance) => {
-            if(isAdmin && isAcceptance){
-                setNotificationAdminDeleted(true);
-            }
-            else if(!isAdmin && isAcceptance){
-                setNotificationWorkerDeleted(true);
-            }
+        const deleteNotification = async (notificationId, isAdmin) => {
             setLoading(true);
             try{
-                if (isAcceptance){
-                    const notificationRef = doc(db, "acceptance", notificationId);
-                    await deleteDoc(notificationRef);        
-                }
-                else{
-                    const notificationRef = doc(db, "projectsRegisters", notificationId);
+                   const notificationRef = doc(db, "projectsRegisters", notificationId);
                     await deleteDoc(notificationRef);
-                }
-                window.location.reload();
             }catch(error){
                 console.error('Error deleting notification', error);
             }
             setLoading(false);
+            window.location.reload();
             
         }
+        const toggleLanguage = () => {
+            setLanguage((prevLanguage) => (prevLanguage === 'ar' ? 'heb' : 'ar'));
+        };
+        const handleSignOut = async () => {
+            try {
+                await signOut(toGetAuth);
+                navigate('/homePage');
+            } catch (error) {
+                console.error("Error signing out: ", error);
+                alert("Error signing out. Please try again.");
+            }
+        };
+        const handleUserProfile = () => {
+            navigate('/userProfile');
+        };
+        const homepage = () => {
+            navigate('/home');
+        };
     
+        const handleParticipant = () => {
+            navigate('/participant');
+        };
     
         const renderRegisterListWorker = () => {
-            const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
-            let registerTo = "";
-            let notificationUidWorker = "";
-            
-            for (const notification of userNotifications) {
-                registerTo = notification.registTo;
-                if (notification.registTo === 'Worker'){
-                    notificationUidWorker = notification.id;
-                    // notificationUid = notification.uid;    
-                }
-                
-            }
             const render = renderRegistProjects();
             return (
-                    <>  
+                  
                         {render}
-                        {registerTo !== "" && (
-                            <div>
-                                {(notificationWorkerDeleted === false) && notificationUidWorker && (
-                                        <>                                
-                                            <h3>the request is accepted to change the role to: {registerTo}</h3>
-                                            <button onClick={() => deleteNotification(notificationUidWorker, false, true)}>close</button>
-                                        </>
-                                )}
-                            </div>
-                        )} 
-                        
-                    </>
                 )
         }
     
@@ -302,7 +358,7 @@
                 .filter(projectElement => projectElement !== null); // Filter out null elements
         
             return (
-                <table className="register-list-table">
+                <table2 className="register-list-table">
                     <thead className="register-list-thead">
                         <tr className="register-list-thead-tr">
                             <th className="register-list-th">First Name</th>
@@ -317,12 +373,30 @@
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table2>
             );
         };
-        
+        const t = translations[language];
         return (
             <div className="notification-list">
+        <header className="header">
+        <button onClick={handleUserProfile}>
+            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+        </button>
+        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+        <div className="header-center">
+        <button onClick={handleSignOut}>{t.signOut}</button>
+        <button onClick={homepage}>{t.close}</button>
+        {userDetails.role === "Admin" && (
+            <>
+                <button onClick={handleParticipant}>{t.users}</button>
+            </>
+        )} 
+    </div>
+    <img src={logo} alt="Logo" className="logo" />
+</header>
+
+
                 {userDetails.role === 'Admin' && renderRegisterListAdmin()}
                 {userDetails.role === 'Worker' && renderRegisterListWorker()}
     
@@ -330,7 +404,7 @@
                     <div className="popup-overlay">
                         <div className="popup-content">
                             <h3>Request Details</h3>
-                            <table>
+                            <table2>
                                 <tbody>
                                     <tr>
                                         <td><strong>User ID:</strong></td>
@@ -357,7 +431,7 @@
                                         <td>{selectedRequest.registTo}</td>
                                     </tr>
                                 </tbody>
-                            </table>
+                            </table2>
                             <div className="popup-buttons">
                                 <button onClick={() => acceptUser(selectedRequest.id)}>Accept</button>
                                 <button onClick={() => rejectUser(selectedRequest.id)}>Reject</button>
@@ -371,7 +445,7 @@
                       <div className="popup-overlay">
                       <div className="popup-content">
                           <h3>Project Details</h3>
-                          <table>
+                          <table2>
                               <tbody>
                                   <tr>
                                       <td><strong>Project Title:</strong></td>
@@ -390,9 +464,9 @@
                                       <td>{selectedProjectUser.project.endDate}</td>
                                   </tr>
                                    </tbody>
-                                  </table>
+                                  </table2>
                                   <h3>User Details</h3>
-                                  <table>
+                                  <table2>
                                   <tbody>
                                  
                                   <tr>
@@ -420,7 +494,7 @@
                                       <td>{selectedProjectUser.user.role}</td>
                                   </tr>
                               </tbody>
-                          </table>
+                          </table2>
                           <div className="popup-buttons">
                               <button onClick={() => acceptUserProject(selectedProjectUser.user.uid, selectedProjectUser.project.id, selectedProjectUser.notify.id)}>Accept</button>
                               <button onClick={() => deleteNotification(selectedProjectUser.notify.id, true, false)}>Reject</button>
