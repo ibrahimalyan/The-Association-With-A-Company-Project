@@ -29,18 +29,6 @@
 }
 
 
-	
-.dashboard .logo-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: transform 0.3s ease; /* Add transition for smooth scaling */
-}
-.dashboard .logo-button:hover {
-    transform: scale(1.1); /* Enlarge the button on hover */
-}
-
 .dashboard .logo {
     width: 100px;
     height: 90px;
@@ -48,9 +36,6 @@
     transition: transform 0.3s ease; /* Add transition for smooth scaling */
 }
 
-.dashboard .logo-button:hover .logo {
-    transform: scale(1.1); /* Enlarge the logo on hover */
-}
 /* Button Styles */
 .header button {
     margin: 0 15px;
