@@ -79,6 +79,9 @@ export const EditProject = () => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [language, setLanguage] = useState('ar');
+    const [searchInputFilter, setSearchInputFilter] = useState("");
+    const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState(users);
     const [projectData, setProjectData] = useState({
         projectTitle: '',
         startDate: '',
@@ -100,11 +103,7 @@ export const EditProject = () => {
         }
     );
     const { 
-        participants, 
-        participantQuery,
         imageFile,
-        imageUrl,
-        handleParticipantSearch,
         setParticipantQuery,
         uploadImage,
         setImageUrl
@@ -142,9 +141,11 @@ export const EditProject = () => {
           ];
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = auth.currentUser;            if (user) {
                 setAuthenticated(true);
+                try{
                 const docRef = doc(db, "projects", id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
@@ -172,10 +173,39 @@ export const EditProject = () => {
                 } else {
                     console.log("No such document!");
                 }
-                setLoading(false);
+                const [userDoc, usersDocs] = await Promise.all([
+                    getDoc(doc(db, 'users', user.uid)),
+                    getDocs(collection(db, 'users'))
+                ]);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserDetails({
+                        userId: userData.id || '',
+                        firstName: userData.firstName || '',
+                        lastName: userData.lastName || '',
+                        phoneNumber: userData.phoneNumber || '',
+                        role: userData.role || '', // Set role
+                        uid: user.uid // Set uid
+                    });
+                } else {
+                    console.error('User document not found');
+                }
+                const usersList = [];
+                    
+                usersDocs.forEach((userDoc) => {
+                usersList.push({ id: userDoc.id, ...userDoc.data() });
+                });
+                setUsers(usersList);    
+            }catch(error){
+                console.error('Error fetching data:', error);
+                }
             } else {
                 navigate('/homePage');
             }
+            setLoading(false);
+        };
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
 
         return () => unsubscribe();
@@ -215,7 +245,9 @@ export const EditProject = () => {
                 const participantRef = doc.ref;
                 const userProjects = doc.data().projects || [];
                 const projectIndex = userProjects.indexOf(lastProjectTitle);
-                if (doc.data().id === participant) {
+                const userFullName = doc.data().firstName + " " + doc.data().lastName ;
+                if (userFullName === participant) {
+                    console.log("projectIndex: ", projectIndex)
                     if (projectIndex !== -1) {
                         userProjects.splice(projectIndex, 1);
                     }
@@ -378,6 +410,14 @@ export const EditProject = () => {
         }
     };
 
+    const handleParticipantSearch = () => {
+        const filtered = users.filter(user =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
+        );
+        console.log(filtered)
+        setFilteredUsers(filtered);
+    };
+
     const handleParticipant = () => {
         navigate('/participant');
     };
@@ -415,17 +455,17 @@ export const EditProject = () => {
     return (
         <div className="big-container">
         <header className="header">
+        <button onClick={handleUserProfile}>
+            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+        </button>
         <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
         <div className="header-center">
         <button onClick={handleSignOut}>{t.signOut}</button>
         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
         <button onClick={handleViewNotifications}>{t.notify}</button> 
-        <button onClick={handleUserProfile}>
-            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-        </button>
     </div>
-    <img src={logo} alt="Logo" className="logo" />
-</header>
+                            <img src={logo} alt="Logo" className="logo" />
+                        </header>
 <div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
@@ -492,15 +532,15 @@ export const EditProject = () => {
                     </div>
                     <div className="participant-search">
                         <label>{t.addParticipant}:</label>
-                        <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
-                        <button type="button" className="search-button" onClick={handleParticipantSearch}>{t.search}</button>
-                    </div>
-                    {participants.length > 0 && (
-                        <>
-                            <ul className="participant-search-results">
-                                {participants.map(participant => (
-                                    <li key={participant.id}>
-                                        <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
+                        <input type="text" name="participantQuery" value={searchInputFilter} onChange={(e) => setSearchInputFilter(e.target.value)} />
+                            <button type="button" className="search-button" onClick={handleParticipantSearch}>{t.search}</button>
+                        </div>
+                        {filteredUsers.length > 0 && (
+                            <>
+                                <ul className="participant-search-results">
+                                    {filteredUsers.map(participant => (
+                                        <li key={participant.id}>
+                                        <button type="button" className="participantcheck-button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
                                     </li>
                                 ))}
@@ -510,16 +550,18 @@ export const EditProject = () => {
                                 isOpen={modalIsOpen}
                                 onRequestClose={closeModal}
                                 contentLabel="User Information"
+                                className="modal1"
+                                overlayClassName="modal-overlay"
                             >
                                 {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button onClick={closeModal}>{t.close}</button>
+                                <button className="close-button6" onClick={closeModal}>{t.close} </button>
                             </Modal>
                         </>
                     )}
 
                     {error && <p className="error">{error}</p>}
                         <div className="save-close-buttons">
-                            <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                            <button type="button" className="close-button1" onClick={handleClose}>{t.close}</button>
                             <button type="submit" className="save-button">{t.save}</button>
                         </div>
                 </form>
@@ -531,7 +573,7 @@ export const EditProject = () => {
                             {projectData.participantList.map(id => (
                                 <li key={id}>
                                     {id}
-                                    <button onClick={() => handleRemoveParticipantToList(id)}>{t.remove}</button></li>
+                                    <button className='removeal' onClick={() => handleRemoveParticipantToList(id)}>{t.remove}</button></li>
                             ))}
                         </ul>
                     </div>
