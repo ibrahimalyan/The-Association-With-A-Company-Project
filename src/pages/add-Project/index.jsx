@@ -272,7 +272,6 @@ export const AddProject = () => {
     };
 
     const handleParticipantSearch = () => {
-        console.log("filter")
         const filtered = users.filter(user =>
             `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
         );
@@ -372,27 +371,29 @@ export const AddProject = () => {
     const t = translations[language];
 
     return (
+        <>
+        {(userDetails.role !== 'Admin') && (navigate('./home'))}
         <div className="big-container">
-        <header className="header">
-        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
-        <div className="header-center">
-        <button onClick={handleSignOut}>{t.signOut}</button>
-        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
-        <button onClick={handleViewNotifications}>{t.notify}</button> 
-        <button onClick={handleUserProfile}>
-            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-        </button>
-        {userDetails.role === "Admin" && (
-            <>
-                <button onClick={handleAddProject}>{t.addProject}</button>
-                <button onClick={handleParticipant}>{t.users}</button>
-            </>
-        )} 
-    </div>
-    <img src={logo} alt="Logo" className="logo" />
-</header>
-<div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
-<img src={bird1} alt="bird" className="bird bird1" />
+            <header className="header">
+                <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+                <div className="header-center">
+                    <button onClick={handleSignOut}>{t.signOut}</button>
+                    {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                    <button onClick={handleViewNotifications}>{t.notify}</button> 
+                    <button onClick={handleUserProfile}>
+                        <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                    </button>
+                    {userDetails.role === "Admin" && (
+                        <>
+                            <button onClick={handleAddProject}>{t.addProject}</button>
+                            <button onClick={handleParticipant}>{t.users}</button>
+                        </>
+                    )} 
+                </div>
+                <img src={logo} alt="Logo" className="logo" />
+            </header>
+            <div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
+                <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">
@@ -433,33 +434,30 @@ export const AddProject = () => {
                         </div>
                         <div className="participant-search">
                             <label>{t.addParticipant}:</label>
-
                             <input type="text" name="Search by first and last name" value={searchInputFilter} onChange={(e) => setSearchInputFilter(e.target.value)} />
                             <button type="button" className="search-button" onClick={handleParticipantSearch}>Search</button>
                         </div>
                         {filteredUsers.length > 0 && (
                             <>
-                            <ul className="participant-search-results">
+                                <ul className="participant-search-results">
                                 {filteredUsers.map(participant => (
                                     <li key={participant.id}>
                                         <button type="button" className="participantcheck-button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
                                         <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
                                     </li>
                                 ))}
-                            </ul>
-                    
-
-                            <Modal
-                                isOpen={modalIsOpen}
-                                onRequestClose={closeModal}
-                                contentLabel="User Information"
-                                className="modal1"
-                                overlayClassName="modal-overlay"
-                            >
-                                {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button className="close-button6" onClick={closeModal}>{t.close} </button>
-                            </Modal>
-                        </>
+                                </ul>
+                                <Modal
+                                    isOpen={modalIsOpen}
+                                    onRequestClose={closeModal}
+                                    contentLabel="User Information"
+                                    className="modal1"
+                                    overlayClassName="modal-overlay"
+                                >
+                                    {selectedUserData && renderUserInfo(selectedUserData)}
+                                    <button className="close-button6" onClick={closeModal}>{t.close} </button>
+                                </Modal>
+                            </>
                         )}
 
                         {error && <p className="error">{error}</p>}
@@ -482,8 +480,8 @@ export const AddProject = () => {
                     </div>
                 </div>
             </div>
-            </div>
-            
+        </div> 
+        </>     
     );
 };
 
