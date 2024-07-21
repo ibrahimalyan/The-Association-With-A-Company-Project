@@ -272,7 +272,6 @@ export const AddProject = () => {
     };
 
     const handleParticipantSearch = () => {
-        console.log("filter")
         const filtered = users.filter(user =>
             `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
         );
@@ -372,16 +371,18 @@ export const AddProject = () => {
     const t = translations[language];
 
     return (
+        <>
+        {(userDetails.role !== 'Admin') && (navigate('./home'))}
         <div className="big-container">
         <header className="header">
+        <button onClick={handleUserProfile}>
+            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+        </button>
         <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
         <div className="header-center">
         <button onClick={handleSignOut}>{t.signOut}</button>
         {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
         <button onClick={handleViewNotifications}>{t.notify}</button> 
-        <button onClick={handleUserProfile}>
-            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-        </button>
         {userDetails.role === "Admin" && (
             <>
                 <button onClick={handleAddProject}>{t.addProject}</button>
@@ -483,6 +484,7 @@ export const AddProject = () => {
                 </div>
             </div>
             </div>
+            </>
             
     );
 };
