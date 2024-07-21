@@ -476,8 +476,21 @@ export const HomePage = () => {
     
     const renderUserInfo = (userData) => {
         if (!selectedUserData) return null;
+        if (userDetails.role === "Guest"){
+            return (
+                <div className="modaluser-content">
+                <>
+                    <p>firstName: {userData.firstName}</p>
+                    <p>LastName: {userData.lastName}</p>
+                    <p>Email: {userData.email}</p>
+                    <p>Phone: {userData.phoneNumber}</p>
+                    <p>Gender: {userData.gender}</p>
+                </>               
+            </div>
+            )    
+        }
 
-        return (
+        return ( 
             <div className="modaluser-content">
                 <>
                     <p>UserName: {userData.username}</p>
@@ -559,11 +572,11 @@ export const HomePage = () => {
                         <button onClick={closeModal} className="close-button6">Close</button>
                     </Modal>
 
-                                        {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
-                                        {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest') && (
-                                            <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
-                                        )}
-                                        <button onClick={closepop} className="close-button6">Close</button>
+                    {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
+                    {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest' && !isParticipant(project)) && (
+                        <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
+                    )}
+                    <button onClick={closepop} className="close-button6">Close</button>
               </div>
         );
     };
@@ -774,7 +787,7 @@ export const HomePage = () => {
                                                     <div className="project-card" key={project.id}>
                                                         <React.Fragment key={project.id}>
                                                             <div className="project-image-wrapper" 
-                                                            onClick={() =>     handleProjectClick(project)}
+                                                            onClick={() => handleProjectClick(project)}
                                                             >
                                                                 {project.imageUrl ? (
                                                                     <img src={project.imageUrl} alt="Project" className="project-image" />
@@ -800,15 +813,15 @@ export const HomePage = () => {
                                                                         )}<br />
                                                                     {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                                                     <>
-                                                                            <div className='buttons-container'>
-                                                                                <button className='editbut' onClick={() => handleEditProject(project.id)}>
-                                                                                    <img src={editImg} alt='Edit' />
-                                                                                </button>
-                                                                                <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
-                                                                                    <img src={trash} alt='Delete' />
-                                                                                </button>
-                                                                            </div>                                       
-                                                                            </>
+                                                                        <div className='buttons-container'>
+                                                                            <button className='editbut' onClick={() => handleEditProject(project.id)}>
+                                                                                <img src={editImg} alt='Edit' />
+                                                                            </button>
+                                                                            <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
+                                                                                <img src={trash} alt='Delete' />
+                                                                            </button>
+                                                                        </div>                                       
+                                                                    </>
                                                                 )}
                                                             </div>
 
