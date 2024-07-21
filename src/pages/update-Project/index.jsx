@@ -79,6 +79,10 @@ export const EditProject = () => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
     const [language, setLanguage] = useState('ar');
+    const [searchInputFilter, setSearchInputFilter] = useState("");
+    const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState(users);
+    
     const [projectData, setProjectData] = useState({
         projectTitle: '',
         startDate: '',
@@ -100,11 +104,8 @@ export const EditProject = () => {
         }
     );
     const { 
-        participants, 
-        participantQuery,
         imageFile,
-        imageUrl,
-        handleParticipantSearch,
+
         setParticipantQuery,
         uploadImage,
         setImageUrl
@@ -142,42 +143,71 @@ export const EditProject = () => {
           ];
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = auth.currentUser;
             if (user) {
                 setAuthenticated(true);
-                const docRef = doc(db, "projects", id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
+                try{
+                    const docRef = doc(db, "projects", id);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
                     
-                    const projectDataDoc = docSnap.data();
-                    
-                    setProjectData({
-                        ...projectData,
-                        projectTitle: projectDataDoc.projectTitle,
-                        startDate: projectDataDoc.startDate,
-                        endDate: projectDataDoc.endDate,
-                        location: projectDataDoc.location,
-                        description: projectDataDoc.description,
-                        participants: projectDataDoc.participants || [],
-                        imageUrl: projectDataDoc.imageUrl || '',
-                        imageName: projectDataDoc.imageName || '',
-                        participantList: projectDataDoc.participants || [],
-                    });
-                    
-                    setLastProjectTitle(projectDataDoc.projectTitle || ''); // Update lastProjectTitle
+                        const projectDataDoc = docSnap.data();
+                        
+                        setProjectData({
+                            ...projectData,
+                            projectTitle: projectDataDoc.projectTitle,
+                            startDate: projectDataDoc.startDate,
+                            endDate: projectDataDoc.endDate,
+                            location: projectDataDoc.location,
+                            description: projectDataDoc.description,
+                            participants: projectDataDoc.participants || [],
+                            imageUrl: projectDataDoc.imageUrl || '',
+                            imageName: projectDataDoc.imageName || '',
+                            participantList: projectDataDoc.participants || [],
+                        });
+                        setLastProjectTitle(projectDataDoc.projectTitle || ''); // Update lastProjectTitle
                     setLastImageName(projectDataDoc.imageName || ''); // Update lastImageName
                        // Preselect locations based on projectData
-                       setSelectedLocations(projectDataDoc.location || []);
-
-                } else {
-                    console.log("No such document!");
+                    setSelectedLocations(projectDataDoc.location || []);  
+                    } else {
+                        console.log("No such document!");
+                    }
+                    const [userDoc, usersDocs] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDocs(collection(db, 'users'))
+                    ]);
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserDetails({
+                            userId: userData.id || '',
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            phoneNumber: userData.phoneNumber || '',
+                            role: userData.role || '', // Set role
+                            uid: user.uid // Set uid
+                        });
+                    } else {
+                        console.error('User document not found');
+                    }
+                    const usersList = [];
+                        
+                    usersDocs.forEach((userDoc) => {
+                    usersList.push({ id: userDoc.id, ...userDoc.data() });
+                    });
+                    setUsers(usersList);    
+                }catch(error){
+                    console.error('Error fetching data:', error);
                 }
-                setLoading(false);
             } else {
                 navigate('/homePage');
             }
+            setLoading(false);
+        };
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
         });
-
         return () => unsubscribe();
     }, [auth, id, navigate]);
 
@@ -208,18 +238,28 @@ export const EditProject = () => {
         navigate('/notifications');
     };
     const updateParticipants = async (notRemovedParticipant) => {
+        console.log("notRemovedParticipant: ", notRemovedParticipant)
         const batch = writeBatch(db);
+        console.log("projectData.participantList: ", projectData.participantList)
         for (const participant of projectData.participantList) {
             const userQuerySnapshot = await getDocs(collection(db, "users"), where("id", "==", participant));
             userQuerySnapshot.forEach((doc) => {
                 const participantRef = doc.ref;
                 const userProjects = doc.data().projects || [];
                 const projectIndex = userProjects.indexOf(lastProjectTitle);
-                if (doc.data().id === participant) {
+                // console.log("doc.data(): ", doc.data())
+                // console.log("doc.data().projects: ", doc.data().projects)
+                // console.log("lastProjectTitle: ", lastProjectTitle)
+                const userFullName = doc.data().firstName + " " + doc.data().lastName ;
+                console.log("userFullName: ", userFullName)
+                console.log("participant: ", participant)
+                if (userFullName === participant) {
+                    console.log("projectIndex: ", projectIndex)
                     if (projectIndex !== -1) {
                         userProjects.splice(projectIndex, 1);
                     }
                     if (notRemovedParticipant){
+                        console.log("projectData.projectTitle: ", projectData.projectTitle)
                         userProjects.push(projectData.projectTitle);
                     }
                     batch.update(participantRef, { projects: userProjects });
@@ -378,6 +418,15 @@ export const EditProject = () => {
         }
     };
 
+    const handleParticipantSearch = () => {
+        const filtered = users.filter(user =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
+        );
+        console.log(filtered)
+        setFilteredUsers(filtered);
+    };
+
+
     const handleParticipant = () => {
         navigate('/participant');
     };
@@ -414,115 +463,115 @@ export const EditProject = () => {
 
     return (
         <div className="big-container">
-        <header className="header">
-        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
-        <div className="header-center">
-        <button onClick={handleSignOut}>{t.signOut}</button>
-        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
-        <button onClick={handleViewNotifications}>{t.notify}</button> 
-        <button onClick={handleUserProfile}>
-            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-        </button>
-    </div>
-    <img src={logo} alt="Logo" className="logo" />
-</header>
-<div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
+            <header className="header">
+                <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+                <div className="header-center">
+                    <button onClick={handleSignOut}>{t.signOut}</button>
+                    {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                    <button onClick={handleViewNotifications}>{t.notify}</button> 
+                    <button onClick={handleUserProfile}>
+                        <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                    </button>
+                </div>
+                <img src={logo} alt="Logo" className="logo" />
+            </header>
+            <div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
                 <img src={bird1} alt="bird" className="bird bird1" />
                 <img src={bird2} alt="bird" className="bird bird2" />
                 <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">
-                <form onSubmit={handleUpdateProject}>
-                    <div>
-                        <label>{t.projectTitle}:</label>
-                        <input
-                            type="text"
-                            name="projectTitle"
-                            value={projectData.projectTitle}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label>{t.startDate}:</label>
-                        <input
-                            type="date"
-                            name="startDate"
-                            value={projectData.startDate}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label>{t.endDate}:</label>
-                        <input
-                            type="date"
-                            name="endDate"
-                            value={projectData.endDate}
-                            onChange={handleInputChange}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label>{t.location}:</label>
-                        {locations.map((location) => (
-                            <div key={location}>
-                                <input
-                                    type="checkbox"
-                                    name="location"
-                                    value={location}
-                                    checked={selectedLocations.includes(location)}
-                                    onChange={handleCheckboxChange}
-                                />
-                                {location}
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <label>{t.description}:</label>
-                        <textarea
-                            name="description"
-                            value={projectData.description}
-                            onChange={handleInputChange}
-                            required
-                        ></textarea>
-                    </div>
-                    <div>
-                        <label>{t.projectImage}:</label>
-                        <input type="file" name="image" onChange={handleUploadImage} />
-                    </div>
-                    <div className="participant-search">
-                        <label>{t.addParticipant}:</label>
-                        <input type="text" name="participantQuery" value={participantQuery} onChange={handleInputChange} />
-                        <button type="button" className="search-button" onClick={handleParticipantSearch}>{t.search}</button>
-                    </div>
-                    {participants.length > 0 && (
-                        <>
-                            <ul className="participant-search-results">
-                                {participants.map(participant => (
-                                    <li key={participant.id}>
-                                        <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
-                                        <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <Modal
-                                isOpen={modalIsOpen}
-                                onRequestClose={closeModal}
-                                contentLabel="User Information"
-                            >
-                                {selectedUserData && renderUserInfo(selectedUserData)}
-                                <button onClick={closeModal}>{t.close}</button>
-                            </Modal>
-                        </>
-                    )}
-
-                    {error && <p className="error">{error}</p>}
-                        <div className="save-close-buttons">
-                            <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
-                            <button type="submit" className="save-button">{t.save}</button>
+                    <form onSubmit={handleUpdateProject}>
+                        <div>
+                            <label>{t.projectTitle}:</label>
+                            <input
+                                type="text"
+                                name="projectTitle"
+                                value={projectData.projectTitle}
+                                onChange={handleInputChange}
+                                required
+                            />
                         </div>
-                </form>
+                        <div>
+                            <label>{t.startDate}:</label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={projectData.startDate}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label>{t.endDate}:</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={projectData.endDate}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label>{t.location}:</label>
+                            {locations.map((location) => (
+                                <div key={location}>
+                                    <input
+                                        type="checkbox"
+                                        name="location"
+                                        value={location}
+                                        checked={selectedLocations.includes(location)}
+                                        onChange={handleCheckboxChange}
+                                    />
+                                    {location}
+                                </div>
+                            ))}
+                        </div>
+                        <div>
+                            <label>{t.description}:</label>
+                            <textarea
+                                name="description"
+                                value={projectData.description}
+                                onChange={handleInputChange}
+                                required
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label>{t.projectImage}:</label>
+                            <input type="file" name="image" onChange={handleUploadImage} />
+                        </div>
+                        <div className="participant-search">
+                            <label>{t.addParticipant}:</label>
+                            <input type="text" name="participantQuery" value={searchInputFilter} onChange={(e) => setSearchInputFilter(e.target.value)} />
+                            <button type="button" className="search-button" onClick={handleParticipantSearch}>{t.search}</button>
+                        </div>
+                        {filteredUsers.length > 0 && (
+                            <>
+                                <ul className="participant-search-results">
+                                    {filteredUsers.map(participant => (
+                                        <li key={participant.id}>
+                                            <button type="button" onClick={() => userInfo(participant.id)}>({participant.firstName} {participant.lastName})</button>
+                                            <button type="button" className="add-participant-button" onClick={() => handleAddParticipantWithCheck(participant)}>Add</button>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <Modal
+                                    isOpen={modalIsOpen}
+                                    onRequestClose={closeModal}
+                                    contentLabel="User Information"
+                                >
+                                    {selectedUserData && renderUserInfo(selectedUserData)}
+                                    <button onClick={closeModal}>{t.close}</button>
+                                </Modal>
+                            </>
+                        )}
+
+                        {error && <p className="error">{error}</p>}
+                            <div className="save-close-buttons">
+                                <button type="button" className="close-button" onClick={handleClose}>{t.close}</button>
+                                <button type="submit" className="save-button">{t.save}</button>
+                            </div>
+                    </form>
                 </div>
                 <div className="container3">
                     <div>
@@ -537,7 +586,7 @@ export const EditProject = () => {
                     </div>
                 </div>
             </div>
-            </div>
+        </div>
     );
 };
 
