@@ -12,12 +12,10 @@
         const { registerList, loading, acceptUser, rejectUser, setLoading } = useRegister();
         const navigate = useNavigate();
         const [authenticated, setAuthenticated] = useState(false);
-        const [notificationWorkerDeleted, setNotificationWorkerDeleted] = useState(false);
-        const [notificationAdminDeleted, setNotificationAdminDeleted] = useState(false);
         const [projects, setProjects] = useState([]);
         const [users, setUsers] = useState([]);
         const [notifies, setNotifies] = useState([]);
-        const [acceptanceList, setAcceptanceList] = useState([]);
+        const [sortOrder, setSortOrder] = useState('asc'); // 'asc' for ascending, 'desc' for descending
         const [userDetails, setUserDetails] = useState({
             userId: '',
             firstName: '',
@@ -29,6 +27,12 @@
         );
         const [selectedRequest, setSelectedRequest] = useState(null);
         const [selectedProjectUser, setSelectedProjectUser] = useState(null);
+        const [filters, setFilters] = useState({
+            firstName: '',
+            lastName: '',
+            projectTitle: ''
+        });
+        const [filteredProjects, setFilteredProjects] = useState(projects);
         useEffect(() => {
             
             setLoading(true);
@@ -38,12 +42,11 @@
                     setAuthenticated(true);
                     
                     try{
-                        const [userDoc, projectDocs, usersDocs, registProject, acceptanceList] = await Promise.all([
+                        const [userDoc, projectDocs, usersDocs, registProject] = await Promise.all([
                             getDoc(doc(db, 'users', user.uid)),
                             getDocs(collection(db, 'projects')),
                             getDocs(collection(db, 'users')),
-                            getDocs(collection(db,'projectsRegisters')),
-                            getDocs(collection(db,'acceptance'))
+                            getDocs(collection(db,'projectsRegisters'))
                             
                         ]);
                         if (userDoc.exists()) {
@@ -78,13 +81,10 @@
                             registProjects.push({ id: registDoc.id, ...registDoc.data() });
                         });
     
-                        const acceptanceListArray = [];
-                        acceptanceList.forEach((acceptanceDoc) => {
-                            acceptanceListArray.push({ id: acceptanceDoc.id, ...acceptanceDoc.data() });
-                        });
+                        
                         setProjects(projectsList);
                         setUsers(usersList);
-                        setAcceptanceList(acceptanceListArray);
+                       
                         setNotifies(registProjects);
     
                     }catch(error){
@@ -102,7 +102,24 @@
     
             return () => unsubscribe();
         }, [navigate, toGetAuth]);
+        const filterProjects = () => {
+            const { firstName, lastName, projectTitle } = filters;
     
+            const filtered = projects.filter(project => {
+                return (
+                    (firstName === '' || project.firstName.toLowerCase().includes(firstName.toLowerCase())) &&
+                    (lastName === '' || project.lastName.toLowerCase().includes(lastName.toLowerCase())) &&
+                    (projectTitle === '' || project.projectTitle.toLowerCase().includes(projectTitle.toLowerCase()))
+                );
+            });
+    
+            setFilteredProjects(filtered);
+        };
+
+
+        useEffect(() => {
+            filterProjects();
+        }, [filters, projects]);
     
         if (!authenticated) {
             return null; // Or a loading spinner while checking authentication
@@ -170,29 +187,30 @@
             await deleteNotification(notify, false, false);
         }
     
-        const renderRegisterListAdmin = () => {
-            const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
-            let registerTo = "";
-            let notificationUidAdmin = "";
-        
-            for (const notification of userNotifications) {
-                registerTo = notification.registTo;
-                if (notification.registTo === 'Admin') {
-                    notificationUidAdmin = notification.id;
-                }
+        const handleSort = () => {
+            setSortOrder(prevSortOrder => prevSortOrder === 'asc' ? 'desc' : 'asc');
+        };
+    
+        // Sorting function
+        const sortedRegisterList = [...registerList].sort((a, b) => {
+            if (a.registTo === b.registTo) return 0;
+    
+            if (sortOrder === 'asc') {
+                return a.registTo === 'Admin' ? -1 : 1;
+            } else {
+                return a.registTo === 'Admin' ? 1 : -1;
             }
+        });
+
+
+        const renderRegisterListAdmin = () => {
+            
             const render = renderRegistProjects();
         
             const hasRegisterListData = registerList.length > 0;
             const hasProjectListData = notifies.filter(notify => notify.workerID.includes(userDetails.uid)).length > 0;
-        
-            if (acceptanceList.length === 0 && !hasRegisterListData && !hasProjectListData) {
-                return <p className="notification-message">No notifications</p>;
-            }
-        
             return (
                 <>
-                    
                     <div className={`tables-container ${!hasRegisterListData || !hasProjectListData ? 'single-table-container' : ''}`}>
                         {hasRegisterListData && (
                             <table className="register-list-table">
@@ -200,11 +218,17 @@
                                     <tr className="register-list-thead-tr">
                                         <th className="register-list-th">First Name</th>
                                         <th className="register-list-th">Last Name</th>
-                                        <th className="register-list-th">Register to</th>
+                                        
+                                        <th className="register-list-th">
+                                        <button onClick={handleSort} className="notification-sort-button">
+                                            Register to
+                                        </button>
+                                        </th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody className="register-list-tbody">
-                                    {registerList.map((register) => (
+                                    {sortedRegisterList.map((register) => (
                                         <tr className="register-list-tbody-tr" key={register.id} onClick={() => setSelectedRequest(register)}>
                                             <td className="register-list-td">{register.firstName}</td>
                                             <td className="register-list-td">{register.lastName}</td>
@@ -219,23 +243,14 @@
                 </>
             );
         };
-        const deleteNotification = async (notificationId, isAdmin, isAcceptance) => {
-            if(isAdmin && isAcceptance){
-                setNotificationAdminDeleted(true);
-            }
-            else if(!isAdmin && isAcceptance){
-                setNotificationWorkerDeleted(true);
-            }
+        const deleteNotification = async (notificationId, isAdmin) => {
+            
             setLoading(true);
             try{
-                if (isAcceptance){
-                    const notificationRef = doc(db, "acceptance", notificationId);
-                    await deleteDoc(notificationRef);        
-                }
-                else{
+                
                     const notificationRef = doc(db, "projectsRegisters", notificationId);
                     await deleteDoc(notificationRef);
-                }
+                
                 window.location.reload();
             }catch(error){
                 console.error('Error deleting notification', error);
@@ -246,35 +261,12 @@
     
     
         const renderRegisterListWorker = () => {
-            const userNotifications = acceptanceList.filter(acceptance => acceptance.user_uid === userDetails.uid);
-            let registerTo = "";
-            let notificationUidWorker = "";
             
-            for (const notification of userNotifications) {
-                registerTo = notification.registTo;
-                if (notification.registTo === 'Worker'){
-                    notificationUidWorker = notification.id;
-                    // notificationUid = notification.uid;    
-                }
-                
-            }
+           
             const render = renderRegistProjects();
             return (
-                    <>  
-                        {render}
-                        {registerTo !== "" && (
-                            <div>
-                                {(notificationWorkerDeleted === false) && notificationUidWorker && (
-                                        <>                                
-                                            <h3>the request is accepted to change the role to: {registerTo}</h3>
-                                            <button onClick={() => deleteNotification(notificationUidWorker, false, true)}>close</button>
-                                        </>
-                                )}
-                            </div>
-                        )} 
-                        
-                    </>
-                )
+                {render}    
+            )
         }
     
         const renderProjectUsersDetails = (projectId, userID, notify) => {
@@ -302,25 +294,46 @@
                 .filter(projectElement => projectElement !== null); // Filter out null elements
         
             return (
-                <table className="register-list-table">
-                    <thead className="register-list-thead">
-                        <tr className="register-list-thead-tr">
-                            <th className="register-list-th">First Name</th>
-                            <th className="register-list-th">Last Name</th>
-                            <th className="register-list-th">Project Title</th>
-                        </tr>
-                    </thead>
-                    <tbody className="register-list-tbody">
-                        {projectElements.length > 0 ? projectElements : (
-                            <tr className="register-list-tbody-tr">
-                                <td className="register-list-td" colSpan="3">No projects found.</td>
+                <div>
+                    <table className="register-list-table">
+                        <thead className="register-list-thead">
+                            <tr className="register-list-thead-tr">
+                                <th className="register-list-th">First Name</th>
+                                <th className="register-list-th">Last Name</th>
+                                <th className="register-list-th">Project Title</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="register-list-tbody">
+                            {projectElements.length > 0 ? projectElements : (
+                                <tr className="register-list-tbody-tr">
+                                    <td className="register-list-td" colSpan="3">No projects found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             );
         };
+    
+        const handleFilterChange = (e) => {
+            const { name, value } = e.target;
+            setFilters(prevFilters => ({
+                ...prevFilters,
+                [name]: value
+            }));
+        };
+
         
+        const clearFilters = () => {
+            setFilters({
+                firstName: '',
+                lastName: '',
+                projectTitle: ''
+            });
+            setFilteredProjects(projects);
+        };
+
+
         return (
             <div className="notification-list">
                 {userDetails.role === 'Admin' && renderRegisterListAdmin()}
