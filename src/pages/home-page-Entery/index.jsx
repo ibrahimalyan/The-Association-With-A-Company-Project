@@ -108,6 +108,14 @@ export const HomePageEntery = () => {
         navigate('/signin');
         
     };
+    const clearFilter = () => {
+        setFilter({
+            name: "",
+            location: "",
+            startDate: "",
+            endDate: ""
+        });
+    };
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -190,12 +198,12 @@ export const HomePageEntery = () => {
 <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
             <header className="header">
                 <div className="header-left">
-                    <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
+                    <img src={logo} alt="Logo" className="logo" />
                 </div>
                 <div className="header-center">
                 <button onClick={handleSignIn}>{translations[language].signIn}</button>
                 </div>
-                <img src={logo} alt="Logo" className="logo" />
+                <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
             </header>
             <main className="main-content">
             <div className="welcome">
@@ -232,7 +240,7 @@ export const HomePageEntery = () => {
                         value={filter.endDate}
                         onChange={handleFilterChange}
                     />
-                    <button onClick={applyFilter}>{translations[language].filter.applyFilter}</button>
+                     <button className='clearfilter' onClick={clearFilter}>Clear Filter</button>
                 </div>
                 <table className="projects-table">
                     <tbody>
