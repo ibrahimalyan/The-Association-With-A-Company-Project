@@ -53,6 +53,7 @@
     margin-bottom: 20px;
 }
 
+
 .filter-section input,
 .filter-section button {
     margin-right: 10px;
@@ -102,6 +103,9 @@
 }
 
 
+.clearfilter {
+    cursor: pointer; /* Change cursor to pointer to indicate it’s clickable */
+}
 .register-button {
     padding: 11px 20px; /* Adjust padding to make the button larger or smaller */
     border: none; /* Remove default border */
