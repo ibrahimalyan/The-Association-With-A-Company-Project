@@ -18,6 +18,9 @@ Modal.setAppElement('#root');
 
 const translations = {
     ar: {
+        noWorkers: " لا يوجد مرشدين ",
+        ClearFilterProjects: " ازالة الفلاتر",
+        myProject: "مشاريعي",
         signOut: "تسجيل الخروج",
         registerAdmin: "تسجيل مشرف",
         registerWorker: "تسجيل مرشد",
@@ -68,6 +71,9 @@ const translations = {
         ]
     },
     heb: {
+        noWorkers: "אין מדריךים",
+        ClearFilterProjects: " סגירת פילוג",
+        myProject: "פרויקטים שלי",
         signOut: "התנתק",
         registerAdmin: "רשום מנהל",
         registerWorker: "רשום מדריך",
@@ -322,7 +328,7 @@ export const HomePage = () => {
                 alert("Error deleting project. Please try again.");
             }finally {
                 setLoading(false);
-                // window.location.reload(); // Refresh the page after all operations are complete
+                window.location.reload(); // Refresh the page after all operations are complete
             }
         }
     };
@@ -474,9 +480,9 @@ export const HomePage = () => {
         setSelectedUserData(null);
     };
     
-    const renderUserInfo = (userData) => {
+    const renderUserInfo = (userData, project) => {
         if (!selectedUserData) return null;
-        if (userDetails.role === "Guest"){
+        if (userDetails.role === "Guest" || (userDetails.role === 'Worker' && !isParticipant(project))){
             return (
                 <div className="modaluser-content">
                 <>
@@ -485,12 +491,11 @@ export const HomePage = () => {
                     <p>Email: {userData.email}</p>
                     <p>Phone: {userData.phoneNumber}</p>
                     <p>Gender: {userData.gender}</p>
-                </>               
+                </>              
             </div>
             )    
         }
-
-        return ( 
+        return (
             <div className="modaluser-content">
                 <>
                     <p>UserName: {userData.username}</p>
@@ -568,15 +573,15 @@ export const HomePage = () => {
                         className="modal1"
                         overlayClassName="modal-overlay"
                     >
-                        {selectedUserData && renderUserInfo(selectedUserData)}
+                        {selectedUserData && renderUserInfo(selectedUserData, project)}
                         <button onClick={closeModal} className="close-button6">Close</button>
                     </Modal>
 
-                    {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
-                    {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest' && !isParticipant(project)) && (
-                        <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
-                    )}
-                    <button onClick={closepop} className="close-button6">Close</button>
+                                        {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
+                                        {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest'&& !isParticipant(project)) && (
+                                            <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
+                                        )}
+                                        <button onClick={closepop} className="close-button6">Close</button>
               </div>
         );
     };
@@ -658,7 +663,7 @@ export const HomePage = () => {
             )
         }
         return (
-            <p>No Workers</p>
+            <p>{t.noWorkers}</p>
         )
     };
     const handleSendRegistProject = async (project) =>{
@@ -714,9 +719,7 @@ export const HomePage = () => {
                 <div id="root"></div>
                     <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
                         <header className="header">
-                        <button onClick={() => navigate('/home')} className="logo-button">
                             <img src={logo} alt="Logo" className="logo" />
-                        </button>
                         <div className="header-center">
                             <button onClick={handleSignOut}>{t.signOut}</button>
                             {userDetails.role === 'Worker' && (<button onClick={handleRegisterAdmin}>{t.registerAdmin}</button>)}
@@ -738,8 +741,8 @@ export const HomePage = () => {
                             )} 
                             </div>
                             <div className="header-right">
-                                <button onClick={toggleLanguage} className="language-button">{t.changeLanguage}</button>
-                                <button onClick={handlePrint}>{t.tableHeaders.print}</button>
+                                <button onClick={toggleLanguage} className="lang-button">{t.changeLanguage}</button>
+                                <button onClick={handlePrint}className='print-but'>{t.tableHeaders.print}</button>
                                 <button onClick={handleUserProfile} className='user-profile-button'>
                                     {userDetails.username}
                                     <img src={profileIcon} alt="profileIcon" className="profileIcon" />
@@ -773,9 +776,9 @@ export const HomePage = () => {
                                     value={filter.endDate}
                                     onChange={(e) => setFilter({ ...filter, endDate: e.target.value })}
                                 />
-                                <button onClick={clearFilter}>Clear Filter</button>
-                                <button type="button" onClick={projectFilterUser}>
-                                    {isFilterApplied ? "Clear Filter Projects" : "My Projects"}
+                                <button className='clearfilter' onClick={clearFilter}>{t.ClearFilterProjects}</button>
+                                <button className='clearfilter' type="button" onClick={projectFilterUser}>
+                                    {isFilterApplied ? t.ClearFilterProjects : t.myProject}
                                 </button>
                             </div>
                             <table className="projects-table">
@@ -787,7 +790,7 @@ export const HomePage = () => {
                                                     <div className="project-card" key={project.id}>
                                                         <React.Fragment key={project.id}>
                                                             <div className="project-image-wrapper" 
-                                                            onClick={() => handleProjectClick(project)}
+                                                            onClick={() =>     handleProjectClick(project)}
                                                             >
                                                                 {project.imageUrl ? (
                                                                     <img src={project.imageUrl} alt="Project" className="project-image" />
@@ -806,22 +809,22 @@ export const HomePage = () => {
                                                                                     ))}
                                                                                 </div>
                                                                             ) : (
-                                                                                <span>No Worker</span>
+                                                                                <span>{t.noWorkers}</span>
                                                                             )
                                                                         ) : (
                                                                             <span>Loading...</span>
                                                                         )}<br />
                                                                     {(userDetails.role === 'Admin' || (userDetails.role === 'Worker' && isParticipant(project))) && (
                                                                     <>
-                                                                        <div className='buttons-container'>
-                                                                            <button className='editbut' onClick={() => handleEditProject(project.id)}>
-                                                                                <img src={editImg} alt='Edit' />
-                                                                            </button>
-                                                                            <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
-                                                                                <img src={trash} alt='Delete' />
-                                                                            </button>
-                                                                        </div>                                       
-                                                                    </>
+                                                                            <div className='buttons-container'>
+                                                                                <button className='editbut' onClick={() => handleEditProject(project.id)}>
+                                                                                    <img src={editImg} alt='Edit' />
+                                                                                </button>
+                                                                                <button className='deletbut' onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id, project.projectTitle); }}>
+                                                                                    <img src={trash} alt='Delete' />
+                                                                                </button>
+                                                                            </div>                                       
+                                                                            </>
                                                                 )}
                                                             </div>
 
