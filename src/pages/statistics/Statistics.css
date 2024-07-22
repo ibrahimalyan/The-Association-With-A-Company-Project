@@ -1,36 +1,76 @@
+/* Statistics.css */
+
 .statistics-container {
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgb(0, 0, 0);
+  height: 825px;
+}
+
+.statistics-container .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f694949a 0%, hsl(243, 100%, 63%) 100%);
+  height: 75px;
+  margin-bottom: 10px;
+}
+
+
+.statistics-container .logo {
+  width: 100px;
+  height: 90px;
+  border-radius: 20px;
+}
+
+.header button {
+  margin: 0 15px;
+  padding: 10px 20px;
+  font-weight: bold;
+  background-color: #6b8aaa;
+  color: black;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.chart-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  height: 70hv; /* Center the container vertically */
-  margin-bottom: 80px;
-}
-.statistics-container h2 {
-  margin-bottom: 20px; /* Space between the heading and the pie chart */
-  font-size: 1.5em;
-  color: #333; /* Darker text color for better contrast */
+  margin: 20px 0;
+  width: 500px;
+  border-radius: 20px;
+  background-color: rgba(245, 245, 220, 0.096);
 }
 
 .pie-chart {
-  margin: 20px 0;
-  width: 400px;
-  height: 400px;
+  width: 100%;
+  max-width: 200px; /* Adjust as needed */
 }
 
-@media (max-width: 600px) {
-  .pie-chart {
-      width: 300px;
-      height: 300px;
-  }
+.location-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: auto;
 }
 
-@media (min-width: 601px) and (max-width: 1024px) {
-  .pie-chart {
-      width: 350px;
-      height: 350px;
-  }
+.location-chart {
+  width: 100%;
+  max-width: 400px; /* Adjust as needed */
+}
+
+/* Flex container for charts to align them horizontally */
+.chart-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px; /* Space between charts */
+}
+
+/* Ensure each chart section has a header */
+.chart-header {
+  text-align: center;
+  margin-bottom: 10px;
 }

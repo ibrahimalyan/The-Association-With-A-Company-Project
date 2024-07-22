@@ -233,27 +233,27 @@ const handleUserProfile = () => {
 const t = translations[language];
   return (
     <div className={`users-list-dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
-      <header className="header">
-        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
-        <button onClick={handlePrint} className="print-button">{t.print}</button>
-        <div className="header-center">
-          <button onClick={handleSignOut}>{t.signOut}</button>
-          <button onClick={handleHomePage} className="home-button">{t.home}</button>
-          {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
-            <button onClick={handleViewNotifications}>{t.notify}</button> 
-            <button onClick={handleUserProfile}>
-              {userDetails.username}
-              <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-            </button>
-          {userDetails.role === "Admin" && (
-            <>
-              <button onClick={handleAddProject}>{t.addProject}</button>
-              <button onClick={handleParticipant}>{t.users}</button>
-            </>
-          )} 
-        </div>
-          <img src={logo} alt="Logo" className="logo" />
-      </header>
+                <header className="header">
+                <img src={logo} alt="Logo" className="logo" />
+                        <div className="header-center">
+                        <button onClick={handleSignOut}>{t.signOut}</button>
+                        <button onClick={handleHomePage} className="home-button">{t.home}</button>
+                        {userDetails.role === 'Worker' && (<button>{t.registerAdmin}</button>)}
+                        <button onClick={handleViewNotifications}>{t.notify}</button> 
+                        {userDetails.role === "Admin" && (
+                            <>
+                                <button onClick={handleAddProject}>{t.addProject}</button>
+                                <button onClick={handleParticipant}>{t.users}</button>
+                            </>
+                        )} 
+                    </div>
+                    <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+                        <button onClick={handlePrint} className="print-button">{t.print}</button>
+                        <button onClick={handleUserProfile} className='user-profile-button'>
+                                    {userDetails.username}
+                                    <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+                            </button>
+                </header>
       <div className="users-list-content">
         <div className="users-list-filter-bar">
           <input 
