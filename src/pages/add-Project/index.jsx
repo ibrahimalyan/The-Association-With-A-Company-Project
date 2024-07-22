@@ -36,6 +36,15 @@ const translations = {
         save: "حفظ",
         participantList: "قائمة المشاركين",
         remove: "إزالة",
+        firstName: "الاسم الأول",
+        lastName: "الاسم الأخير",
+        email: "البريد الإلكتروني",
+        role: "الدور",
+        phoneNumber: "رقم الهاتف",
+        address: "العنوان",
+        birthDate: "تاريخ الميلاد",
+        gender: "الجنس",
+        id: "رقم الهوية",
         changeLanguage: "עברית",
         locations: [
             'منطقة الشمال',
@@ -49,7 +58,13 @@ const translations = {
             'المجال الأرثوذكسي المتشدد',
             'المجال الديني الوطني',
             'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
-        ]
+        ],
+        errors: {
+            selectLocation: "الرجاء تحديد موقع واحد على الأقل",
+            addParticipants: "الرجاء إضافة المشاركين",
+            addAdmin: "الرجاء إضافة مشرف واحد على الأقل",
+            invalidDates: "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء"
+        }
     },
     heb: {
         signOut: "התנתק",
@@ -71,6 +86,15 @@ const translations = {
         participantList: "רשימת משתתפים",
         remove: "הסר",
         changeLanguage: "العربية",
+        firstName: "שם פרטי",
+        lastName: "שם משפחה",
+        email: "אימייל",
+        role: "תפקיד",
+        phoneNumber: "מספר טלפון",
+        address: "כתובת",
+        birthDate: "תאריך לידה",
+        gender: "מין",
+        id: "תעודת זהות",
         locations: [
             'אזור הצפון',
             'אזור הדרום',
@@ -83,7 +107,13 @@ const translations = {
             'תחום האורתודוקסי',
             'תחום הדתי הלאומי',
             'חינוך, הכשרה ותעסוקה, מדיה, מענה'
-        ]
+        ],
+        errors: {
+            selectLocation: "אנא בחר לפחות מיקום אחד",
+            addParticipants: "אנא הוסף משתתפים",
+            addAdmin: "אנא הוסף לפחות מנהל אחד",
+            invalidDates: "תאריך הסיום חייב להיות לאחר תאריך ההתחלה"
+        }
     }
 };
 
@@ -128,6 +158,7 @@ export const AddProject = () => {
         uploadImage,
         updateParticipants,
         setImageUrl,
+        setError
     } = useProjectInfo();
 
     useEffect(() => {
@@ -200,9 +231,11 @@ export const AddProject = () => {
     const handleAddProject = async (e) => {
         setLoading(true)
         e.preventDefault();
+        const t = translations[language].errors;
+
         
         if (selectedLocations.length === 0) {
-            alert("אנא בחר לפחות מיקום אחד");
+            setError(t.selectLocation);
             setLoading(false);
             return;
         }
@@ -219,20 +252,20 @@ export const AddProject = () => {
                 });
             })
         } else {
-            alert("אנא הוסף משתתפים");
+            setError(t.addParticipants);
             setLoading(false)
             return;
         }
     
         if (!adminFound) {
-            alert("אנא הוסף לפחות מנהל אחד");
+            setError(t.addAdmin);
             setLoading(false)
             return;
         }
 
 
         if (new Date(endDate) <= new Date(startDate)) {
-            alert("תאריך הסיום חייב להיות לאחר תאריך ההתחלה");
+            setError(t.invalidDates);
             setLoading(false)
             return;
         }
@@ -322,7 +355,7 @@ export const AddProject = () => {
     const handleAddParticipantWithCheck = (participant) => {
         const participantName = participant.firstName + " " + participant.lastName;
         if (participantList.includes(participantName)) {
-            alert("This participant is already added.");
+            setError("This participant is already added.");
         } else {
             handleAddParticipant(participant);
         }
@@ -335,24 +368,26 @@ export const AddProject = () => {
             navigate('/homePage');
         } catch (error) {
             console.error("Error signing out: ", error);
-            alert("Error signing out. Please try again.");
+            setError("Error signing out. Please try again.");
         }
     };
 
 
     const renderUserInfo = (userData) => {
+        const directionClass = language === 'ar' || language === 'heb' ? 'rtl' : 'ltr';
+
         return (
-            <div>
+            <div className={directionClass}>
                 <>
-                    <p>firstName: {userData.firstName}</p>
-                    <p>LastName: {userData.lastName}</p>
-                    <p>Email: {userData.email}</p>
-                    <p>Role: {userData.role}</p>
-                    <p>Phone: {userData.phoneNumber}</p>
-                    <p>Address: {userData.location}</p>
-                    <p>BirthDate: {userData.birthDate}</p>
-                    <p>Gender: {userData.gender}</p>
-                    <p>ID: {userData.id}</p>
+                    <p>{t.firstName}: {userData.firstName}</p>
+                    <p>{t.lastName}: {userData.lastName}</p>
+                    <p>{t.email}: {userData.email}</p>
+                    <p>{t.role}: {userData.role}</p>
+                    <p>{t.phoneNumber}: {userData.phoneNumber}</p>
+                    <p>{t.address}: {userData.location}</p>
+                    <p>{t.birthDate}: {userData.birthDate}</p>
+                    <p>{t.gender}: {userData.gender}</p>
+                    <p>{t.id}: {userData.id}</p>
                 </>               
             </div>
         );

@@ -12,82 +12,69 @@
     
     const translations = {
         ar: {
+            userDetails: "تفاصيل المستخدم",
             signOut: "تسجيل الخروج",
-            registerAdmin: "تسجيل مشرف",
-            registerWorker: "تسجيل عامل",
-            addProject: "إضافة مشروع",
             users: "المستخدمين",
-            notify: "إشعارات",
-            projectTitle: "عنوان المشروع",
+            registTo: "التسجيل ل",
+            username: "اسم المستخدم",
+            firstName: "الاسم الأول",
+            lastName: "الاسم الأخير",
+            id: "رقم الهوية",
+            email: "البريد الإلكتروني",
+            role: "الدور",
             location: "الموقع",
+            birthDate: "تاريخ الميلاد",
+            gender: "الجنس",
+            phoneNumber: "رقم الهاتف",
+            noprojects: "لا توجد مشاريع",
+            accept: "قبول",
+            reject: "رفض",
+            close: "إغلاق",
+            ProjectDetails: "تفاصيل المشروع",
+            ProjectTitle: "عنوان المشروع",
+            description: "الوصف",
             startDate: "تاريخ البدء",
             endDate: "تاريخ الانتهاء",
-            description: "الوصف",
-            projectImage: "صورة المشروع",
-            addParticipant: "إضافة مشارك",
-            search: "بحث",
-            close: "إغلاق",
-            save: "حفظ",
-            participantList: "قائمة المشاركين",
-            remove: "إزالة",
-            changeLanguage: "עברית",
-            locations: [
-                'منطقة الشمال',
-                'منطقة الجنوب',
-                'المنطقة المركزية',
-                'منطقة الغرب',
-                'منطقة الشرق',
-                'مجال الإدمان',
-                'مجال الشباب والمشردين',
-                'مجال العمل الجماعي',
-                'المجال الأرثوذكسي المتشدد',
-                'المجال الديني الوطني',
-                'التعليم والتدريب والتوظيف، الإعلام، الاستجابة'
-            ]
-        },
-        heb: {
+            changeLanguage: "עברית"
+          },
+          heb: {
             signOut: "התנתק",
-            registerAdmin: "רשום מנהל",
-            registerWorker: "רשום עובד",
-            addProject: "הוסף פרויקט",
             users: "משתמשים",
-            notify: "עדכונים",
-            projectTitle: "כותרת הפרויקט",
-            location: "מקום",
+            userDetails: "פרטי משתמש",
+            username: "שם משתמש",
+            id: "ת.ז",
+            registTo: "הרשמה ל",
+            firstName: "שם פרטי",
+            lastName: "שם משפחה",
+            email: "אימייל",
+            location: "מיקום",
+            birthDate: "תאריך לידה",
+            role: "תפקיד",
+            gender: "מין",
+            phoneNumber: "מספר טלפון",
+            noprojects: "אין פרויקטים",
+            accept: "קבל",
+            reject: "דחה",
+            close: "סגור",
+            ProjectDetails: "פרטי פרויקט",
+            ProjectTitle: "כותרת הפרויקט",  
+            description: "תיאור", 
             startDate: "תאריך התחלה",
             endDate: "תאריך סיום",
-            description: "תיאור",
-            projectImage: "תמונת הפרויקט",
-            addParticipant: "הוסף משתתף",
-            search: "חפש",
-            close: "סגור",
-            save: "שמור",
-            participantList: "רשימת משתתפים",
-            remove: "הסר",
-            changeLanguage: "العربية",
-            locations: [
-                'אזור הצפון',
-                'אזור הדרום',
-                'אזור המרכז',
-                'אזור המערב',
-                'אזור המזרח',
-                'תחום ההתמכרויות',
-                'תחום הצעירים והחסרי בית',
-                'תחום העבודה הקבוצתית',
-                'תחום האורתודוקסי',
-                'תחום הדתי הלאומי',
-                'חינוך, הכשרה ותעסוקה, מדיה, מענה'
-            ]
-        }
-    };
+            changeLanguage: "العربية"
+          }
+        };
+  
 
     export const Notifications = () => {
+
+        const [language, setLanguage] = useState('heb');
+        const t = translations[language];
         const toGetAuth = getAuth();
         const { registerList, loading, acceptUser, rejectUser, setLoading } = useRegister();
         const navigate = useNavigate();
         const [authenticated, setAuthenticated] = useState(false);
         const [projects, setProjects] = useState([]);
-        const [language, setLanguage] = useState('heb');
         const [users, setUsers] = useState([]);
         const [notifies, setNotifies] = useState([]);
         const [sortOrder, setSortOrder] = useState('asc'); // 'asc' for ascending, 'desc' for descending
@@ -265,11 +252,11 @@
                             <table2 className="register-list-table">
                                 <thead className="register-list-thead">
                                     <tr className="register-list-thead-tr">
-                                        <th className="register-list-th">שם פרטי</th>
-                                        <th className="register-list-th">שם משפחה</th>
+                                    <th className="register-list-th">{t.firstName}</th>
+                                    <th className="register-list-th">{t.lastName}</th>
                                         <th className="register-list-th">
                                         <button onClick={handleSort} className="notification-sort-button">
-                                            -להרשם ל
+                                        {t.registTo}
                                         </button>
                                         </th>
                                     </tr>
@@ -363,24 +350,27 @@
                 <table2 className="register-list-table">
                     <thead className="register-list-thead">
                         <tr className="register-list-thead-tr">
-                            <th className="register-list-th">שם פרטי</th>
-                            <th className="register-list-th">שם משפחה</th>
-                            <th className="register-list-th">פרויקט</th>
+                        <th className="register-list-th">{t.firstName}</th>
+                            <th className="register-list-th">{t.lastName}</th>
+                            <th className="register-list-th">{t.ProjectTitle}</th>
                         </tr>
                     </thead>
                     <tbody className="register-list-tbody">
                         {projectElements.length > 0 ? projectElements : (
                             <tr className="register-list-tbody-tr">
-                                <td className="register-list-td" colSpan="3">לא נמצא פרויקטים</td>
+                                <td className="register-list-td" colSpan="3">{t.noprojects}</td>
                             </tr>
                         )}
                     </tbody>
                 </table2>
             );
         };
-        const t = translations[language];
+
+        
+
+        
         return (
-            <div className="notification-list">
+            <div className={`notification-list ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
         <header className="header">
         <button onClick={handleUserProfile}>
             <img src={profileIcon} alt="profileIcon" className="profileIcon" />
@@ -405,39 +395,39 @@
                 {selectedRequest && (
                     <div className="popup-overlay">
                         <div className="popup-content">
-                            <h3>פרטי בקשות</h3>
+                            <h3>{t.userDetails}</h3>
                             <table2>
                                 <tbody>
                                     <tr>
-                                        <td><strong>ת"ז:</strong></td>
+                                        <td><strong>{t.id}:</strong></td>
                                         <td>{selectedRequest.userId}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>שם פרטי:</strong></td>
+                                        <td><strong>{t.firstName}:</strong></td>
                                         <td>{selectedRequest.firstName}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>שם משפחה:</strong></td>
+                                        <td><strong>{t.lastName}:</strong></td>
                                         <td>{selectedRequest.lastName}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>טור:</strong></td>
+                                        <td><strong>{t.role}:</strong></td>
                                         <td>{selectedRequest.role}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>פ"ל:</strong></td>
+                                        <td><strong>{t.phoneNumber}:</strong></td>
                                         <td>{selectedRequest.phoneNumber}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>-הרשמה ל:</strong></td>
+                                        <td><strong>{t.registTo}:</strong></td>
                                         <td>{selectedRequest.registTo}</td>
                                     </tr>
                                 </tbody>
                             </table2>
                             <div className="popup-buttons">
-                                <button onClick={() => acceptUser(selectedRequest.id)}>אשור</button>
-                                <button onClick={() => rejectUser(selectedRequest.id)}>סירוב</button>
-                                <button onClick={() => setSelectedRequest(null)}>לסגור</button>
+                                <button onClick={() => acceptUser(selectedRequest.id)}>{t.accept}</button>
+                                <button onClick={() => rejectUser(selectedRequest.id)}>{t.reject}</button>
+                                <button onClick={() => setSelectedRequest(null)}>{t.close}</button>
                             </div>
                         </div>
                     </div>
@@ -446,61 +436,61 @@
                 {selectedProjectUser && (
                       <div className="popup-overlay">
                       <div className="popup-content">
-                          <h3>פרטי פרויקטים</h3>
+                          <h3>{t.ProjectDetails}</h3>
                           <table2>
                               <tbody>
                                   <tr>
-                                      <td><strong>שם פרויקת: </strong></td>
+                                      <td><strong>{t.ProjectTitle}:</strong></td>
                                       <td>{selectedProjectUser.project.projectTitle}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>מידע: </strong></td>
+                                      <td><strong>{t.description}:</strong></td>
                                       <td>{selectedProjectUser.project.description}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>תאריך: </strong></td>
+                                      <td><strong>{t.startDate}:</strong></td>
                                       <td>{selectedProjectUser.project.startDate}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>תאריך סיום:</strong></td>
+                                      <td><strong>{t.endDate}:</strong></td>
                                       <td>{selectedProjectUser.project.endDate}</td>
                                   </tr>
                                    </tbody>
                                   </table2>
-                                  <h3>פרטי משתמש</h3>
+                                  <h3>{t.userDetails}</h3>
                                   <table2>
                                   <tbody>
                                  
                                   <tr>
-                                      <td><strong>שם פרטי:</strong></td>
+                                      <td><strong>{t.firstName}:</strong></td>
                                       <td>{selectedProjectUser.user.firstName}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>שם משפחה:</strong></td>
+                                      <td><strong>{t.lastName}:</strong></td>
                                       <td>{selectedProjectUser.user.lastName}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>Location:</strong></td>
+                                      <td><strong>{t.location}:</strong></td>
                                       <td>{selectedProjectUser.user.location}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>Email:</strong></td>
+                                      <td><strong>{t.email}:</strong></td>
                                       <td>{selectedProjectUser.user.email}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>פ"ל:</strong></td>
+                                      <td><strong>{t.phoneNumber}:</strong></td>
                                       <td>{selectedProjectUser.user.phoneNumber}</td>
                                   </tr>
                                   <tr>
-                                      <td><strong>טור :</strong></td>
+                                      <td><strong>{t.role}:</strong></td>
                                       <td>{selectedProjectUser.user.role}</td>
                                   </tr>
                               </tbody>
                           </table2>
                           <div className="popup-buttons">
-                              <button onClick={() => acceptUserProject(selectedProjectUser.user.uid, selectedProjectUser.project.id, selectedProjectUser.notify.id)}>אישור</button>
-                              <button onClick={() => deleteNotification(selectedProjectUser.notify.id, true, false)}>סירוב</button>
-                              <button onClick={() => setSelectedProjectUser(null)}>לסגור</button>
+                              <button onClick={() => acceptUserProject(selectedProjectUser.user.uid, selectedProjectUser.project.id, selectedProjectUser.notify.id)}>{t.accept}</button>
+                              <button onClick={() => deleteNotification(selectedProjectUser.notify.id, true, false)}>{t.reject}</button>
+                              <button onClick={() => setSelectedProjectUser(null)}>{t.close}</button>
                           </div>
                       </div>
                   </div>

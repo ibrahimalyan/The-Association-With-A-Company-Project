@@ -101,7 +101,7 @@ export const HomePageEntery = () => {
         endDate: ''
     });
 
-    const [language, setLanguage] = useState('ar'); // Default language is Arabic
+    const [language, setLanguage] = useState('heb'); // Default language is Arabic
     const changeLanguage = () => {
         setLanguage((prevLang) => (prevLang === 'ar' ? 'heb' : 'ar'));
     };

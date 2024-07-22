@@ -38,6 +38,7 @@ const translations = {
       birthDate: "تاريخ الميلاد",
       gender: "الجنس",
       phoneNumber: "رقم الهاتف",
+      close: "إغلاق",
       changeLanguage: "עברית"
   },
   heb: {
@@ -68,6 +69,7 @@ const translations = {
       birthDate: "תאריך לידה",
       gender: "מין",
       phoneNumber: "מספר טלפון",
+      close: "סגור",
       changeLanguage: "العربية"
   }
 };
@@ -312,7 +314,7 @@ const t = translations[language];
             <p><strong>{t.role}:</strong> {selectedUser.role}</p>
             <div className="popup-buttons">
               <button onClick={handlePrint} className="print-popup-button">{t.print}</button>
-              <button onClick={() => setSelectedUser(null)} className="close-popup-button">Close</button>
+              <button onClick={() => setSelectedUser(null)} className="close-popup-button">{t.close}</button>
             </div>
             </div>
             <div className="user-project-content">

@@ -53,7 +53,19 @@ const translations = {
             participants: "المشاركون",
             register: "التسجيل في المشروع",
             role: "الدور",
-            name: "الاسم"
+            close: "إغلاق",
+            name: "الاسم",
+            userName: "اسم المستخدم",
+            firstName: "الاسم الأول",
+            lastName: "الاسم الأخير",
+            email: "البريد الإلكتروني",
+            role: "الدور",
+            phoneNumber: "رقم الهاتف",
+            address: "العنوان",
+            birthDate: "تاريخ الميلاد",
+            gender: "الجنس",
+            id: "رقم الهوية",
+
         },
         changeLanguage: "עברית",
         locations: [
@@ -107,7 +119,18 @@ const translations = {
             participants: "משתתפים",
             register: "הירשם לפרויקט",
             role: "תפקיד",
-            name: "שם"
+            close: "סגור",
+            name: "שם",
+            userName: "שם משתמש",
+            firstName: "שם פרטי",
+            lastName: "שם משפחה",
+            email: "אימייל",
+            role: "תפקיד",
+            phoneNumber: "מספר טלפון",
+            address: "כתובת",
+            birthDate: "תאריך לידה",
+            gender: "מין",
+            id: "תעודת זהות",
         },
         changeLanguage: "العربية",
         locations: [
@@ -163,7 +186,7 @@ export const HomePage = () => {
         endDate: ''
     });
 
-    const [language, setLanguage] = useState('ar');
+    const [language, setLanguage] = useState('heb');
     const locations = translations[language].locations;
 
     useEffect(() => {
@@ -481,37 +504,40 @@ export const HomePage = () => {
     };
     
     const renderUserInfo = (userData, project) => {
+        const t = translations[language].expandedContent;
+    
         if (!selectedUserData) return null;
         if (userDetails.role === "Guest" || (userDetails.role === 'Worker' && !isParticipant(project))){
             return (
-                <div className="modaluser-content">
-                <>
-                    <p>firstName: {userData.firstName}</p>
-                    <p>LastName: {userData.lastName}</p>
-                    <p>Email: {userData.email}</p>
-                    <p>Phone: {userData.phoneNumber}</p>
-                    <p>Gender: {userData.gender}</p>
-                </>              
-            </div>
-            )    
+                <div className={`modaluser-content ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
+                    <>
+                        <p>{t.firstName}: {userData.firstName}</p>
+                        <p>{t.lastName}: {userData.lastName}</p>
+                        <p>{t.email}: {userData.email}</p>
+                        <p>{t.phoneNumber}: {userData.phoneNumber}</p>
+                        <p>{t.gender}: {userData.gender}</p>
+                    </>              
+                </div>
+            );    
         }
         return (
-            <div className="modaluser-content">
+            <div className={`modaluser-content ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
                 <>
-                    <p>UserName: {userData.username}</p>
-                    <p>firstName: {userData.firstName}</p>
-                    <p>LastName: {userData.lastName}</p>
-                    <p>Email: {userData.email}</p>
-                    <p>Role: {userData.role}</p>
-                    <p>Phone: {userData.phoneNumber}</p>
-                    <p>Address: {userData.location}</p>
-                    <p>BirthDate: {userData.birthDate}</p>
-                    <p>Gender: {userData.gender}</p>
-                    <p>ID: {userData.id}</p>
+                    <p>{t.userName}: {userData.username}</p>
+                    <p>{t.firstName}: {userData.firstName}</p>
+                    <p>{t.lastName}: {userData.lastName}</p>
+                    <p>{t.email}: {userData.email}</p>
+                    <p>{t.role}: {userData.role}</p>
+                    <p>{t.phoneNumber}: {userData.phoneNumber}</p>
+                    <p>{t.address}: {userData.location}</p>
+                    <p>{t.birthDate}: {userData.birthDate}</p>
+                    <p>{t.gender}: {userData.gender}</p>
+                    <p>{t.id}: {userData.id}</p>
                 </>               
             </div>
         );
     };
+    
 
     const renderProjectInfo = (project) => {
         if (!project) return null;
@@ -574,14 +600,14 @@ export const HomePage = () => {
                         overlayClassName="modal-overlay"
                     >
                         {selectedUserData && renderUserInfo(selectedUserData, project)}
-                        <button onClick={closeModal} className="close-button6">Close</button>
+                        <button onClick={closeModal} className="close-button6">{t.expandedContent.close}</button>
                     </Modal>
 
                                         {((userDetails.role === 'Guest' || (userDetails.role === 'Worker' && !isParticipant(project))) && rendersWorkersSpecificProject(project.id))}
                                         {((userDetails.role === 'Worker' && !isParticipant(project)) || userDetails.role === 'Guest'&& !isParticipant(project)) && (
                                             <button onClick={() => handleSendRegistProject(project)}>{t.expandedContent.register}</button>
                                         )}
-                                        <button onClick={closepop} className="close-button6">Close</button>
+                                        <button onClick={closepop} className="close-button6">{t.expandedContent.close}</button>
               </div>
         );
     };

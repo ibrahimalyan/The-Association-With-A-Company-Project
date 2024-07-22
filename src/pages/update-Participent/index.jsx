@@ -78,7 +78,7 @@ export const UserProfile = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [language, setLanguage] = useState('ar');
+    const [language, setLanguage] = useState('heb');
 
 
     useEffect(() => {
