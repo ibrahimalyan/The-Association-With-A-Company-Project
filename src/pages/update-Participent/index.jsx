@@ -175,41 +175,47 @@ export const UserProfile = () => {
             <img src={duck1} alt="duck" className="duck duck4" />
             <img src={duck1} alt="duck" className="duck duck5" />
             <div>
-                <form onSubmit={handleSubmit} className="user-profile-form">
-                    <div className="form-group">
-                        <label className="form-label">{t.firstName}:</label>
-                        <input className="form-input" type="text" name="firstName" value={userData.firstName} onChange={handleInputChange} required />
-                        <label className="form-label">{t.lastName}:</label>
-                        <input className="form-input" type="text" name="lastName" value={userData.lastName} onChange={handleInputChange} required />
-                        <label className="form-label">{t.id}:</label>
-                        <input className="form-input" type="text" name="id" value={userData.id} onChange={handleInputChange} required />
-                        <label className="form-label">{t.phoneNumber}:</label>
-                        <input className="form-input" type="text" name="phoneNumber" value={userData.phoneNumber} onChange={handleInputChange} required />
-                        <label className="form-label">{t.username}:</label>
-                        <input className="form-input" type="text" name="username" value={userData.username} onChange={handleInputChange} required />
-                        <label className="form-label">{t.email}:</label>
-                        <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
-                        <label className="form-label">{t.gender}:</label>
-                        <select className="form-input" name="gender" value={userData.gender} onChange={handleInputChange} required>
-                            <option value="" disabled>{t.gender}</option>
-                            <option value="male">{t.male}</option>
-                            <option value="female">{t.female}</option>
-                        </select>
-                        <label className="form-label">{t.birthDate}:</label>
-                        <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
-                        <label className="form-label">{t.location}:</label>
-                        <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />
+            <form onSubmit={handleSubmit} className="user-profile-form">
+                <div className="form-group">
+                    <label className="form-label">{t.firstName}:</label>
+                    <input className="form-input" type="text" name="firstName" value={userData.firstName} onChange={handleInputChange} required />
+                    <label className="form-label">{t.lastName}:</label>
+                    <input className="form-input" type="text" name="lastName" value={userData.lastName} onChange={handleInputChange} required />
+                    <label className="form-label">{t.id}:</label>
+                    <input className="form-input" type="text" name="id" value={userData.id} onChange={handleInputChange} required />
+                    <label className="form-label">{t.phoneNumber}:</label>
+                    <input className="form-input" type="text" name="phoneNumber" value={userData.phoneNumber} onChange={handleInputChange} required />
+                    <label className="form-label">{t.username}:</label>
+                    <input className="form-input" type="text" name="username" value={userData.username} onChange={handleInputChange} required />
+                    <label className="form-label">{t.email}:</label>
+                    <input className="form-input" type="email" name="email" value={userData.email} onChange={handleInputChange} required />
+                    <label className="form-label">{t.gender}:</label>
+                    <select className="form-input" name="gender" value={userData.gender} onChange={handleInputChange} required>
+                        <option value="" disabled>{t.gender}</option>
+                        <option value="male">{t.male}</option>
+                        <option value="female">{t.female}</option>
+                    </select>
+                    <label className="form-label">{t.birthDate}:</label>
+                    <input className="form-input" type="date" name="birthDate" value={userData.birthDate} onChange={handleInputChange} required />
+                    <label className="form-label">{t.location}:</label>
+                    <input className="form-input" type="text" name="location" value={userData.location} onChange={handleInputChange} required />
+                    {userData.role !== "Guest" && ( 
+                        <>
                         <label className="form-label">{t.role}:</label>
-                        <span className="form-input">{userData.role}</span>
-                    </div>
-                    {error && <p className="error-message">{error}</p>}
-                    <div className="save-close-buttons">
-                        <button type="button" className="close-button2" onClick={handleClose}>{t.close}</button>
-                        <button type="button" className="language-button" onClick={toggleLanguage}>{t.changeLanguage}</button>
-                        <button type="submit" className="save-button">{t.save}</button>
-                    </div>
-                </form>
+                    <span className="form-input">{userData.role}</span>
+                    </>
+                    ) 
+                    }
+                   
+                </div>
+                {error && <p className="error-message">{error}</p>}
+                <div className="save-close-buttons">
+                    <button type="button" className="close-button2" onClick={handleClose}>{t.close}</button>
+                    <button type="button" className="language-button" onClick={toggleLanguage}>{t.changeLanguage}</button>
+                    <button type="submit" className="save-button">{t.save}</button>
+                </div>
+            </form>
             </div>
-        </div>
+            </div>
     );
 };
