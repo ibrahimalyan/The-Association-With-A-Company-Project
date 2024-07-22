@@ -11,6 +11,10 @@ import { useProjects } from '../../hooks/useGetProjectsInfo';
 
 const translations = {
     ar: {
+        noImage: "لا يوجد صورة",
+        noWorkers: " لا يوجد مرشدين ",
+        ClearFilterProjects: " ازالة الفلاتر",
+        myProject: "مشاريعي",
         signIn: "تسجيل الدخول",
         filter: {
             projectName: "اسم المشروع",
@@ -44,6 +48,10 @@ const translations = {
         ]
     },
     heb: {
+        noImage: "אין תמונה",
+        noWorkers: "אין מדריךים",
+        ClearFilterProjects: " סגירת פילוג",
+        myProject: "פרויקטים שלי",
         signIn: "התחבר",
         filter: {
             projectName: "שם הפרויקט",
@@ -107,6 +115,14 @@ export const HomePageEntery = () => {
     const handleSignIn = async () => {
         navigate('/signin');
         
+    };
+    const clearFilter = () => {
+        setFilter({
+            name: "",
+            location: "",
+            startDate: "",
+            endDate: ""
+        });
     };
 
     const handleFilterChange = (e) => {
@@ -190,12 +206,12 @@ export const HomePageEntery = () => {
 <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
             <header className="header">
                 <div className="header-left">
-                    <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
+                    <img src={logo} alt="Logo" className="logo" />
                 </div>
                 <div className="header-center">
                 <button onClick={handleSignIn}>{translations[language].signIn}</button>
                 </div>
-                <img src={logo} alt="Logo" className="logo" />
+                <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
             </header>
             <main className="main-content">
             <div className="welcome">
@@ -232,7 +248,7 @@ export const HomePageEntery = () => {
                         value={filter.endDate}
                         onChange={handleFilterChange}
                     />
-                    <button onClick={applyFilter}>{translations[language].filter.applyFilter}</button>
+                     <button className='clearfilter' onClick={clearFilter}>{t.clearFilter}</button>
                 </div>
                 <table className="projects-table">
                     <tbody>
