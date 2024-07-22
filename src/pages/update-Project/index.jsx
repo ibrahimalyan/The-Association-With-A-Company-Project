@@ -78,7 +78,7 @@ export const EditProject = () => {
     const [addImageFile, setAddImageFile] = useState(null);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedUserData, setSelectedUserData] = useState(null);
-    const [language, setLanguage] = useState('ar');
+    const [language, setLanguage] = useState('heb');
     const [searchInputFilter, setSearchInputFilter] = useState("");
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState(users);
