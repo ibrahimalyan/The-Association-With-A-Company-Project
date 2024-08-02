@@ -83,7 +83,7 @@ const translations = {
         ]
     },
     heb: {
-        noWorkers: "אין מדריךים",
+        noWorkers: "אין מדריכים",
         ClearFilterProjects: " סגירת פילוג",
         myProject: "פרויקטים שלי",
         signOut: "התנתק",
@@ -321,14 +321,12 @@ export const HomePage = () => {
                 });
                 await Promise.all(deleteImagePromises);
              } catch(error){
-                console.log("fuck image")
                 alert("Error deleting project. Please try again.");
              }
              try{
                 const projectDocRef = doc(db, "projects", projectId);
                 await deleteDoc(projectDocRef);
             } catch (error) {
-                console.error("fuck project");
                 alert("Error deleting project. Please try again.");
             }
             try{
@@ -347,7 +345,7 @@ export const HomePage = () => {
                 await Promise.all(updateUserProjectsPromises);
                 alert("Project deleted successfully.");
             } catch (error) {
-                console.error("fuck user");
+                console.error("error user");
                 alert("Error deleting project. Please try again.");
             }finally {
                 setLoading(false);
@@ -516,6 +514,8 @@ export const HomePage = () => {
                         <p>{t.email}: {userData.email}</p>
                         <p>{t.phoneNumber}: {userData.phoneNumber}</p>
                         <p>{t.gender}: {userData.gender}</p>
+                        <p>{t.address}: {userData.location}</p>
+                        <p>{t.birthDate}: {userData.birthDate}</p>
                     </>              
                 </div>
             );    
@@ -550,7 +550,7 @@ export const HomePage = () => {
                     'No Image'
                     )}
                     </p>
-                    <h1><p><strong>{t.expandedContent.projectTitle}:</strong> {project.projectTitle}</p></h1>
+                    <h1><p>{project.projectTitle}</p></h1>
                     <p><strong>{t.expandedContent.startDate}:</strong> {project.startDate}
                     <strong> {t.expandedContent.endDate}:</strong> {project.endDate}</p>
                     <p><strong>{t.expandedContent.location}:</strong> {renderLocations(project.location)}</p>
@@ -719,7 +719,6 @@ export const HomePage = () => {
                     if (notifies){
                         for (notification of notifies){
                             if (notification.projectId === project.id && notification.userId === userDetails.uid){
-                                console.log("fuck")
                                 alert ("Notification already sent to this worker.");
                                 return null;
                             }

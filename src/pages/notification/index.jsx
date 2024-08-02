@@ -27,6 +27,7 @@
             gender: "الجنس",
             phoneNumber: "رقم الهاتف",
             noprojects: "لا توجد مشاريع",
+            noRequestsYet: "لا يوجد طلب",
             accept: "قبول",
             reject: "رفض",
             close: "إغلاق",
@@ -53,6 +54,7 @@
             gender: "מין",
             phoneNumber: "מספר טלפון",
             noprojects: "אין פרויקטים",
+            noRequestsYet:"ללא בקשה",
             accept: "קבל",
             reject: "דחה",
             close: "סגור",
@@ -237,46 +239,6 @@
             }
         });
 
-    
-        const renderRegisterListAdmin = () => {
-            const render = renderRegistProjects();
-        
-            const hasRegisterListData = registerList.length > 0;
-            const hasProjectListData = notifies.filter(notify => notify.workerID.includes(userDetails.uid)).length > 0;
-    
-            return (
-                <>
-                    
-                    <div className={`tables-container ${!hasRegisterListData || !hasProjectListData ? 'single-table-container' : ''}`}>
-                        {hasRegisterListData && (
-                            <table2 className="register-list-table">
-                                <thead className="register-list-thead">
-                                    <tr className="register-list-thead-tr">
-                                    <th className="register-list-th">{t.firstName}</th>
-                                    <th className="register-list-th">{t.lastName}</th>
-                                        <th className="register-list-th">
-                                        <button onClick={handleSort} className="notification-sort-button">
-                                        {t.registTo}
-                                        </button>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="register-list-tbody">
-                                {sortedRegisterList.map((register) => (
-                                        <tr className="register-list-tbody-tr" key={register.id} onClick={() => setSelectedRequest(register)}>
-                                            <td className="register-list-td">{register.firstName}</td>
-                                            <td className="register-list-td">{register.lastName}</td>
-                                            <td className="register-list-td">{register.registTo}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table2>
-                        )}
-                        {hasProjectListData && render}
-                    </div>
-                </>
-            );
-        };
         const deleteNotification = async (notificationId, isAdmin) => {
             setLoading(true);
             try{
@@ -340,6 +302,50 @@
             );
         };
         
+
+        const renderRegisterListAdmin = () => {
+            const render = renderRegistProjects();
+        
+            const hasRegisterListData = registerList.length > 0;
+            const hasProjectListData = notifies.filter(notify => notify.workerID.includes(userDetails.uid)).length > 0;
+        
+            return (
+                <>
+                    <div className={`tables-container ${!hasRegisterListData || !hasProjectListData ? 'single-table-container' : ''}`}>
+                        <table className="register-list-table">
+                            <thead className="register-list-thead">
+                                <tr className="register-list-thead-tr">
+                                    <th className="register-list-th">{t.firstName}</th>
+                                    <th className="register-list-th">{t.lastName}</th>
+                                    <th className="register-list-th">
+                                        <button onClick={handleSort} className="notification-sort-button">
+                                            {t.registTo}
+                                        </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="register-list-tbody">
+                                {hasRegisterListData ? (
+                                    sortedRegisterList.map((register) => (
+                                        <tr className="register-list-tbody-tr" key={register.id} onClick={() => setSelectedRequest(register)}>
+                                            <td className="register-list-td">{register.firstName}</td>
+                                            <td className="register-list-td">{register.lastName}</td>
+                                            <td className="register-list-td">{register.registTo}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr className="register-list-tbody-tr">
+                                        <td className="register-list-td" colSpan="3">{t.noRequestsYet}</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                            {render}
+                    </div>
+                </>
+            );
+        };
+        
         const renderRegistProjects = () => {
             const projectElements = notifies
                 .filter(notify => notify.workerID.includes(userDetails.uid))
@@ -347,10 +353,10 @@
                 .filter(projectElement => projectElement !== null); // Filter out null elements
         
             return (
-                <table2 className="register-list-table">
+                <table className="register-list-table">
                     <thead className="register-list-thead">
                         <tr className="register-list-thead-tr">
-                        <th className="register-list-th">{t.firstName}</th>
+                            <th className="register-list-th">{t.firstName}</th>
                             <th className="register-list-th">{t.lastName}</th>
                             <th className="register-list-th">{t.ProjectTitle}</th>
                         </tr>
@@ -362,20 +368,16 @@
                             </tr>
                         )}
                     </tbody>
-                </table2>
+                </table>
             );
         };
-
-        
+                
 
         
         return (
             <div className={`notification-list ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
         <header className="header">
-        <button onClick={handleUserProfile}>
-            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
-        </button>
-        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+        <img src={logo} alt="Logo" className="logo" />
         <div className="header-center">
         <button onClick={handleSignOut}>{t.signOut}</button>
         <button onClick={homepage}>{t.close}</button>
@@ -385,10 +387,11 @@
             </>
         )} 
     </div>
-    <img src={logo} alt="Logo" className="logo" />
+        <button onClick={toggleLanguage} className="change-language-button">{t.changeLanguage}</button>
+        <button onClick={handleUserProfile}>
+            <img src={profileIcon} alt="profileIcon" className="profileIcon" />
+        </button>
 </header>
-
-
                 {userDetails.role === 'Admin' && renderRegisterListAdmin()}
                 {userDetails.role === 'Worker' && renderRegisterListWorker()}
     
@@ -443,10 +446,10 @@
                                       <td><strong>{t.ProjectTitle}:</strong></td>
                                       <td>{selectedProjectUser.project.projectTitle}</td>
                                   </tr>
-                                  <tr>
+                                  {/* <tr>
                                       <td><strong>{t.description}:</strong></td>
                                       <td>{selectedProjectUser.project.description}</td>
-                                  </tr>
+                                  </tr> */}
                                   <tr>
                                       <td><strong>{t.startDate}:</strong></td>
                                       <td>{selectedProjectUser.project.startDate}</td>

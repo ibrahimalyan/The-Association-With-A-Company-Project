@@ -8,7 +8,6 @@ import { db } from '../../config/firebase-config';
 import './participent.css'; // Ensure you have appropriate CSS
 
 
-
 const translations = {
   ar: {
     signOut: "تسجيل الخروج",

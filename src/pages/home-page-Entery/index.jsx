@@ -15,6 +15,7 @@ const translations = {
         noWorkers: " لا يوجد مرشدين ",
         ClearFilterProjects: " ازالة الفلاتر",
         myProject: "مشاريعي",
+        Close:"إغلاق",
         signIn: "تسجيل الدخول",
         filter: {
             projectName: "اسم المشروع",
@@ -49,8 +50,9 @@ const translations = {
     },
     heb: {
         noImage: "אין תמונה",
-        noWorkers: "אין מדריךים",
-        ClearFilterProjects: " סגירת פילוג",
+        noWorkers: "אין מדריכים",
+        ClearFilterProjects: " נקה מסננים",
+        Close:"סגור",
         myProject: "פרויקטים שלי",
         signIn: "התחבר",
         filter: {
@@ -114,7 +116,7 @@ export const HomePageEntery = () => {
 
     const handleSignIn = async () => {
         navigate('/signin');
-        
+
     };
     const clearFilter = () => {
         setFilter({
@@ -155,22 +157,22 @@ export const HomePageEntery = () => {
     const renderProjectInfo = (project) => {
         if (!project) return null;
         return (
-                            <div className="expanded-content">
-                                <p>
-                                            {project.imageUrl ? (
-                                                <img src={project.imageUrl} alt="Project" className="project-image2" />
-                                            ) : (
-                                                'No Image'
-                                            )}
-                                        </p>
-                                        <h1><p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p></h1>
-                                        <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}
-                                        <strong> {translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
-                                        <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
-                                        <p><strong>{translations[language].tableHeaders.description}:</strong></p> <p> {project.description}</p> 
-                                        <button onClick={closeModal} className="close-button5">Close</button>
-                                        <button onClick={handleSignIn}className="register-button">{translations[language].toRegister}</button>
-              </div>
+            <div className="expanded-content">
+                <p>
+                    {project.imageUrl ? (
+                        <img src={project.imageUrl} alt="Project" className="project-image2" />
+                    ) : (
+                        'No Image'
+                    )}
+                </p>
+                <h1><p> {project.projectTitle}</p></h1>
+                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
+                <p><strong> {translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
+                <p><strong>{translations[language].tableHeaders.description}:</strong></p> <p> {project.description}</p>
+                <button onClick={closeModal} className="close-button6">{translations[language].Close}</button>
+                <button onClick={handleSignIn} className="register-button">{translations[language].toRegister}</button>
+            </div>
         );
     };
 
@@ -203,19 +205,19 @@ export const HomePageEntery = () => {
     }
     const t = translations[language];
     return (
-<div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>    
+        <div className={`dashboard ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
             <header className="header">
                 <div className="header-left">
                     <img src={logo} alt="Logo" className="logo" />
                 </div>
                 <div className="header-center">
-                <button onClick={handleSignIn}>{translations[language].signIn}</button>
+                    <button onClick={handleSignIn}>{translations[language].signIn}</button>
                 </div>
                 <button onClick={changeLanguage}>{translations[language].changeLanguage}</button>
             </header>
             <main className="main-content">
-            <div className="welcome">
-            <img src={intro} alt = "intro"  className = "intro"/>
+                <div className="welcome">
+                    <img src={intro} alt="intro" className="intro" />
                 </div>
                 <div className="filter-section">
                     <input
@@ -230,10 +232,10 @@ export const HomePageEntery = () => {
                         value={filter.location}
                         onChange={handleFilterChange}
                     >
-                    <option value="">{translations[language].filter.location}</option>
-                        {translations[language].locations.map((location,index) => (
-                        <option key={index} value={location}>{location}</option>
-                    ))}
+                        <option value="">{translations[language].filter.location}</option>
+                        {translations[language].locations.map((location, index) => (
+                            <option key={index} value={location}>{location}</option>
+                        ))}
                     </select>
 
                     <input
@@ -248,7 +250,7 @@ export const HomePageEntery = () => {
                         value={filter.endDate}
                         onChange={handleFilterChange}
                     />
-                     <button className='clearfilter' onClick={clearFilter}>{t.clearFilter}</button>
+                    <button className='clearfilter' onClick={clearFilter}>{t.ClearFilterProjects}</button>
                 </div>
                 <table className="projects-table">
                     <tbody>
@@ -267,9 +269,10 @@ export const HomePageEntery = () => {
                                                     <span>No Image</span>
                                                 )}
                                                 <h1>
-                                                    <p><strong>{translations[language].tableHeaders.projectName}:</strong> {project.projectTitle}</p>
+                                                    <p>{project.projectTitle}</p>
                                                 </h1>
-                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate} - <strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
+                                                <p><strong>{translations[language].tableHeaders.startDate}:</strong> {project.startDate}</p>
+                                                <p><strong>{translations[language].tableHeaders.endDate}:</strong> {project.endDate}</p>
                                                 <p><strong>{translations[language].tableHeaders.location}:</strong> {renderLocations(project.location)}</p>
                                             </div>
                                         </div>
@@ -290,9 +293,9 @@ export const HomePageEntery = () => {
 
                 <footer className="footer">
                     <p>אביטל גולדברג - glavital@jerusalem.muni.il<br />
-                    050-312-1883<br />
-                    רונית סבטי - ronit_se@jerusalem.muni.il<br />
-                    051-548-0763</p>
+                        050-312-1883<br />
+                        רונית סבטי - ronit_se@jerusalem.muni.il<br />
+                        051-548-0763</p>
                 </footer>
             </main>
         </div>

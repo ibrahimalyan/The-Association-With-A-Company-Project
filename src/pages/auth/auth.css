@@ -7,7 +7,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 120vh;
-    background: linear-gradient(180deg, hsl(219, 100%, 63%) 0%, #f69494 100%);
+    background: linear-gradient(180deg, #d7c2c2 0%, #494949 100%);
     overflow: hidden;
 }
 
@@ -24,11 +24,10 @@ body {
 }
 
 .auth-wrapper .container {
-    background: rgba(41, 31, 31, 0.1);
+    background: rgba(69, 97, 102, 0.307);
     border-radius: 10px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px 0 rgb(31, 38, 135);
-    color: white;
+    box-shadow: 2px 8px 32px 2px rgb(0, 0, 0);
     padding: 20px;
     width: 350px;
     max-width: 100%;
@@ -38,14 +37,13 @@ body {
     width: 70%;
     height: auto;
     margin-bottom: 20px;
-    background: #525440b9;
     border-radius: 5px;
 }
 
 .auth-wrapper form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px;
 }
 
 .auth-wrapper .input-group {
@@ -60,8 +58,6 @@ body {
     border: none;
     border-radius: 5px;
     outline: none;
-    background: rgba(255, 255, 255, 0.15);
-    color: black;   
     height: 30px;
     text-align: right;
 }
@@ -72,12 +68,12 @@ body {
     border: none;
     border-radius: 5px;
     outline: none;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.395);
     color: black;
 }
 
 .auth-wrapper input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(0, 0, 0, 0.525);
     text-align: right;
 }
 
@@ -85,7 +81,7 @@ body {
     padding: 10px;
     border: none;
     border-radius: 5px;
-    background: #eef7a0;
+    background: #f7f59b;
     color: black;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -95,8 +91,6 @@ body {
     position: absolute;
     top: 20px; /* Adjust as needed */
     left: 20px; /* Adjust as needed */
-    background: #a4a772; /* Button background color */
-    color: black; /* Button text color */
     border: none;
     border-radius: 5px;
     padding-top: 5px;
@@ -121,9 +115,8 @@ body {
 
 }
 
-
 .auth-wrapper button:hover {
-    background: #fffb00;
+    background: #e6e2109f;
 }
 
 .auth-wrapper button[type="button"] {
@@ -132,137 +125,5 @@ body {
 }
 
 .auth-wrapper button[type="button"]:hover {
-    background: #fffb00;
-}
-
-.auth-wrapper p {
-    color: red;
-    margin-top: -10px;
-}
-
-.auth-wrapper .bubbles {
-    position: absolute;
-    opacity: 0; /* Start invisible */
-}
-
-/* Individual bubble animations */
-.auth-wrapper .bubbles1 {
-    left: -100%; /* Random position on x-axis */
-    width: 50px; 
-    animation: floating 15s linear infinite;
-    animation-delay: 0s; /* Start immediately */
-    animation-fill-mode: forwards;
-}
-.auth-wrapper .bubbles2 {
-    left: -35%; /* Random position on x-axis */
-    animation: floating 30s linear infinite;
-    width: 30px; /* Adjust size as needed */
-    animation-delay: 8s; /* Start after 6 seconds */
-    animation-fill-mode: forwards;
-}
-.auth-wrapper .bubbles3 {
-    left: 45%; /* Random position on x-axis */
-    animation: floating 40s linear infinite;
-    width: 20px; /* Adjust size as needed */
-    animation-delay: 5s; /* Start after 12 seconds */
-    animation-fill-mode: forwards;
-}
-.auth-wrapper .bubbles4 {
-    left: 120%; /* Random position on x-axis */
-    width: 70px; /* Adjust size as needed */
-    animation: floating 10s linear infinite;
-    animation-delay: 3s; /* Start after 18 seconds */
-    animation-fill-mode: forwards;
-}
-.auth-wrapper .bubbles5 {
-    left: 200%; /* Random position on x-axis */
-    width: 40px; /* Adjust size as needed */
-    animation: floating 20s linear infinite;
-    animation-delay: 10s; /* Start after 24 seconds */
-    animation-fill-mode: forwards;
-}
-/* Fish animation */
-.auth-wrapper .fish {
-    top: 550px;
-    position: absolute;
-    width: 50px; /* Adjust size as needed */
-    height: auto;
-    bottom: 20px; /* Adjust as needed */
-    right: 700px;
-}
-.auth-wrapper .fish1{
-    top: 300px;
-    animation: swim 36s linear infinite;
-    animation-delay: 10s;
-    animation-fill-mode: forwards;
-    animation-fill-mode: both;
-    opacity: 0; 
-}
-.auth-wrapper .fish2{
-    top: 150px;
-    animation: swim 51s linear infinite;
-    animation-delay: 0s; /* Start after 18 seconds */
-    animation-fill-mode: both;
-    opacity: 0; 
-}
-.auth-wrapper .fish3{
-    top: 400px;
-    animation: swim 23.5s linear infinite;
-    animation-delay: 7s; /* Start after 18 seconds */
-    animation-fill-mode: both;
-    opacity: 0; 
-}
-.auth-wrapper .fish4{
-    top: 25px;
-    animation: swim 13s linear infinite;
-    animation-delay: 3s; /* Start after 18 seconds */
-    animation-fill-mode: both;
-    opacity: 0; 
-}
-
-
-/* Fish swimming keyframes */
-@keyframes swim {
-    0% {
-        transform: translateX(-100px) scaleX(-1);
-    }
-    15% {
-        opacity: 1; 
-        transform: translateX(calc(14vw - 50px)) scaleX(-1);
-    }
-    50% {
-        opacity: 1; 
-        transform: translateX(calc(70vw - 50px)) scaleX(-1);
-    }
-    51% {
-        opacity: 1; 
-        transform: translateX(calc(70vw - 50px)) scaleX(1);
-    }
-    99% {
-        opacity: 1; 
-        transform: translateX(-100px) scaleX(1);
-    }
-    100% {
-        opacity: 1; 
-        transform: translateX(-100px) scaleX(-1);
-    }
-}
-/* Bubbles floating keyframes */
-@keyframes floating {
-    0% {
-        opacity: 0; /* Start invisible */
-        bottom: -45%; /* Start position slightly below the viewport */
-    }
-    10% {
-        opacity: 1; /* Fade in */
-        bottom: 0; /* Starting visible position */
-    }
-    90% {
-        opacity: 1; /* Stay visible */
-        bottom: 100vh; /* Ending visible position */
-    }
-    100% {
-        bottom: 110vh; /* Float off the top */
-        opacity: 0; /* Fade out */
-    }
+    background: #e6e21062;
 }
