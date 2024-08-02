@@ -226,12 +226,12 @@ const Statistics = () => {
                     </div>
                 </div>
             </div>
-            <div className="chart-container location-chart-container">
+            {/* <div className="chart-container location-chart-container">
                 <h2 className="chart-header">Location Statistics</h2>
                 <div className="pie-chart location-chart">
                     <Bar data={locationData} />
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };

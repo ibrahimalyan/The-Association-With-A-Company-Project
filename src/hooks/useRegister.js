@@ -87,6 +87,7 @@ export const useRegister = () => {
             setError(err);
             console.error("Error accepting user:", err);
         }
+        window.location.reload();
     };
 
     const rejectUser = async (registerId) => {
@@ -97,6 +98,7 @@ export const useRegister = () => {
             setError(err);
             console.error("Error rejecting user:", err);
         }
+        window.location.reload();
     };
 
     return {

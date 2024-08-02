@@ -1,4 +1,3 @@
-/* src/pages/notifications/Notifications.css */
 .notifications {
     padding: 20px;
 }
@@ -8,11 +7,9 @@
     align-items: center;
     padding: 10px 20px;
     border-radius: 20px;
-    background: linear-gradient(180deg, #f694949a 0%, hsl(243, 100%, 63%) 100%);
+    background-color: rgba(132, 132, 132, 0.8);
     height: 75px;
-    margin-bottom: 10px;
 }
-
 
 .notification-list .logo {
     width: 100px;
@@ -20,23 +17,9 @@
     border-radius: 20px;
 }
 
-.header button {
-    margin: 0 15px;
-    padding: 10px 20px;
-    font-weight: bold;
-    background-color: #6b8aaa;
-    color: black;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
 table2 {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
-    max-height: 400px; 
     overflow-y: auto;
     display: block;
 }
@@ -66,12 +49,13 @@ th {
 }
 
 .popup-content {
-    background: white;
+    max-height: 90vh;
+    box-sizing: border-box;
     padding: 20px;
     border-radius: 8px;
     width: 30%;
-    background-color: #ebdff7;
-    border: 4px solid #a478cc;
+    background-color: #e4e4e4;
+    border: 4px solid rgba(132, 132, 132, 0.8);
 }
 
 .popup-content h3 {
@@ -97,7 +81,7 @@ th {
     border-radius: 8px;
     padding: 8px;
     width: 300px;
-    border: 2px solid #a478cc;
+    border: 2px solid rgba(132, 132, 132, 0.8);
 }
 
 /* Popup buttons */
@@ -109,46 +93,41 @@ th {
 
 .popup-buttons button {
     border-radius: 8px;
-    border: 2px solid #a478cc;
+    border: 2px solid rgba(132, 132, 132, 0.8);
     background-color: #f0e8fb;
     margin: 0 5px;
 }
-/* Scrollbar Styles for Tables */
-table2::-webkit-scrollbar {
-    width: 8px;
-    background: transparent;
-}
-
-table2::-webkit-scrollbar-thumb {
-    background-color: rgba(113, 81, 154, 0.8);
-    border-radius: 50px;
-}
-
-table2::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(113, 81, 154, 1);
-}
-
-table2::-webkit-scrollbar-track {
-    background: transparent;
-}
 
 .popup-buttons button:hover {
-    background-color: #a478cc;
+    background-color: rgba(132, 132, 132, 0.8);
 }
 
 /* General Table Styles */
 .register-list-table {
     margin: 34px;
-    width: 100%;
-    /* border: 6px solid #71519a; */
+    border: 6px solid #626262;
     margin-top: 50px;
     font-family: Arial, sans-serif;
     font-size: 18px;
-    /* border-radius: 40px; */
+    display: block;
+    max-height: 450px;
+    width: 324px;
+    overflow-y: auto;
+    border-radius: 10px;
 }
 
+.register-list-table::-webkit-scrollbar {
+    width: 12px; 
+}
+
+.register-list-table::-webkit-scrollbar-thumb {
+    background: #3d3d3d; 
+    border-radius: 20px; 
+}
+
+
 .register-list-th, .register-list-td {
-    border: 3px solid #71519a;
+    border: 3px solid rgba(132, 132, 132, 0.8);
     padding: 12px;
     text-align: center;
 }
@@ -159,26 +138,26 @@ table2::-webkit-scrollbar-track {
 }
 
 .register-list-thead-tr:hover {
-    background-color: #ccc1e0;
+    background-color: #696969;
 }
 
 .register-list-th {
-    background-color: #a478cc;
-    color: #fff;
+    background-color: rgba(132, 132, 132, 0.8);
+    color: #000000;
     font-weight: bold;
 }
 
 /* Body Styles */
 .register-list-tbody-tr:nth-child(even) {
-    background-color: #d4c7f4;
+    background-color: #919191;
 }
 
 .register-list-tbody-tr:nth-child(odd) {
-    background-color: #ebdff7;
+    background-color: #c2c2c2;
 }
 
 .register-list-tbody-tr:hover {
-    background-color: #f0e8fb;
+    background-color: #7d8e95;
 }
 
 .notification-container {
@@ -194,18 +173,19 @@ table2::-webkit-scrollbar-track {
     font-size: 18px;
 }
 
-.notification-container button {
-    margin-top: 10px;
-    padding: 8px 16px;
-    background-color: #4CAF50;
+.notification-sort-button {
+    padding: 4px 8px;
+    background-color: #5b5b5b;
     color: white;
     border: none;
     border-radius: 5px;
+    font-size: 14px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-.notification-container button:hover {
-    background-color: #45a049;
+.notification-sort-button:hover {
+    background-color: #373737;
 }
 
 .tables-container {
@@ -223,39 +203,12 @@ table2::-webkit-scrollbar-track {
     display: none;
 }
 
-.notification-list {
+.notification-list {   
     padding: 20px;
     border-radius: 50px;
-    background: linear-gradient(180deg, #f694949a 0%, hsl(243, 100%, 63%) 100%);
-    max-height: 80vh;
-    margin-bottom: 200px;
-}
-
-/* Scrollbar Styles for Webkit Browsers (e.g., Chrome, Safari) */
-.notification-list::-webkit-scrollbar {
-    width: 8px;
-    background: transparent;
-}
-
-.notification-list::-webkit-scrollbar-thumb {
-    background-color: rgba(113, 81, 154, 0.8);
-    border-radius: 50px;
-}
-
-.notification-list::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(113, 81, 154, 1);
-}
-
-.notification-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-
-/* CSS for popup content */
-.popup-content {
-    padding: 20px;
-    border-radius: 5px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-sizing: border-box;
+    background-color: rgba(244, 248, 167, 0.125);
+    height: 625px;
+    overflow: hidden;
+    width: 1000px;
+    margin-bottom: 150px;
 }

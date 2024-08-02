@@ -4,7 +4,7 @@
     align-items: center;
     padding: 10px 20px;
     border-radius: 20px;
-    background-color:rgba(0, 255, 89, 0.2);
+    background-color: rgba(132, 132, 132, 0.8);
     height: 75px;
     margin-bottom: 10px;
 }
@@ -14,23 +14,6 @@
     height: 90px;
     border-radius: 20px;
 }
-
-/* Button Styles */
-.header button {
-    margin: 0 15px;
-    padding: 10px 20px;
-    font-weight: bold;
-    background-color: #6b8aaa;
-    color: black;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-
-
-
 
 .users-list-dashboard {
     background: rgba(41, 31, 31, 0.1);
@@ -74,7 +57,7 @@
 }
 
 .users-list-filter-bar input[type="text"]:focus {
-    border-color: #5C97BF;
+    border-color: #dbbb74;
     outline: none;
     font-weight: bold;
 }
@@ -92,7 +75,7 @@
 }
 
 .apply-filters-button:hover {
-    background-color: #810fba;
+    background-color: #6f8792;
     transform: scale(1.05);
     font-weight: bold;
 }
@@ -126,23 +109,23 @@
 }
 
 .users-list-table-header {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.462);
     font-weight: bold;
 }
 
 .users-list-table-row:nth-child(even) {
-    background-color: #00a1b053;    
+    background-color: #64646453;    
     font-weight: bold;
 }
 
 .users-list-table-row:hover {
-    background-color: rgb(205, 255, 235);
+    background-color: rgb(218, 218, 218);
     font-weight: bold;
 }
 
 .delete-button {
     padding: 5px 10px;
-    background-color: #ff3e3e;
+    background-color: rgb(218, 34, 34);
     color: black;
     border: none;
     border-radius: 10px;
@@ -163,7 +146,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.522);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -172,13 +155,13 @@
 }
 
 .user-details-content, .user-project-content {
-    background-color: hsl(57, 32%, 63%);
+    background-color: hsl(0, 1%, 62%);
     padding: 20px;
     border-radius: 10px;
     width: 400px;
     max-width: 90%;
     height: 70%;
-    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.029);
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.271);
     font-weight: bold;
     text-align: right;
 }
@@ -199,12 +182,10 @@
     border: none;
     transition: background-color 0.3s, transform 0.3s;
     font-weight: bold;
-    background-color: #ff3f3f;
     color: black;
 }
 
 .print-popup-button:hover, .close-popup-button:hover {
-    background-color: #ffacac;
     transform: scale(1.05);
     font-weight: bold;
 }
@@ -212,5 +193,5 @@
 /* For Firefox */
 .users-list-table-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: #337ab7 rgba(255, 255, 255, 0.2); /* thumb color and track color */
+    scrollbar-color: #434343 rgba(255, 255, 255, 0.2);
 }

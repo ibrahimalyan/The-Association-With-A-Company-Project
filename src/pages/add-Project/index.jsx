@@ -5,9 +5,6 @@ import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../config/firebase-config';
 import { doc, getDocs, collection, getDoc, addDoc } from 'firebase/firestore';
 import { useProjectInfo } from '../../hooks/useProjectInfo';  // Adjust the path as needed
-import bird1 from '../../images/bird1.svg';
-import bird2 from '../../images/bird2.svg';
-import bird3 from '../../images/bird3.svg';
 import profileIcon from '../../images/profileIcon.png';
 import logo from '../../images/logo.jpeg';
 import './addproject.css';
@@ -418,7 +415,6 @@ export const AddProject = () => {
         <button onClick={handleViewNotifications}>{t.notify}</button> 
         {userDetails.role === "Admin" && (
             <>
-                <button onClick={handleAddProject}>{t.addProject}</button>
                 <button onClick={handleParticipant}>{t.users}</button>
             </>
         )} 
@@ -426,9 +422,6 @@ export const AddProject = () => {
     <img src={logo} alt="Logo" className="logo" />
 </header>
 <div className={`container-wrapper ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
-<img src={bird1} alt="bird" className="bird bird1" />
-                <img src={bird2} alt="bird" className="bird bird2" />
-                <img src={bird3} alt="bird" className="bird bird3" />
                 <div className="container2">
                     <form onSubmit={handleAddProject}>
                         <div>

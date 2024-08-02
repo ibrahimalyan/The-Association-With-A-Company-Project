@@ -23,7 +23,7 @@
     background: rgba(41, 31, 31, 0.1);
     border-radius: 10px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    box-shadow: 0 8px 32px 0 rgb(203, 203, 203);
     color: black;
     padding: 20px;
     width: 400px;
@@ -103,60 +103,4 @@
 .user-profile-container .loading {
     font-size: 20px;
     color: #000;
-}
-
-.user-profile-container .duck1 {
-    animation: swimaround 45s linear infinite;
-    width: 50px;
-    height: auto;
-    position: absolute;
-    animation-delay: 0.1s;
-}
-.user-profile-container .duck2 {
-    animation: swimaround 45s linear infinite;
-    width: 25px;
-    height: auto;
-    position: absolute;
-    animation-delay: 0.8s;
-}
-.user-profile-container .duck3 {
-    animation: swimaround 45s linear infinite;
-    width: 25px;
-    height: auto;
-    position: absolute;
-    animation-delay: 1.3s;
-}
-.user-profile-container .duck4 {
-    animation: swimaround 45s linear infinite;
-    width: 25px;
-    height: auto;
-    position: absolute;
-    animation-delay: 1.8s;
-
-}
-.user-profile-container .duck5 {
-    animation: swimaround 45s linear infinite;
-    width: 25px;
-    height: auto;
-    position: absolute;
-    animation-delay: 2.3s;
-
-}
-
-@keyframes swimaround {
-    0% {
-        transform: rotate(0deg) translate(600px) rotate(0deg) scaleX(1);
-    }
-    25% {
-        transform: rotate(90deg) translate(300px) rotate(-90deg) scaleX(1);
-    }
-    50% {
-        transform: rotate(180deg) translate(600px) rotate(-180deg) scaleX(-1);
-    }
-    75% {
-        transform: rotate(270deg) translate(300px) rotate(-270deg) scaleX(-1);
-    }
-    100% {
-        transform: rotate(360deg) translate(600px) rotate(-360deg) scaleX(1);
-    }
 }

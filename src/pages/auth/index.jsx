@@ -6,11 +6,6 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswor
 import { getFirestore, doc, setDoc, getDocs, collection, where, query } from 'firebase/firestore';
 import { useUserInfo } from '../../hooks/useUserInfo';  // Adjust the path as needed
 import logo from '../../images/logo.jpeg';
-import fish1 from '../../images/fish1.svg';
-import fish2 from '../../images/fish2.svg';
-import fish3 from '../../images/fish3.svg';
-import fish4 from '../../images/fish4.svg';
-import bubbles from '../../images/airbubbles.svg';
 import './auth.css'; // Import the CSS file
 
 const db = getFirestore();
@@ -269,15 +264,6 @@ export const Auth = () => {
 
     return (
         <div className="auth-wrapper">
-            <img src={fish1} alt="Fish" className="fish fish1" />
-            <img src={fish2} alt="Fish" className="fish fish2" />
-            <img src={fish3} alt="Fish" className="fish fish3" />
-            <img src={fish4} alt="Fish" className="fish fish4" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles1" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles2" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles3" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles4" />
-            <img src={bubbles} alt="bubbles" className="bubbles bubbles5" />
             <div className="container">
             <div className="header-container">
                 <button type="button" onClick={toggleLanguage} className="language-button">{t.changeLanguage}</button>

@@ -3,7 +3,6 @@ import validator from 'validator';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
-import duck1 from '../../images/duck1.svg';
 import './userprofileedite.css'; // Make sure to create a corresponding CSS file for styling
 
 const db = getFirestore();
@@ -169,11 +168,6 @@ export const UserProfile = () => {
 
     return (
         <div className="user-profile-container" dir ={t.dir}>
-            <img src={duck1} alt="duck" className="duck duck1" />
-            <img src={duck1} alt="duck" className="duck duck2" />
-            <img src={duck1} alt="duck" className="duck duck3" />
-            <img src={duck1} alt="duck" className="duck duck4" />
-            <img src={duck1} alt="duck" className="duck duck5" />
             <div>
             <form onSubmit={handleSubmit} className="user-profile-form">
                 <div className="form-group">
