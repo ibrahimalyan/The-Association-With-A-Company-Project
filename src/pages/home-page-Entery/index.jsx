@@ -5,6 +5,8 @@ import './homeStyles.css'; // Import CSS for styling
 import logo from '../../images/logo.jpeg';
 import intro from '../../images/welcome.jfif';
 import { useProjects } from '../../hooks/useGetProjectsInfo';
+import { getAuth } from "firebase/auth";
+import {auth} from '../../config/firebase-config';
 
 
 
@@ -92,10 +94,11 @@ const translations = {
 
 
 export const HomePageEntery = () => {
-    const { projects, loading, error } = useProjects();
+    const { projects, loading, error,setLoading} = useProjects();
     const navigate = useNavigate();
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
+    const toGetAuth = getAuth();
     const [filter, setFilter] = useState({
         name: '',
         location: '',
@@ -107,6 +110,24 @@ export const HomePageEntery = () => {
     const changeLanguage = () => {
         setLanguage((prevLang) => (prevLang === 'ar' ? 'heb' : 'ar'));
     };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            const user = toGetAuth.currentUser;
+            if (user) {
+                navigate('/home');
+            
+            setLoading(false);
+        };
+
+    }
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            fetchData();
+        });
+
+        return () => unsubscribe();
+    }, [navigate, toGetAuth]);
 
 
     useEffect(() => {

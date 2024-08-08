@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc,getDoc } from 'firebase/firestore';
 import { getAuth,signOut, onAuthStateChanged } from 'firebase/auth';
 import logo from '../../images/logo.jpeg';
 import profileIcon from '../../images/profileIcon.png';
 import { db } from '../../config/firebase-config';
 import './participent.css'; // Ensure you have appropriate CSS
+
 
 
 const translations = {
@@ -85,6 +86,7 @@ export const Participent = () => {
   const [filterRole, setFilterRole] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);  
   const [authenticated, setAuthenticated] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
   const [userDetails, setUserDetails] = useState({
     userId: '',
     firstName: '',
@@ -94,11 +96,12 @@ export const Participent = () => {
     uid: ''
     }
 );
-  const [language, setLanguage] = useState('ar');
+  const [language, setLanguage] = useState('heb');
   const navigate = useNavigate();
   const auth = getAuth();
   
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             setAuthenticated(true);
@@ -112,12 +115,46 @@ export const Participent = () => {
 }, [auth, navigate]);
 
 
-  const fetchUsersAndProjects = async () => {
-    const userSnapshot = await getDocs(collection(db, 'users'));
-    const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setUsers(usersList);
-    setFilteredUsers(usersList); // Initialize filteredUsers with all users
-  };
+
+
+const fetchUsersAndProjects = async () => {
+    
+  const userSnapshot = await getDocs(collection(db, 'users'));
+  const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  setUsers(usersList);
+  setFilteredUsers(usersList); 
+
+
+  const user = toGetAuth.currentUser;
+  const userDoc = await  getDoc(doc(db, 'users', user.uid));
+
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    setUserDetails({
+        userId: userData.id || '',
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        phoneNumber: userData.phoneNumber || '',
+        role: userData.role || '', // Set role
+        uid: user.uid, // Set uid
+        username: userData.username || '',
+        projects: userData.projects || []
+    });
+    setDataFetched(true);
+} else {
+    console.error('User document not found');
+}
+};
+
+useEffect(() => {
+  if (dataFetched) {
+
+    if (userDetails.role !== 'Admin'){
+        navigate('/home')
+    }
+    setLoading(false);
+  }
+}, [dataFetched, navigate, userDetails]);
 
   const handleHomePage = () => {
     navigate('/home');

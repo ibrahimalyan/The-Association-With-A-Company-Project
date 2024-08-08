@@ -26,5 +26,5 @@ export const useProjects = () => {
         fetchProjects();
     }, []);
 
-    return { projects, loading, error };
+    return { projects, loading, error,setLoading };
 };
