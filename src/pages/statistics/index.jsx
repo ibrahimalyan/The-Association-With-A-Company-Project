@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStatistics } from '../../hooks/useStatistics';
 import { Pie, Bar } from 'react-chartjs-2';
 import logo from '../../images/logo.jpeg';
@@ -80,18 +80,21 @@ const translations = {
 };
 
 const Statistics = () => {
-    const { statistics, loading, error } = useStatistics();
+    const { statistics, loading, error,userDetails } = useStatistics();
     const [language, setLanguage] = useState('heb');
     const navigate = useNavigate();
     const toGetAuth = getAuth();
-    const [userDetails, setUserDetails] = useState({
-        userId: '',
-        firstName: '',
-        lastName: '',
-        phoneNumber: '',
-        role: '',
-        uid: ''
-    });
+    
+    useEffect(() => {
+        console.log("userDetails: ", userDetails);
+        if (userDetails.uid !== '' ){
+            if (userDetails.role !== 'Admin'){
+                navigate('/home');
+            }   
+        }
+        
+    })
+ 
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;

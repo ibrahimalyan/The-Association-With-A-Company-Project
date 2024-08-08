@@ -157,6 +157,12 @@
     
             return () => unsubscribe();
         }, [navigate, toGetAuth]);
+
+        useEffect(()=> {
+            if (userDetails.role === 'Guest'){
+                navigate('/home')
+            }
+        }, [navigate])
     
     
         if (!authenticated) {

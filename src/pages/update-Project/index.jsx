@@ -392,26 +392,32 @@ export const EditProject = () => {
         return;
     }
         
-        try {
-            console.log("projectData: ", projectData);
-            console.log("lastProjectTitle: ", lastProjectTitle);
-            console.log("lastImageName: ", lastImageName);
-            console.log("addImageFile: ", addImageFile);
-            if (addImageFile) {
-                // Delete previous image if it exists
-               console.log("projectData: ", projectData);
-                if (projectData.imageUrl) {
-                    const imageRef = ref(storage, `images/${lastProjectTitle}/${lastImageName}`);
-                    await deleteObject(imageRef);
-                }
-                console.log("projectData: ", projectData);
-                // Upload new image
-                const uploadedImageUrl = await uploadImage(imageFile, projectData.projectTitle);
-                setImageUrl(uploadedImageUrl);
+    try {
+        if (addImageFile) {
+            // Delete previous image if it exists
+            if (projectData.imageUrl) {
+                const imageRef = ref(storage, `images/${lastProjectTitle}/${lastImageName}`);
+                await deleteObject(imageRef);
             }
+            const uploadedImageUrl = await uploadImage(addImageFile, projectData.projectTitle);
 
+            setImageUrl(uploadedImageUrl);
             const docRef = doc(db, "projects", id);
-
+                
+            await updateDoc(docRef, {
+                projectTitle: projectData.projectTitle,
+                startDate: projectData.startDate,
+                endDate: projectData.endDate,
+                location: selectedLocations,
+                description: projectData.description,
+                imageUrl: uploadedImageUrl,
+                imageName: addImageFile.name || '',
+                participants: projectData.participantList
+            });
+        }
+        else{
+            const docRef = doc(db, "projects", id);
+                
             await updateDoc(docRef, {
                 projectTitle: projectData.projectTitle,
                 startDate: projectData.startDate,
@@ -422,12 +428,13 @@ export const EditProject = () => {
                 imageName: projectData.imageName || '',
                 participants: projectData.participantList
             });
-            updateParticipants(true);
-            navigate('/home');
-        } catch (error) {
-            console.error("Error updating document: ", error);
-            setError("Error updating document");
         }
+        updateParticipants(true);
+        navigate('/home');
+    } catch (error) {
+        console.error("Error updating document: ", error);
+        setError("Error updating document");
+    }
     };
 
 

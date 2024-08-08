@@ -157,6 +157,7 @@ export const HomePage = () => {
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
     const [notifies, setNotifies] = useState([]);
+    const [registerApplication, setRegisterApplication] = useState([]);
     const [loading, setLoading] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
     const { registerUser } = useRegister();
@@ -196,11 +197,12 @@ export const HomePage = () => {
             if (user) {
                 setAuthenticated(true);
                 try {
-                    const [userDoc, projectDocs, usersDocs, registProject] = await Promise.all([
+                    const [userDoc, projectDocs, usersDocs, registProject,register] = await Promise.all([
                         getDoc(doc(db, 'users', user.uid)),
                         getDocs(collection(db, 'projects')),
                         getDocs(collection(db, 'users')),
-                        getDocs(collection(db,'projectsRegisters'))
+                        getDocs(collection(db,'projectsRegisters')),
+                        getDocs(collection(db, 'register'))
                     ]);
 
                     if (userDoc.exists()) {
@@ -235,6 +237,11 @@ export const HomePage = () => {
                         registProjects.push({ id: registDoc.id, ...registDoc.data() });
                     });
 
+                    const registerApplications = [];
+                    register.forEach((registerDoc) => {
+                        registerApplications.push({ id: registerDoc.id, ...registerDoc.data() })
+                    })
+
                     const workersInfo = {};
                     const nameParticipants = {};
 
@@ -266,6 +273,7 @@ export const HomePage = () => {
                     setWorkersInfo(workersInfo);
                     setNameParticipants(nameParticipants);
                     setNotifies(registProjects)
+                    setRegisterApplication(registerApplications);
                 } catch (error) {
                     console.error('Error fetching data:', error);
                 }
@@ -513,12 +521,28 @@ export const HomePage = () => {
                         <p>{t.lastName}: {userData.lastName}</p>
                         <p>{t.email}: {userData.email}</p>
                         <p>{t.phoneNumber}: {userData.phoneNumber}</p>
-                        <p>{t.gender}: {userData.gender}</p>
                         <p>{t.address}: {userData.location}</p>
-                        <p>{t.birthDate}: {userData.birthDate}</p>
                     </>              
                 </div>
             );    
+        }
+
+        else if(userDetails.role === 'Worker' && isParticipant(project)){
+            return (
+                <div className={`modaluser-content ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
+                    <>
+                        <p>{t.userName}: {userData.username}</p>
+                        <p>{t.firstName}: {userData.firstName}</p>
+                        <p>{t.lastName}: {userData.lastName}</p>
+                        <p>{t.email}: {userData.email}</p>
+                        <p>{t.role}: {userData.role}</p>
+                        <p>{t.phoneNumber}: {userData.phoneNumber}</p>
+                        <p>{t.address}: {userData.location}</p>
+                        <p>{t.birthDate}: {userData.birthDate}</p>
+                        <p>{t.gender}: {userData.gender}</p>
+                    </>               
+                </div>
+            );
         }
         return (
             <div className={`modaluser-content ${language === 'ar' || language === 'heb' ? 'rtl' : 'ltr'}`}>
@@ -613,15 +637,33 @@ export const HomePage = () => {
     };
 
     const handleRegisterAdmin = async () => {
+        registerApplication.forEach((regist) => {
+            console.log("regist: ", regist)
+            if (regist.user_uid === userDetails.uid && regist.registTo === 'Admin'){
+                alert("you are already registed");
+                window.location.reload();
+                return;
+            }
+        })
+
         try {
             await registerUser(userDetails.userId, userDetails.firstName, userDetails.lastName, userDetails.role, userDetails.phoneNumber, "Admin", userDetails.uid);
             alert("Registration request for Admin submitted.");
         } catch (error) {
             alert("Error registering admin. Please try again.");
         }
+        window.location.reload();
     };
 
     const handleRegisterWorker = async () => {
+        registerApplication.forEach((regist) => {
+            if (regist.user_uid === userDetails.uid && regist.registTo === 'Worker'){
+                alert("you are already registed");
+                window.location.reload();
+                return;
+            }
+        })
+        
         try {
             await registerUser(userDetails.userId, userDetails.firstName, userDetails.lastName, userDetails.role, userDetails.phoneNumber, "Worker", userDetails.uid);
             alert("Registration request for Worker submitted.");
@@ -629,6 +671,7 @@ export const HomePage = () => {
             console.error("Error registering worker:", error);
             alert("Error registering worker. Please try again.");
         }
+        window.location.reload();
     };
 
     const handleViewNotifications = () => {

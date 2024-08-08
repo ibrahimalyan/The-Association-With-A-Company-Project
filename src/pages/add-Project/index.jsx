@@ -208,6 +208,13 @@ export const AddProject = () => {
         return () => unsubscribe();
     }, [navigate, auth]);
 
+    useEffect(()=> {
+        if (userDetails.uid !== ''){
+        if (userDetails.role !== 'Admin'){
+            navigate('/home')
+        }}
+    }, [navigate])
+
 
     const handleCheckboxChange = (event) => {
         const { value, checked } = event.target;

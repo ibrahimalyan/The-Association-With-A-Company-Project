@@ -2,10 +2,11 @@
   "name": "start",
   "version": "0.1.0",
   "private": true,
+  "homePage": ".",
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.1",
     "chart.js": "^4.4.3",
-    "firebase": "^10.12.2",
+    "firebase": "^10.12.5",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",

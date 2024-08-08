@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from '../config/firebase-config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 export const useStatistics = () => {
+    const toGetAuth = getAuth();
     const [statistics, setStatistics] = useState({
         totalUsers: 0,
         totalProjects: 0,
@@ -25,6 +28,19 @@ export const useStatistics = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const [userDetails, setUserDetails] = useState({
+        userId: '',
+        firstName: '',
+        lastName: '',
+        phoneNumber: '',
+        role: '', // Add role to state
+        uid: '',
+        username: '',
+        projects: []
+        }
+    );
+
 
     useEffect(() => {
         const fetchStatistics = async () => {
@@ -66,15 +82,6 @@ export const useStatistics = () => {
                     education: Math.floor(Math.random() * 5),
                 };
 
-                console.log("Generated statistics:", {
-                    totalUsers,
-                    totalProjects,
-                    adminUsers,
-                    workerUsers,
-                    guestUsers,
-                    locations
-                });
-
                 setStatistics({
                     totalUsers,
                     totalProjects,
@@ -83,6 +90,25 @@ export const useStatistics = () => {
                     guestUsers,
                     locations
                 });
+
+                const auth = getAuth();
+                const user = auth.currentUser;
+                const [userDoc] = await Promise.all([
+                    getDoc(doc(db, 'users', user.uid))
+                ]);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserDetails({
+                        userId: userData.userId,
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                        phoneNumber: userData.phoneNumber,
+                        role: userData.role, // Set role from user data
+                        uid: userData.uid,
+                        username: userData.username,
+                        projects: userData.projects || []
+                    });
+                }
             } catch (err) {
                 setError(err.message);
                 console.error("Error fetching statistics:", err);
@@ -92,7 +118,8 @@ export const useStatistics = () => {
         };
 
         fetchStatistics();
-    }, []);
+    }, [toGetAuth]);
 
-    return { statistics, loading, error };
+
+    return { statistics, loading, error, userDetails };
 };
