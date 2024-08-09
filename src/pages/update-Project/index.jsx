@@ -522,7 +522,7 @@ export const EditProject = () => {
 
     const handleParticipantSearch = () => {
         const filtered = users.filter(user =>
-            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
+            (user.role !== 'deleted') && `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchInputFilter.toLowerCase())
         );
         console.log(filtered)
         setFilteredUsers(filtered);
